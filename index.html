@@ -1,35 +1,13 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>CCS Grant Support Mockups</title>
+<link rel="stylesheet" href="https://zefanonuevo.github.io/ccs-design/ccs-tokens.css?v=1">
 <style>
-/* Layout: sticky frosted toolbar with a segmented tab strip; one view at a time in a 1120px column. Same design tokens as CCS Task Tracker, so the two can merge into one site. */
+/* Layout: sticky frosted toolbar with a segmented tab strip; one view at a time in a 1120px column.
+   Shared tokens (color, shadow, easing, type, theme switch) load from ccs-design. Older names used by this file resolve to them: */
 :root{
-  --paper:#f5f5f7; --surface:#ffffff; --raised:#ffffff; --ink:#1d1d1f; --muted:#6e6e73; --line:#e3e3e8;
-  --accent:#0066cc; --accent-fill:#0071e3; --accent-ink:#ffffff; --accent-soft:#e8f1fc;
-  --good:#1d7a36; --good-soft:#e3f3e8; --warn:#a64b00; --warn-soft:#fdeedd; --crit:#c4001a; --crit-soft:#fde7ea;
-  --fill:rgba(118,118,128,.12); --scrim:rgba(0,0,0,.28);
-  --shadow-1:0 1px 2px rgba(0,0,0,.05); --shadow-hover:0 4px 14px rgba(0,0,0,.1); --shadow-2:0 12px 40px rgba(0,0,0,.16),0 0 0 .5px rgba(0,0,0,.08);
-  --ease-out:cubic-bezier(.23,1,.32,1); --ease-drawer:cubic-bezier(.32,.72,0,1);
-  --f-display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;
-  --f-body:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif;
-  --f-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
-  /* names used by this file, resolved from the shared tokens */
   --bg:var(--paper); --fg:var(--ink); --surface-2:var(--paper); --accent-fg:var(--accent-ink);
   --bad:var(--crit); --bad-soft:var(--crit-soft); --ok:var(--good); --ok-soft:var(--good-soft); --info:var(--accent); --info-soft:var(--accent-soft);
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#1c1c1e; --surface:#2c2c2e; --raised:#353538; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
-  --accent:#4aa3ff; --accent-fill:#0a6fd6; --accent-ink:#ffffff; --accent-soft:#1b2f47;
-  --good:#30d158; --good-soft:#163524; --warn:#ff9f0a; --warn-soft:#3b2a0c; --crit:#ff6961; --crit-soft:#401c1a;
-  --fill:rgba(118,118,128,.24); --scrim:rgba(0,0,0,.5);
-  --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-hover:0 4px 14px rgba(0,0,0,.45); --shadow-2:0 12px 40px rgba(0,0,0,.55),0 0 0 .5px rgba(255,255,255,.08);
-  color-scheme:dark}}
-:root[data-theme="dark"]{
-  --paper:#1c1c1e; --surface:#2c2c2e; --raised:#353538; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
-  --accent:#4aa3ff; --accent-fill:#0a6fd6; --accent-ink:#ffffff; --accent-soft:#1b2f47;
-  --good:#30d158; --good-soft:#163524; --warn:#ff9f0a; --warn-soft:#3b2a0c; --crit:#ff6961; --crit-soft:#401c1a;
-  --fill:rgba(118,118,128,.24); --scrim:rgba(0,0,0,.5);
-  --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-hover:0 4px 14px rgba(0,0,0,.45); --shadow-2:0 12px 40px rgba(0,0,0,.55),0 0 0 .5px rgba(255,255,255,.08);
-  color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--f-body);padding-inline:16px;padding-block:0}
@@ -168,12 +146,6 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
 .tabs button:active{transform:scale(.97)}
 .tabs.more{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 36px),transparent)}
 
-/* theme switch: System, Light, Dark */
-.theme{display:inline-flex;flex:none;gap:2px;padding:3px;border-radius:9px;background:var(--fill)}
-.theme button{appearance:none;border:0;background:none;width:32px;height:30px;border-radius:7px;display:grid;place-items:center;color:var(--muted);cursor:pointer;transition:transform 160ms var(--ease-out)}
-.theme button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
-.theme button:active{transform:scale(.94)}
-@media (hover:hover) and (pointer:fine){.theme button:hover{color:var(--ink)}}
 
 /* buttons and fields */
 .btn{background:var(--accent-fill);color:#fff;border-radius:8px;border:1px solid var(--accent-fill);font-size:13.5px;transition:transform 160ms var(--ease-out)}
