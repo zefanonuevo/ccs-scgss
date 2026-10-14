@@ -1,5 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>CCS Grant Support Mockups</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cpath d='M8 11h16M8 16h11M8 21h7' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://zefanonuevo.github.io/ccs-design/ccs-tokens.css?v=1">
 <style>
 /* Layout: sticky frosted toolbar with a segmented tab strip; one view at a time in a 1120px column.
@@ -139,7 +140,8 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
 .tag{border-radius:6px;text-transform:none;letter-spacing:0;font-weight:500;padding:2px 8px}
 
 /* tabs: segmented control */
-.tabs{position:relative;background:var(--fill);padding:3px;border-radius:10px;gap:2px;margin-top:10px;width:max-content;max-width:100%;scrollbar-width:none}
+.tabbar{margin-top:10px;min-width:0}
+.tabs{position:relative;background:var(--fill);padding:3px;border-radius:10px;gap:2px;margin-top:0;width:max-content;max-width:100%;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tabs button{border:0;border-radius:7px;padding:6px 12px;font-size:13px;transition:transform 160ms var(--ease-out)}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
@@ -180,18 +182,38 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
 .toast{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-2);padding:10px 16px;animation:toast-in 240ms var(--ease-out) both}
 @keyframes toast-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes fade{from{opacity:0}to{opacity:1}}
+.toast{width:max-content;max-width:calc(100vw - 32px)}
 .toast.out{animation:none;opacity:0;transform:translate(-50%,6px);transition:opacity 160ms ease,transform 160ms ease}
 
 .swipe{display:none;margin:0 0 8px;font-size:12.5px}
 @media (max-width:1000px){.swipe{display:block}}
 
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){@media (max-width:520px){.tabbar{background:var(--paper)}}}
+/* 3. verification list becomes stacked rows on phones, so Verify and Return are reachable without sideways scrolling */
+.tbl .mono,.tbl td.mono{overflow-wrap:anywhere}
+@media (max-width:520px){
+  #vdocs,#vdocs tbody,#vdocs tr,#vdocs td{display:block}
+  #vdocs{min-width:0}
+  #vdocs thead{display:none}
+  #vdocs tr{padding:10px 12px;border-bottom:1px solid var(--line)}
+  #vdocs tr:last-child{border-bottom:0}
+  #vdocs td{border:0;padding:2px 0;white-space:normal}
+  #vdocs td:first-child{font-weight:600}
+  #vdocs td:nth-child(2){font-size:12px;color:var(--muted)}
+  #vdocs td:last-child{padding-top:8px}
+  #vdocs .pill{white-space:normal}
+  #vdocs td:last-child:has(> .muted){display:none}
+}
+/* touch: larger targets */
+@media (pointer:coarse){.btn.sm{min-height:36px;padding-left:12px;padding-right:12px}.btn{min-height:40px}}
 /* phone: the header scrolls away; only the tab strip stays pinned */
 @media (max-width:520px){
   .top,.top-in{display:contents}
   .top-row{padding-top:12px}
   .brand h1{font-size:16px}
-  .tabs{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5;
-    background:linear-gradient(var(--fill),var(--fill)),var(--paper);box-shadow:0 -16px 0 0 var(--paper),0 6px 16px -10px rgba(0,0,0,.35)}
+  .tabbar{position:sticky;top:0;z-index:5;margin-top:0;padding:calc(env(safe-area-inset-top,0px) + 8px) 0 8px;
+    background:color-mix(in srgb,var(--paper) 72%,transparent);border-bottom:1px solid var(--line);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
+  .tabbar{-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 }
 /* diagram text sized for the system font */
 .flow text[font-size="12.5"]{font-size:12px}
@@ -211,7 +233,7 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
 <div class="top"><div class="top-in">
   <div class="top-row"><div class="brand"><h1>CCS Student Conference Grant Support System</h1><span class="tag">Mockups &amp; simulation · fictional sample data</span></div>
   <div class="theme" id="theme" role="radiogroup" aria-label="Color theme"><button type="button" role="radio" data-theme-set="system" aria-checked="true" aria-label="System theme" title="System"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="1.75" y="2.75" width="12.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14h5M8 11.5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg></button><button type="button" role="radio" data-theme-set="light" aria-checked="false" aria-label="Light theme" title="Light"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="2.9" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg></button><button type="button" role="radio" data-theme-set="dark" aria-checked="false" aria-label="Dark theme" title="Dark"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13.2 9.6A5.6 5.6 0 0 1 6.4 2.8a5.6 5.6 0 1 0 6.8 6.8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button></div></div>
-  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="tabbar"><div class="tabs" role="tablist" id="tabs"></div></div>
 </div></div>
 
 <main id="main">
