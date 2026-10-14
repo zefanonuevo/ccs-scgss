@@ -1,22 +1,36 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>CCS Grant Support Mockups</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
 <style>
-/* Layout: sticky title bar with horizontally scrolling tabs; one view at a time inside a 1120px column. Mock screens sit in framed "screen" boxes so they read as application mockups. */
+/* Layout: sticky frosted toolbar with a segmented tab strip; one view at a time in a 1120px column. Same design tokens as CCS Task Tracker, so the two can merge into one site. */
 :root{
-  --bg:#F3F5F2; --surface:#FFFFFF; --surface-2:#F8FAF7; --fg:#1A2320; --muted:#5A6862; --line:#DAE0DB;
-  --accent:#0F5A42; --accent-fg:#FFFFFF; --accent-soft:#E0EFE8;
-  --warn:#8F5700; --warn-soft:#FBEFD3; --bad:#A12B2B; --bad-soft:#F8E0E0; --ok:#1B6B38; --ok-soft:#DFF1E5; --info:#1F4E8C; --info-soft:#E0E9F5;
-  --f-display:"Newsreader",Georgia,"Times New Roman",serif; --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --paper:#f5f5f7; --surface:#ffffff; --raised:#ffffff; --ink:#1d1d1f; --muted:#6e6e73; --line:#e3e3e8;
+  --accent:#0066cc; --accent-fill:#0071e3; --accent-ink:#ffffff; --accent-soft:#e8f1fc;
+  --good:#1d7a36; --good-soft:#e3f3e8; --warn:#a64b00; --warn-soft:#fdeedd; --crit:#c4001a; --crit-soft:#fde7ea;
+  --fill:rgba(118,118,128,.12); --scrim:rgba(0,0,0,.28);
+  --shadow-1:0 1px 2px rgba(0,0,0,.05); --shadow-hover:0 4px 14px rgba(0,0,0,.1); --shadow-2:0 12px 40px rgba(0,0,0,.16),0 0 0 .5px rgba(0,0,0,.08);
+  --ease-out:cubic-bezier(.23,1,.32,1); --ease-drawer:cubic-bezier(.32,.72,0,1);
+  --f-display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',system-ui,sans-serif;
+  --f-body:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',system-ui,sans-serif;
+  --f-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  /* names used by this file, resolved from the shared tokens */
+  --bg:var(--paper); --fg:var(--ink); --surface-2:var(--paper); --accent-fg:var(--accent-ink);
+  --bad:var(--crit); --bad-soft:var(--crit-soft); --ok:var(--good); --ok-soft:var(--good-soft); --info:var(--accent); --info-soft:var(--accent-soft);
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#101613; --surface:#18201C; --surface-2:#141B17; --fg:#E6ECE8; --muted:#9AA8A1; --line:#2B3731;
-  --accent:#5CC49C; --accent-fg:#06241A; --accent-soft:#1B3A2E;
-  --warn:#E8B04A; --warn-soft:#3A2D12; --bad:#F08A8A; --bad-soft:#3D1B1B; --ok:#6FD08F; --ok-soft:#173222; --info:#8DB7F0; --info-soft:#17283F; color-scheme:dark}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#1c1c1e; --surface:#2c2c2e; --raised:#353538; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
+  --accent:#4aa3ff; --accent-fill:#0a6fd6; --accent-ink:#ffffff; --accent-soft:#1b2f47;
+  --good:#30d158; --good-soft:#163524; --warn:#ff9f0a; --warn-soft:#3b2a0c; --crit:#ff6961; --crit-soft:#401c1a;
+  --fill:rgba(118,118,128,.24); --scrim:rgba(0,0,0,.5);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-hover:0 4px 14px rgba(0,0,0,.45); --shadow-2:0 12px 40px rgba(0,0,0,.55),0 0 0 .5px rgba(255,255,255,.08);
+  color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#101613; --surface:#18201C; --surface-2:#141B17; --fg:#E6ECE8; --muted:#9AA8A1; --line:#2B3731;
-  --accent:#5CC49C; --accent-fg:#06241A; --accent-soft:#1B3A2E;
-  --warn:#E8B04A; --warn-soft:#3A2D12; --bad:#F08A8A; --bad-soft:#3D1B1B; --ok:#6FD08F; --ok-soft:#173222; --info:#8DB7F0; --info-soft:#17283F; color-scheme:dark}
+  --paper:#1c1c1e; --surface:#2c2c2e; --raised:#353538; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
+  --accent:#4aa3ff; --accent-fill:#0a6fd6; --accent-ink:#ffffff; --accent-soft:#1b2f47;
+  --good:#30d158; --good-soft:#163524; --warn:#ff9f0a; --warn-soft:#3b2a0c; --crit:#ff6961; --crit-soft:#401c1a;
+  --fill:rgba(118,118,128,.24); --scrim:rgba(0,0,0,.5);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-hover:0 4px 14px rgba(0,0,0,.45); --shadow-2:0 12px 40px rgba(0,0,0,.55),0 0 0 .5px rgba(255,255,255,.08);
+  color-scheme:dark}
+
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--f-body);padding-inline:16px;padding-block:0}
 h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;line-height:1.2}
@@ -100,7 +114,7 @@ td.r,th.r{text-align:right}
 .mail{border:1px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden}
 .mail-h{background:var(--surface-2);padding:8px 12px;border-bottom:1px solid var(--line);font-size:12.5px;display:grid;gap:1px}
 .mail-b{padding:12px;display:grid;gap:8px}
-.paper{background:#fff;color:#1a1a1a;border:1px solid #bbb;padding:24px;font-family:"IBM Plex Sans",Arial,sans-serif;position:relative;overflow-x:auto}
+.paper{background:#fff;color:#1a1a1a;border:1px solid #bbb;padding:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;position:relative;overflow-x:auto}
 .paper table{min-width:520px;color:#1a1a1a}.paper th{background:#eee;color:#333}.paper td,.paper th{border:1px solid #bbb;padding:6px 9px}
 .paper .wm{position:absolute;inset:0;display:grid;place-items:center;font-size:80px;font-weight:700;color:rgba(160,40,40,.09);transform:rotate(-18deg);pointer-events:none;letter-spacing:.1em}
 .bars{display:grid;gap:7px}
@@ -124,11 +138,107 @@ td.r,th.r{text-align:right}
 .who dt{color:var(--muted)} .who dd{margin:0}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:6px;z-index:9;max-width:90vw}
 @media (max-width:560px){.bar{grid-template-columns:100px 1fr 30px}.paper{padding:14px}}
-@media (prefers-reduced-motion:no-preference){.view{animation:fade .18s ease-out}@keyframes fade{from{opacity:.4}to{opacity:1}}}
+
+
+/* ===== macOS layer: same surfaces, controls and motion as CCS Task Tracker v2.5. Motion uses transform and opacity only. ===== */
+html{-webkit-text-size-adjust:100%}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2,h3{font-weight:650;letter-spacing:-.018em}
+h2{font-size:28px;letter-spacing:-.025em}
+h3{font-size:18px}
+::selection{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+
+/* toolbar: frosted, sticky */
+.top{background:color-mix(in srgb,var(--paper) 72%,transparent);padding-bottom:10px}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .top{-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.top{background:var(--paper)}}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:12px 20px}
+.brand{flex:1 1 0;min-width:0}
+.brand h1{font-size:20px;letter-spacing:-.022em}
+.tag{border-radius:6px;text-transform:none;letter-spacing:0;font-weight:500;padding:2px 8px}
+
+/* tabs: segmented control */
+.tabs{position:relative;background:var(--fill);padding:3px;border-radius:10px;gap:2px;margin-top:10px;width:max-content;max-width:100%;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{border:0;border-radius:7px;padding:6px 12px;font-size:13px;transition:transform 160ms var(--ease-out)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+.tabs button:active{transform:scale(.97)}
+.tabs.more{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 36px),transparent)}
+
+/* theme switch: System, Light, Dark */
+.theme{display:inline-flex;flex:none;gap:2px;padding:3px;border-radius:9px;background:var(--fill)}
+.theme button{appearance:none;border:0;background:none;width:32px;height:30px;border-radius:7px;display:grid;place-items:center;color:var(--muted);cursor:pointer;transition:transform 160ms var(--ease-out)}
+.theme button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+.theme button:active{transform:scale(.94)}
+@media (hover:hover) and (pointer:fine){.theme button:hover{color:var(--ink)}}
+
+/* buttons and fields */
+.btn{background:var(--accent-fill);color:#fff;border-radius:8px;border:1px solid var(--accent-fill);font-size:13.5px;transition:transform 160ms var(--ease-out)}
+.btn:hover{filter:none}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.45;cursor:default;pointer-events:none}
+.btn.sec{background:var(--surface);color:var(--ink);border-color:var(--line);box-shadow:var(--shadow-1)}
+.btn.warn,.btn.bad{box-shadow:none}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover{filter:brightness(.92)}
+  .btn.sec:hover{filter:none;background:var(--paper)}
+}
+.field input,.field select,.field textarea,.row input,.row select{border-radius:8px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.seg{background:var(--fill);border:0;border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;border-radius:7px;background:none;color:var(--muted);transition:transform 160ms var(--ease-out)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+.seg button:active{transform:scale(.97)}
+
+/* surfaces */
+.card,.kpi,.tbl,.mail,.log,.flow,.screen{border-radius:12px}
+.card,.kpi,.screen{box-shadow:var(--shadow-1)}
+.screen-bar{background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line);font-weight:600}
+.screen-bar .mono{opacity:1;color:var(--muted);font-weight:400}
+.callout{border-radius:0 10px 10px 0}
+.pill{border-radius:6px}
+.kpi b{font-weight:650;letter-spacing:-.025em}
+.bar-t{border-radius:4px}
+.paper{border-radius:6px}
+
+/* toast */
+.toast{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-2);padding:10px 16px;animation:toast-in 240ms var(--ease-out) both}
+@keyframes toast-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.toast.out{animation:none;opacity:0;transform:translate(-50%,6px);transition:opacity 160ms ease,transform 160ms ease}
+
+.swipe{display:none;margin:0 0 8px;font-size:12.5px}
+@media (max-width:1000px){.swipe{display:block}}
+
+/* phone: the header scrolls away; only the tab strip stays pinned */
+@media (max-width:520px){
+  .top,.top-in{display:contents}
+  .top-row{padding-top:12px}
+  .brand h1{font-size:16px}
+  .tabs{position:sticky;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:5;
+    background:linear-gradient(var(--fill),var(--fill)),var(--paper);box-shadow:0 -16px 0 0 var(--paper),0 6px 16px -10px rgba(0,0,0,.35)}
+}
+/* diagram text sized for the system font */
+.flow text[font-size="12.5"]{font-size:12px}
+.sub{font-size:10px}
+/* fixes: progress steps inside cards stay in a row, pills do not stretch, small tables fit their card */
+.card .steps{display:flex;gap:0;margin:6px 0}
+.pill{align-self:flex-start}
+.card .tbl>table,.grid .tbl>table{min-width:0}
+.field{align-content:start}
+@media (prefers-reduced-motion:reduce){
+  .tabs button:active,.btn:active,.seg button:active,.theme button:active{transform:none}
+  .toast{animation:fade 120ms ease both}
+}
 </style>
+<script>try{var ct=localStorage.getItem('ccs-theme');if(ct==='light'||ct==='dark')document.documentElement.setAttribute('data-theme',ct)}catch(e){}</script>
 
 <div class="top"><div class="top-in">
-  <div class="brand"><h1>CCS Student Conference Grant Support System</h1><span class="tag">Mockups &amp; simulation · fictional sample data</span></div>
+  <div class="top-row"><div class="brand"><h1>CCS Student Conference Grant Support System</h1><span class="tag">Mockups &amp; simulation · fictional sample data</span></div>
+  <div class="theme" id="theme" role="radiogroup" aria-label="Color theme"><button type="button" role="radio" data-theme-set="system" aria-checked="true" aria-label="System theme" title="System"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="1.75" y="2.75" width="12.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14h5M8 11.5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg></button><button type="button" role="radio" data-theme-set="light" aria-checked="false" aria-label="Light theme" title="Light"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="2.9" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg></button><button type="button" role="radio" data-theme-set="dark" aria-checked="false" aria-label="Dark theme" title="Dark"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13.2 9.6A5.6 5.6 0 0 1 6.4 2.8a5.6 5.6 0 1 0 6.8 6.8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button></div></div>
   <div class="tabs" role="tablist" id="tabs"></div>
 </div></div>
 
@@ -371,6 +481,7 @@ td.r,th.r{text-align:right}
 <!-- ===== WORKFLOW ===== -->
 <section class="view" id="v-flow" hidden data-title="Workflow">
   <header><h2>Approval and reimbursement workflow</h2><p class="muted">Solid lines are the normal path. Dashed lines return the file for correction. The dotted line ends the application. Previous decisions and document versions are always kept.</p></header>
+  <p class="muted swipe">Scroll sideways to see every step.</p>
   <div class="flow"><svg viewBox="0 0 1000 430" role="img" aria-label="Workflow from student submission through adviser, chair, associate dean and dean approval, then documents, verification, final approval, FAO report and completion">
     <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
     <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--warn)"/></marker></defs>
@@ -395,11 +506,11 @@ td.r,th.r{text-align:right}
     <g><rect class="nd" x="316" y="268" width="120" height="58" rx="6"/><text x="376" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Verified amount</text><text class="sub" x="376" y="304" text-anchor="middle">entered with reason</text><text class="sub" x="376" y="317" text-anchor="middle">for any adjustment</text></g>
     <g><rect class="nd" x="464" y="268" width="120" height="58" rx="6"/><text x="524" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Dean or Secretary</text><text class="sub" x="524" y="304" text-anchor="middle">records final amount</text><text class="sub" x="524" y="317" text-anchor="middle">and funding source</text></g>
     <g><rect class="nd3" x="612" y="268" width="120" height="58" rx="6"/><text x="672" y="288" text-anchor="middle" font-size="12.5" font-weight="600">System</text><text class="sub" x="672" y="304" text-anchor="middle">generates FAO report</text><text class="sub" x="672" y="317" text-anchor="middle">(draft until template)</text></g>
-    <g><rect class="nd" x="760" y="268" width="100" height="58" rx="6"/><text x="810" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Admin Assistant</text><text class="sub" x="810" y="304" text-anchor="middle">reviews, files</text></g>
+    <g><rect class="nd" x="752" y="268" width="112" height="58" rx="6"/><text x="808" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Admin Assistant</text><text class="sub" x="808" y="304" text-anchor="middle">reviews, files</text></g>
     <g><rect class="nd2" x="880" y="268" width="96" height="58" rx="6"/><text x="928" y="292" text-anchor="middle" font-size="12.5" font-weight="600">Completed</text><text class="sub" x="928" y="309" text-anchor="middle">records retained</text></g>
-    <path class="ln" d="M140 297H166" marker-end="url(#ar)"/><path class="ln" d="M288 297H314" marker-end="url(#ar)"/><path class="ln" d="M436 297H462" marker-end="url(#ar)"/><path class="ln" d="M584 297H610" marker-end="url(#ar)"/><path class="ln" d="M732 297H758" marker-end="url(#ar)"/><path class="ln" d="M860 297H878" marker-end="url(#ar)"/>
+    <path class="ln" d="M140 297H166" marker-end="url(#ar)"/><path class="ln" d="M288 297H314" marker-end="url(#ar)"/><path class="ln" d="M436 297H462" marker-end="url(#ar)"/><path class="ln" d="M584 297H610" marker-end="url(#ar)"/><path class="ln" d="M732 297H750" marker-end="url(#ar)"/><path class="ln" d="M864 297H878" marker-end="url(#ar)"/>
     <path class="ld" d="M228 326V362H80V328" marker-end="url(#aw)"/><text class="sm" x="96" y="379">Return a document for correction (old version kept)</text>
-    <path class="ld" d="M524 326V345H400" /><text class="sm" x="410" y="342">Dean or Secretary may return amount</text>
+    <path class="ld" d="M524 326V345H400" /><text class="sm" x="410" y="359">Dean or Secretary may return amount</text>
     <text class="sm" x="14" y="412">Solid: normal path · Dashed: return for correction · Dotted: reject. Every transition writes an audit row and, once per event, one email and one in-app notice.</text>
   </svg></div>
 
@@ -555,20 +666,35 @@ var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelect
 var money=function(n){return Number(n).toLocaleString('en-PH')};
 var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
 
+/* ---------- theme switch ---------- */
+(function(){var KEY='ccs-theme',root=document.documentElement,box=$('#theme');if(!box)return;
+  function mode(){try{var m=localStorage.getItem(KEY);return m==='light'||m==='dark'?m:'system'}catch(e){return 'system'}}
+  function apply(m){if(m==='light'||m==='dark')root.setAttribute('data-theme',m);else root.removeAttribute('data-theme');
+    $$('button',box).forEach(function(b){b.setAttribute('aria-checked',String(b.dataset.themeSet===m))})}
+  apply(mode());
+  box.addEventListener('click',function(e){var b=e.target.closest('button[data-theme-set]');if(!b)return;var m=b.dataset.themeSet;
+    try{if(m==='system')localStorage.removeItem(KEY);else localStorage.setItem(KEY,m)}catch(err){}apply(m)})})();
+
 /* ---------- navigation ---------- */
 var views=$$('.view'), tabsEl=$('#tabs');
 views.forEach(function(v){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.dataset.v=v.id.slice(2);b.textContent=v.dataset.title;tabsEl.appendChild(b)});
+function tabFade(){tabsEl.classList.toggle('more',tabsEl.scrollWidth-tabsEl.clientWidth-tabsEl.scrollLeft>4)}
+tabsEl.addEventListener('scroll',tabFade,{passive:true});window.addEventListener('resize',tabFade);
 function show(id,push){
   if(!$('#v-'+id)) id='overview';
   views.forEach(function(v){v.hidden=v.id!=='v-'+id});
   $$('#tabs button').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.v===id))});
+  var sel=$('#tabs button[aria-selected="true"]');if(sel){var l=sel.offsetLeft,r=l+sel.offsetWidth;if(l<tabsEl.scrollLeft)tabsEl.scrollLeft=Math.max(0,l-8);else if(r>tabsEl.scrollLeft+tabsEl.clientWidth)tabsEl.scrollLeft=r-tabsEl.clientWidth+8}
+  tabFade();
   try{ if(push) history.replaceState(null,'','#'+id) }catch(e){}
   window.scrollTo(0,0);
 }
-var toastEl=null,toastT=0;
+var toastEl=null,toastT=0,toastO=0;
 function toast(m){
   if(!toastEl){toastEl=document.createElement('div');toastEl.className='toast';toastEl.setAttribute('role','status');document.body.appendChild(toastEl)}
-  toastEl.textContent=m;toastEl.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){toastEl.hidden=true},2600);
+  toastEl.textContent=m;toastEl.classList.remove('out');toastEl.hidden=false;toastEl.style.animation='none';void toastEl.offsetWidth;toastEl.style.animation='';
+  clearTimeout(toastT);clearTimeout(toastO);
+  toastT=setTimeout(function(){toastEl.classList.add('out');toastO=setTimeout(function(){toastEl.hidden=true;toastEl.classList.remove('out')},180)},2600);
 }
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-go],[data-toast],#tabs button');
