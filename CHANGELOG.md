@@ -11,10 +11,31 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 1.0.0 | 12 Oct 2026 | Written in claude.ai as the CCS Grant Support Mockups artifact, last updated 12 Oct. Copied into GitHub on 15 Oct at 00:50 as one commit (5756603), so edits before that are not recorded. |
 | 1.1.0 to 1.1.2 | 15 Oct 2026 | GitHub. One commit each, listed below. |
 | 1.2.0 | 15 Oct 2026 | GitHub. This version history change. |
+| 1.3.0 | 15 Oct 2026 | GitHub. Sign-in first and role tabs. |
 
 # Versions
 
-## 1.2.0 (15 Oct 2026 · Prototype · current)
+## 1.3.0 (15 Oct 2026 · Prototype · current)
+
+The app now opens on a sign-in screen, then on a dashboard that matches the role. Tabs are grouped by role, and Review & suggestions moves to the end, just before Versions.
+
+### Added
+
+- **Sign-in screen** with eight sample accounts (student, adviser, chair, associate dean, dean, administrative assistant, secretary, project owner). Password `demo`.
+- The signed-in person shows in the header with a **Sign out** button.
+- Each role opens on its own **dashboard**: student, approver or admin staff.
+
+### Changed
+
+- Dashboards is now the first tab. **Review & suggestions** is the last tab before Versions.
+- Each role sees only the tabs it needs. The project owner account sees all of them.
+- Header matches CCS Task Tracker: logo mark, version tag, subtitle and green favicon.
+
+### Known limits
+
+- The password is a fixed demo value and roles are not enforced on a server. This is a prototype.
+
+## 1.2.0 (15 Oct 2026 · Prototype)
 
 The full version history is recorded in the app, so any past change can be looked up here.
 
