@@ -88,7 +88,7 @@ function reportHTML(a){
    '<p class="rp-h">Documents verified in the consolidated PDF ('+esc(D().files[p.fileId].name)+')</p><table class="rp"><tr>'+C.REQ_POST.map(r=>'<td style="width:11%">'+(v.checks[r[0]]?'✓':'✗')+' '+r[1]+(v.remarks[r[0]]?'<br><span class="muted2">'+esc(v.remarks[r[0]])+'</span>':'')+'</td>').join('')+'</tr></table>'+(v.overall?'<p class="rp-note">Remarks: '+esc(v.overall)+'</p>':'')+
    '<p class="rp-h">Endorsements and approvals</p><table class="rp rp-sign"><tr>'+endorsed+'<td>Dean<br><b>'+esc(dl.by)+'</b><br><span class="muted2">'+fmtT(dl.at).slice(0,10)+'</span></td></tr></table>'+
    '<table class="rp rp-sign" style="margin-top:10px"><tr><td>Prepared and verified by<br><br><b>'+esc(v.by)+'</b><br>Administrative Assistant<br><span class="muted2">'+fmtT(v.at).slice(0,10)+'</span></td><td>Received by the Accounting Office<br><br>_______________________<br>Name and signature<br>Date: ______________</td></tr></table>'+
-   '<p class="rp-foot">Generated '+fmtT(Date.now())+' from the CCS Student Conference Grant Support System · template v1. If the Accounting Office uses a different layout, this report keeps the same fields and can be re-laid out.</p></div>';
+   '<p class="rp-foot">Generated '+fmtT(Date.now())+' from the CCS Student Conference Grant Support System · template v1, under review by the College.';
 }
 R.rpt=function(){
   const list=D().apps.filter(a=>a.status==='verified'||a.status==='completed');

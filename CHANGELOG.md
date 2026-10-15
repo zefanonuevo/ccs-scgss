@@ -13,10 +13,20 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 1.2.0 | 15 Oct 2026 | GitHub. This version history change. |
 | 1.3.0 | 15 Oct 2026 | GitHub. Sign-in first and role tabs. |
 | 2.0.0 | 15 Oct 2026 | GitHub. Working routing, approvals, post-activity reports and Google records. |
+| 2.0.1 | 15 Oct 2026 | GitHub. Report template wording. |
 
 # Versions
 
-## 2.0.0 (15 Oct 2026 · Prototype · current)
+## 2.0.1 (15 Oct 2026 · Prototype · current)
+
+Wording fixes only.
+
+### Changed
+
+- The reimbursement report is now described as template v1, to be polished by the College. It no longer refers to an Accounting Office template.
+- BSIS is confirmed as the third degree program.
+
+## 2.0.0 (15 Oct 2026 · Prototype · commit 027093f)
 
 A working simulation. One application now travels through every role, with real routing rules, notifications, a post-activity report, verification and a reimbursement report. Because how people work changes (a new routing order, a Dean e-signature and a new verification step), this is a major version.
 
@@ -38,7 +48,7 @@ A working simulation. One application now travels through every role, with real 
 
 ### Changed
 
-- **Department is now Degree Program** (BSCS, BSIT, BSIS; the third was typed as BSIT twice, so BSIS is assumed).
+- **Department is now Degree Program** (BSCS, BSIT, BSIS).
 - References and file names follow `AY-Term-Number`, for example `2627-Term1-001` (`-v2` for new versions, `-C1` for clarification files, `-PAR` for post-activity reports).
 - The dashboards, tracking table, verification and report read live data instead of fixed samples. Data is saved in the browser.
 - The Dean's final-amount step was removed: the Dean sets the grant, and the Administrative Assistant sets the reimbursement.
@@ -47,7 +57,7 @@ A working simulation. One application now travels through every role, with real 
 ### Known limits
 
 - Data lives in one browser; sign out and in to switch roles. Google sync only runs when a script URL is set.
-- The Accounting Office template was not supplied, so the report layout is final in structure but may need re-laying out.
+- The reimbursement report is template v1; the College will polish it.
 - The drawn signature is not a certified digital signature. The 7-working-day deadline skips weekends, not holidays.
 
 ## 1.3.0 (15 Oct 2026 · Prototype · commit 2cb28a6)
