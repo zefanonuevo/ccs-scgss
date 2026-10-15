@@ -8,6 +8,10 @@ Mockups and a working simulation for the CCS student conference grant process: a
 - Nothing here is a deployed system. The simulation runs entirely in the browser and sends nothing.
 - Anything not stated in the supplied application form and guidelines is marked as an assumption to confirm.
 
+## Version history
+
+Every version since the start is in [CHANGELOG.md](CHANGELOG.md) and in the app on the **Versions** tab.
+
 ## Design system
 
 Same macOS-style design as [ccs-task-tracker](https://github.com/zefanonuevo/ccs-task-tracker): system font stack, frosted toolbar, segmented tabs, and a System, Light or Dark theme switch.
