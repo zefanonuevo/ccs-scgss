@@ -7,7 +7,7 @@
 .vgrid h4{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px}
 .vgrid ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:13px}
 </style></head><body>
-<title>CCS Grant Support Mockups</title>
+<title>CCS Student Conference Grant Support System</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b5d45'/%3E%3Cpath d='M8 11h16M8 16h11M8 21h7' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://zefanonuevo.github.io/ccs-design/ccs-tokens.css?v=2">
 <style>
@@ -277,11 +277,62 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
 }
 .top-right .theme{margin-left:auto}
 @media (prefers-reduced-motion:reduce){.acc:active{transform:none}}
+
+/* ===== v2.0: live workflow screens ===== */
+button.kpi{text-align:left;cursor:pointer;font:inherit;color:inherit;transition:transform 160ms var(--ease-out)}
+button.kpi:active{transform:scale(.98)}
+.chips .kpi[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.kpi small{font-size:11px}
+.field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--bad)}
+.chk{display:flex;gap:8px;align-items:flex-start}
+.chk input{margin-top:3px;flex:none}
+.chk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:8px}
+.privacy{max-height:150px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;background:var(--surface-2);color:var(--muted);margin-top:6px}
+.viewer{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden;margin-top:10px}
+.viewer .vbar{display:flex;gap:6px 14px;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);font-size:12.5px}
+.viewer iframe{display:block;width:100%;height:520px;border:0;background:#fff}
+.viewer img{display:block;max-width:100%;margin:0 auto}
+.viewer .empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.sigpad{display:block;width:100%;max-width:420px;height:140px;border:1px dashed var(--muted);border-radius:10px;background:#fff;touch-action:none;cursor:crosshair}
+.thread{display:grid;gap:8px}
+.cm{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--surface-2)}
+.cm.mine{background:var(--accent-soft);border-color:transparent}
+.cm-h{font-size:12.5px}
+.cm p{margin:4px 0 0}
+.log .unread{background:var(--accent-soft)}
+tr.denied td{background:var(--bad-soft)}
+tr.sel td{background:var(--accent-soft)}
+.empty-note{padding:18px;text-align:center;color:var(--muted)}
+.bad-row{background:var(--bad-soft);color:var(--bad)}
+.sheet table{min-width:max-content;font-size:12.5px}
+.sheet td,.sheet th{white-space:nowrap}
+.sheet td:first-child,.sheet th:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
+.flist{list-style:none;padding:0!important;margin:4px 0 0;display:grid;gap:4px}
+.lt td:nth-child(3){min-width:220px}
+.paper h3{font-family:var(--f-display);font-size:20px;margin:2px 0 0}
+.rp-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 20px;margin-bottom:12px}
+.rp-org{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#0b5d45;font-weight:600}
+.rp-no{display:grid;text-align:right;font-size:12px;color:#555}
+.paper table.rp{min-width:0;width:100%;margin-bottom:4px;font-size:12.5px}
+.paper table.rp th{text-align:left;white-space:normal;text-transform:none;letter-spacing:0;font-size:12px}
+.paper table.rp td.r,.paper table.rp th.r{text-align:right}
+.rp-h{margin:14px 0 6px;font-weight:600}
+.rp-note{margin:8px 0 0;font-size:12.5px}
+.muted2{color:#666;font-size:11px}
+.sigimg{display:block;height:48px;max-width:100%}
+.rp-sign td{height:92px;vertical-align:top;width:20%}
+.rp-foot{font-size:10.5px;color:#666;margin-top:14px}
+@media print{
+  body{background:#fff;padding:0}
+  .top,.tabbar,.toast,main>*:not(#v-rpt),#v-rpt>*:not(#rptBody),#rptBody>*:not(.paper){display:none!important}
+  #v-rpt,#rptBody{display:block!important}
+  .paper{border:0;padding:0}
+}
 </style>
 <script>try{var ct=localStorage.getItem('ccs-theme');if(ct==='light'||ct==='dark')document.documentElement.setAttribute('data-theme',ct)}catch(e){}</script>
 
 <div class="top"><div class="top-in">
-  <div class="top-row"><div class="brand"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 4.5h14M3 10h10M3 15.5h6" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg></span><div><h1>CCS Student Conference Grant Support System<span class="vtag">v1.3</span></h1><p>Mockups &amp; simulation · fictional sample data</p></div></div>
+  <div class="top-row"><div class="brand"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 4.5h14M3 10h10M3 15.5h6" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg></span><div><h1>CCS Student Conference Grant Support System<span class="vtag">v2.0</span></h1><p>Working simulation · fictional sample data</p></div></div>
   <div class="top-right"><div class="me" id="me" hidden></div><div class="theme" id="theme" role="radiogroup" aria-label="Color theme"><button type="button" role="radio" data-theme-set="system" aria-checked="true" aria-label="System theme" title="System"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="1.75" y="2.75" width="12.5" height="8.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 14h5M8 11.5V14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg></button><button type="button" role="radio" data-theme-set="light" aria-checked="false" aria-label="Light theme" title="Light"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="2.9" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg></button><button type="button" role="radio" data-theme-set="dark" aria-checked="false" aria-label="Dark theme" title="Dark"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13.2 9.6A5.6 5.6 0 0 1 6.4 2.8a5.6 5.6 0 1 0 6.8 6.8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button></div></div></div>
   <div class="tabbar" id="tabbar" hidden><div class="tabs" role="tablist" id="tabs"></div></div>
 </div></div>
@@ -290,153 +341,9 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
 
 <section id="login"></section>
 
-<!-- ===== OVERVIEW ===== -->
-<section class="view" id="v-overview" hidden data-title="Review &amp; suggestions">
-  <header><h2>What I reviewed, and what I suggest changing</h2>
-  <p class="muted">Everything on the other tabs is a mockup or a functional simulation. Nothing here is a deployed system, and all names, amounts and dates are made up.</p></header>
+<section class="view" id="v-dash" hidden data-title="Dashboard"><div id="dashBody"></div></section>
 
-  <div class="grid g2">
-    <div class="card"><h3>Reference documents</h3>
-      <div class="tbl" style="margin-top:8px"><table><tr><th>Document</th><th>Status</th></tr>
-      <tr><td>Application for Grant for Undergraduate Students (.docx, footer "v. 2026.02.25")</td><td><span class="pill p-ok">Read</span></td></tr>
-      <tr><td>CCS Guidelines for Student Funding Support</td><td><span class="pill p-ok">Read (2 pages)</span></td></tr>
-      <tr><td>CCS Conference Grant Tracking Spreadsheet</td><td><span class="pill p-bad">Not found</span></td></tr>
-      <tr><td>FAO reimbursement template</td><td><span class="pill p-warn">Not supplied</span></td></tr></table></div>
-      <p class="muted" style="margin-top:10px">I read the guidelines from the two pages you attached. The tracking spreadsheet and the FAO template are still missing, so the FAO report stays a draft placeholder. No policy is invented: anything not in these documents is marked as such.</p>
-    </div>
-    <div class="card"><h3>Facts taken from the application form</h3>
-      <ul>
-        <li>Subsidy "up to P30,000" for international travel and "up to P15,000" for local travel, subject to availability of funds.</li>
-        <li>Available once every academic year, after considering all other funding sources.</li>
-        <li>Criteria: DLSU-CCS undergraduate (within one year of completion if the paper comes from a thesis); paper in a Scopus, ISI or ASEAN Citation listed proceedings; endorsement from the Associate Dean and Thesis Adviser.</li>
-        <li>Priority to first-time applicants; one student co-author funded per paper; one paper per faculty per conference.</li>
-        <li>Expense rows: registration, pre-departure fees, roundtrip airfare, accommodation, per diem, each with amount, funding source and remarks.</li>
-        <li>A conference report and liquidation with receipts are required after the activity.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:14px"><h3>Facts taken from the guidelines</h3>
-    <ul>
-      <li>Scope is wider than conferences: competitions, exhibits and public fora too. Funding is partial and discretionary.</li>
-      <li>Eligibility constraints: a limit on total funding and on allowable expense types; quotas per event, per faculty mentor and per academic year; reputation of the event and organisers; compliance with pre-, during and post-event requirements.</li>
-      <li>Branding: state De La Salle University, the College of Computer Studies and the degree program on all materials, and show the official DLSU and CCS logos.</li>
-      <li>Within 7 working days after the event, submit a high-resolution social media graphic and a 300–500 word article (event details, summary of the work, key learnings, acknowledgment).</li>
-      <li>Not complying may delay reimbursement and may affect the faculty mentor's eligibility for future grants.</li>
-    </ul></div>
-  <h3 style="margin:26px 0 10px">Suggested changes</h3>
-  <div class="grid g2">
-    <div class="card"><h4>1. Add the Conference Report as a required document</h4><p>The form says the grantee must submit one, but it is not in your list of ten documents. I added it as document 11.</p></div>
-    <div class="card"><h4>2. Funding source per expense line, plus one for the grant</h4><p>The form has a funding source column on every expense row. The Dean also sets a funding source for the grant. I store both, so reports can show either.</p></div>
-    <div class="card"><h4>3. Eligibility pre-check that advises, not blocks</h4><p>Show "once per academic year", "first-time applicant" and "one student per paper" as checks for the adviser and staff to confirm. The system should not auto-reject on rules it cannot verify.</p></div>
-    <div class="card"><h4>4. A separate "Return for correction" decision</h4><p>Approvers get Approve, Return for correction and Reject. Return sends the file back to the student and keeps all earlier decisions. Reject needs a reason and ends the application.</p></div>
-    <div class="card"><h4>5. Conference indexing field</h4><p>Ask for the index (Scopus, ISI or ASEAN Citation) and a link or file as proof, since eligibility depends on it. Reviewers see it on the details page.</p></div>
-    <div class="card"><h4>6. Auto-name uploads with the form's convention</h4><p>The form defines <span class="mono">LN_FN-CONF-DocType-yyyymmdd.pdf</span>. The system can apply it on upload, so staff do not rename files.</p></div>
-    <div class="card"><h4>7. In-system approvals replace the attached endorsement</h4><p>The form asks for attached endorsements. With Approve buttons, the audit record becomes the endorsement. Please confirm that the Office of the Dean and the FAO accept this, and whether a PDF of the approval history should be attached to the FAO report.</p></div>
-    <div class="card"><h4>8. Strict separation of duties</h4><p>Dean: approves the grant and final amount. Administrative Assistant: verifies and adjusts the verified amount only. Secretary: records and monitors. The backend refuses any other combination, and nobody can act on their own application.</p></div>
-    <div class="card"><h4>9. Routing table managed by the System Administrator</h4><p>Each application stores its adviser, chair and associate dean at submission time. If someone leaves, an audited reassignment moves the file without editing history.</p></div>
-    <div class="card"><h4>10. Reference number format</h4><p>Proposed <span class="mono">CCS-CG-YYYY-NNNN</span>, counting per calendar year. Open question: do you prefer academic-year numbering?</p></div>
-    <div class="card"><h4>11. Add an event type</h4><p>The guidelines cover conferences, competitions, exhibits and public fora. The paper form only covers conferences. A "type of event" field lets the same system handle all four, and the form fields adjust later.</p></div>
-    <div class="card"><h4>12. Structure the article and graphic</h4><p>Your items 8 and 9 match the guidelines' article and social media graphic. The article upload gets a word count check (300–500) and the four required parts as a checklist. The graphic is checked for resolution.</p></div>
-    <div class="card"><h4>13. A 7-working-day clock</h4><p>After the event ends, the system computes the due date and sends reminders. A late file shows a flag to staff and the mentor. It does not block anything, because the guidelines say lateness may delay reimbursement, not forbid it.</p></div>
-    <div class="card"><h4>14. Branding acknowledgement</h4><p>A required checkbox at submission, and a staff check on the verification screen that the uploaded paper and poster show the university, college, degree program and both logos.</p></div>
-    <div class="card"><h4>15. Quota panel for approvers</h4><p>Show counts per event, per faculty mentor and per academic year beside each application. The guidelines give no quota numbers, so the limits are settings the administrator fills in.</p></div>
-  </div>
-
-  <h3 style="margin:26px 0 10px">Proposed stack (needs your confirmation)</h3>
-  <div class="card">
-    <p>I do not know your current hosting or framework, so this is a default to react to. Tell me what the existing CCS Portal uses and I will match it.</p>
-    <div class="grid g3" style="margin-top:10px">
-      <div><h4>Application</h4><p class="muted">TypeScript web app with a REST API (OpenAPI documented) and a separate frontend.</p></div>
-      <div><h4>Data</h4><p class="muted">PostgreSQL with migrations. Append-only audit table. Documents on private storage, served through authorised links.</p></div>
-      <div><h4>Sign-in</h4><p class="muted">Google OAuth limited to the DLSU domain. Roles come from our own table, never from the Google profile.</p></div>
-      <div><h4>Notifications</h4><p class="muted">Queue with an idempotency key per event, so one event sends one email and one in-app item.</p></div>
-      <div><h4>Reports</h4><p class="muted">Fill the FAO template from stored data (DOCX or PDF, to match the template). Keep each generated copy linked to the application.</p></div>
-      <div><h4>Google Forms</h4><p class="muted">Not recommended. Per-document uploads, role rules and audit need a real backend. Forms and Sheets stay as import or export only.</p></div>
-    </div>
-  </div>
-
-  <h3 style="margin:26px 0 10px">Questions to answer before Step 3</h3>
-  <div class="card"><ol>
-    <li>Does the P30,000 or P15,000 limit apply to the total subsidy per application? I assumed yes, and the mockups show that.</li>
-    <li>Who is the "Department Chair" when the adviser is from another department: the student's department or the adviser's?</li>
-    <li>May the Secretary record the final amount instead of the Dean, and which amounts need the Dean?</li>
-    <li>How long must documents and reports be retained, and what are the publication and privacy rules for the write-up and poster?</li>
-    <li>Which file types and size limit should uploads accept? The mockup uses PDF, JPG and PNG up to 10 MB.</li>
-    <li>Do the guidelines have more pages? The two I received give no funding limit figures, allowable expense types, quota numbers or reimbursement procedure.</li>
-    <li>What are the quotas per event, per faculty mentor and per academic year?</li>
-    <li>Who receives the post-event article and graphic? The guidelines say the Department or College office where funding was secured.</li>
-  </ol></div>
-</section>
-
-<!-- ===== DASHBOARDS ===== -->
-<section class="view" id="v-dash" hidden data-title="Dashboards">
-  <header><h2>Dashboards by role</h2><p class="muted">Each role lands on its own view. The backend filters the records too, so hiding a button is never the only protection.</p></header>
-  <div class="seg" id="dashSeg"><button data-d="student" aria-pressed="true">Student</button><button data-d="approver" aria-pressed="false">Approver (Dept. Chair)</button><button data-d="admin" aria-pressed="false">Admin staff</button></div>
-
-  <!-- student -->
-  <div class="screen" id="d-student">
-    <div class="screen-bar"><b>My grants</b><span class="mono" data-signed>Signed in</span></div>
-    <div class="screen-body">
-      <div class="grid g2">
-        <div class="card"><h3>Start an application</h3><p class="muted">Read the guidelines first. The summary comes from the original document.</p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><button class="btn" data-go="form">Start new application</button><button class="btn sec" data-go="guide">View guidelines</button></div></div>
-        <div class="card"><h3>Notifications</h3><div class="log" style="max-height:150px;border:0">
-          <div><b>Document returned</b><span class="muted">CCS-CG-2026-0042 · Student ID photo is blurry. Upload a clearer copy.</span></div>
-          <div><b>Dean approved your application</b><span class="muted">CCS-CG-2026-0042 · funding source recorded</span></div></div></div>
-      </div>
-      <div class="card">
-        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px"><div><span class="mono">CCS-CG-2026-0042</span><h3>International Conference on Sample Computing (ICSC 2026)</h3><span class="muted">Kyoto, Japan · 18–20 Nov 2026 (sample)</span></div><span class="pill p-warn">Correction requested</span></div>
-        <ol class="steps" style="margin-top:14px">
-          <li class="done">Submitted</li><li class="done">Adviser</li><li class="done">Chair</li><li class="done">Assoc. Dean</li><li class="done">Dean</li><li class="done">Documents</li><li class="now">Verification</li><li>Final approval</li><li>Report filed</li></ol>
-        <p class="muted">Next action: <b style="color:var(--fg)">you</b> replace the Student ID photo, which was returned as blurry. <a href="#" data-go="verify">See the checklist</a></p>
-      </div>
-      <div class="card"><h4>Earlier applications</h4><div class="tbl" style="margin-top:8px"><table><tr><th>Reference</th><th>Conference</th><th>Status</th></tr><tr><td class="mono">CCS-CG-2026-0011</td><td>Sample Symposium on Software (local)</td><td><span class="pill p-bad">Rejected</span> <span class="muted">reason on file</span></td></tr></table></div></div>
-    </div>
-  </div>
-
-  <!-- approver -->
-  <div class="screen" id="d-approver" hidden>
-    <div class="screen-bar"><b>Approval queue</b><span class="mono" data-signed>Signed in</span></div>
-    <div class="screen-body">
-      <div class="callout info">2 applications wait for you. You can only act on a file when it is your turn in the sequence.</div>
-      <div class="tbl"><table id="queue"><tr><th>Reference</th><th>Student</th><th>Conference</th><th>Previous step</th><th>Your action</th></tr></table></div>
-      <div class="card"><h4>Application detail (selected: CCS-CG-2026-0044)</h4>
-        <div class="grid g2" style="margin-top:8px">
-          <dl class="who"><dt>Student</dt><dd>Paolo Ramos (sample), BS-ST, 4th year</dd><dt>Paper</dt><dd>Full paper, "Sample Title on Edge Inference"</dd><dt>Index</dt><dd>Scopus (proof attached)</dd><dt>Requested</dt><dd class="num">₱15,000 · local</dd></dl>
-          <div><h4>Approval history</h4><div class="log" style="margin-top:6px;max-height:130px"><div><span>Submitted · P. Ramos</span><span class="mono muted">2026-10-02 09:14</span></div><div><span>Approved · Adviser Dr. Reyes · "Endorsed."</span><span class="mono muted">2026-10-03 15:40</span></div></div></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><button class="btn" data-toast="Sample only: would record Approve with your name and the time.">Approve</button><button class="btn warn" data-toast="Sample only: would return the file to the student with your comment.">Return for correction</button><button class="btn bad" data-toast="Sample only: a written reason is required before Reject is saved.">Reject…</button></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- admin -->
-  <div class="screen" id="d-admin" hidden>
-    <div class="screen-bar"><b>Monitoring dashboard</b><span class="mono" data-signed>Signed in</span></div>
-    <div class="screen-body">
-      <div class="kpis">
-        <div class="kpi"><b>48</b><span>Applications received</span></div>
-        <div class="kpi"><b>11</b><span>Awaiting approval</span></div>
-        <div class="kpi"><b>33 / 4</b><span>Approved / rejected</span></div>
-        <div class="kpi"><b>6</b><span>Documents under review</span></div>
-        <div class="kpi"><b>7</b><span>Awaiting post-conference documents</span></div>
-        <div class="kpi"><b>9</b><span>Reimbursements to verify or approve</span></div>
-        <div class="kpi"><b>8</b><span>Reimbursements completed</span></div>
-        <div class="kpi"><b>₱196,400</b><span>Total reimbursed (sample)</span></div>
-      </div>
-      <div class="grid g2">
-        <div class="card"><h4>Applications by stage</h4><div class="bars" style="margin-top:10px" id="bars"></div></div>
-        <div class="card"><h4>Needs staff action today</h4><ul>
-          <li><span class="mono">CCS-CG-2026-0042</span> · Student ID photo returned for correction. <a href="#" data-go="verify">Open</a></li>
-          <li><span class="mono">CCS-CG-2026-0037</span> · verified amount ready for final approval.</li>
-          <li><span class="mono">CCS-CG-2026-0030</span> · FAO report ready for review.</li></ul>
-          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-go="track">Open all applications</button><button class="btn sec" data-toast="Sample only: would export the filtered list as CSV or XLSX.">Export report</button></div></div>
-      </div>
-      <p class="muted">The numbers are invented and add up: 11 + 9 + 7 + 6 + 3 + 8 + 4 = 48.</p>
-    </div>
-  </div>
-</section>
+<section class="view" id="v-app" hidden data-title="Application"><div id="appBody"></div></section>
 
 <!-- ===== GUIDELINES ===== -->
 <section class="view" id="v-guide" hidden data-title="Guidelines">
@@ -451,9 +358,9 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
           <p style="margin-top:8px">Not complying may delay reimbursement and may affect the faculty mentor's eligibility for future grants.</p></div>
         <div class="card"><h4>Amounts and criteria <span class="pill p-warn">application form</span></h4><ul><li>Up to ₱30,000 international, ₱15,000 local, subject to availability of funds.</li><li>Once every academic year.</li><li>Paper in a Scopus, ISI or ASEAN Citation listed proceedings.</li><li>Priority to first-time applicants. One student co-author per paper.</li></ul></div>
         <div class="card"><h4>Branding <span class="pill p-ok">guidelines</span></h4><ul><li>State De La Salle University, the College of Computer Studies and the degree program on the paper, poster, video, presentation materials, program or event registry.</li><li>Show the official DLSU and CCS logos on slides, videos, posters, exhibit materials and booth signage.</li><li>Identify proponents and mentors as members of the CCS community.</li></ul></div>
-        <div class="card"><h4>Required after the event <span class="pill p-ok">guidelines</span></h4><p class="muted">Within 7 working days, submit to the Department or College office where funding was secured:</p><ul><li>A high-resolution social media graphic, following CCS brand guidelines.</li><li>An article of 300–500 words for the CCS website or newsletter: event details, summary of the work, key learnings and an acknowledgment.</li></ul>
+        <div class="card"><h4>Required after the event <span class="pill p-ok">guidelines</span></h4><p class="muted">Within 7 working days, submit to the Department or College office where funding was secured. In the system this is the post-activity report:</p><ul><li>A high-resolution social media graphic, following CCS brand guidelines.</li><li>An article of 300–500 words for the CCS website or newsletter: event details, summary of the work, key learnings and an acknowledgment.</li></ul>
           <p class="muted" style="margin-top:8px">The form also requires a conference report and receipts for liquidation.</p></div>
-        <div class="card"><h4>Application procedure <span class="pill p-idle">not in pages received</span></h4><p class="muted">The system's steps are: submit, adviser, department chair, associate dean, dean. Wording for students will come from the guidelines once a procedure section is supplied.</p></div>
+        <div class="card"><h4>Application procedure <span class="pill p-warn">system</span></h4><ol><li>Fill in the application form and attach one PDF with all requirements.</li><li>The system routes it to your Thesis Adviser, Department Chair, Associate Dean and Dean, one after the other.</li><li>After approval, attend the event, then submit the post-activity report as one PDF within 7 working days.</li><li>The Administrative Assistant verifies the documents and the reimbursement report goes to the Accounting Office.</li></ol></div>
         <div class="card"><h4>Reimbursement rules <span class="pill p-idle">not in pages received</span></h4><p class="muted">Allowable expenses, limits and deadlines are not stated in the pages I have. The system will show them here when supplied.</p></div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-go="form">Start new application</button><button class="btn sec" data-toast="Sample only: would open the original document.">View original document</button><button class="btn sec" data-toast="Sample only: would download the original document.">Download</button></div>
@@ -461,219 +368,91 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
   </div>
 </section>
 
-<!-- ===== FORM ===== -->
 <section class="view" id="v-form" hidden data-title="Application form">
-  <header><h2>Application form</h2><p class="muted">Built from the paper form's sections. Try pressing Review without filling a field, or fill the example and continue.</p></header>
-  <div class="screen">
-    <div class="screen-bar"><b>New application · Draft</b><span class="mono" id="refPrev">Reference assigned on submit</span></div>
-    <div class="screen-body">
-      <ol class="steps" id="fsteps"><li class="now">1 Student &amp; conference</li><li>2 Paper</li><li>3 Expenses</li><li>4 Attachments</li><li>5 Review &amp; submit</li></ol>
-      <form id="appForm" novalidate>
-        <div class="card" data-fs="0"><h3>Student information</h3>
-          <div class="row" style="margin-top:10px">
-            <div class="field"><label for="f_name">Name of student</label><input id="f_name" value="" placeholder="Filled from Google sign-in" required><div class="msg"></div></div>
-            <div class="field"><label for="f_dept">Department</label><select id="f_dept" required><option value="">Select</option><option>Computer Technology</option><option>Information Systems</option><option>Software Technology</option></select><div class="msg"></div></div>
-            <div class="field"><label for="f_year">Year level</label><select id="f_year" required><option value="">Select</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select><div class="msg"></div></div>
-          </div>
-          <h3 style="margin-top:18px">Conference details</h3>
-          <div class="row" style="margin-top:10px">
-            <div class="field"><label for="f_conf">Conference title</label><input id="f_conf" required><div class="msg"></div></div>
-            <div class="field"><label for="f_dates">Inclusive dates</label><input id="f_dates" placeholder="e.g. 18–20 Nov 2026" required><div class="msg"></div></div>
-            <div class="field"><label for="f_venue">Venue</label><input id="f_venue" required><div class="msg"></div></div>
-            <div class="field"><label for="f_org">Organizer</label><input id="f_org" required><div class="msg"></div></div>
-            <div class="field"><label for="f_etype">Type of event</label><select id="f_etype" required><option value="">Select</option><option>Conference</option><option>Competition</option><option>Exhibit</option><option>Public forum</option><option>Other</option></select><small>Suggested addition. The guidelines cover all of these.</small><div class="msg"></div></div>
-            <div class="field"><label for="f_scope">Travel</label><select id="f_scope" required><option value="">Select</option><option value="30000">International (up to ₱30,000)</option><option value="15000">Local (up to ₱15,000)</option></select><div class="msg"></div></div>
-          </div>
-        </div>
-        <div class="card" data-fs="1" hidden><h3>Participation details</h3>
-          <div class="row" style="margin-top:10px">
-            <div class="field"><label for="f_class">Classification</label><select id="f_class"><option>Paper presenter</option><option>Poster presentation</option></select></div>
-            <div class="field"><label for="f_ptype">Paper type</label><select id="f_ptype"><option>Full paper</option><option>Short paper</option></select></div>
-            <div class="field"><label for="f_index">Indexed in</label><select id="f_index" required><option value="">Select</option><option>Scopus</option><option>ISI</option><option>ASEAN Citation</option></select><small>Suggested addition. Attach proof in step 4.</small><div class="msg"></div></div>
-          </div>
-          <div class="field" style="margin-top:12px"><label for="f_title">Title of paper</label><input id="f_title" required><div class="msg"></div></div>
-          <div class="row" style="margin-top:12px"><div class="field"><label for="f_cof">Co-authors (faculty)</label><input id="f_cof"></div><div class="field"><label for="f_cos">Co-authors (student)</label><input id="f_cos"><small>Only one student co-author is funded per paper.</small></div></div>
-        </div>
-        <div class="card" data-fs="2" hidden><h3>Breakdown of projected expenses</h3><p class="muted">Include the day before the conference until the day after.</p>
-          <div class="tbl" style="margin-top:10px"><table><tr><th>Expense type</th><th class="r">Amount (₱)</th><th>Funding source</th><th>Remarks</th></tr>
-          <tr><td>Registration fee</td><td><input class="ex" aria-label="Registration amount" type="number" min="0" style="width:110px;text-align:right"></td><td><input aria-label="Registration funding source" style="width:100%"></td><td><input aria-label="Registration remarks" style="width:100%"></td></tr>
-          <tr><td>Pre-departure fees</td><td><input class="ex" aria-label="Pre-departure amount" type="number" min="0" style="width:110px;text-align:right"></td><td><input aria-label="Pre-departure funding source" style="width:100%"></td><td><input aria-label="Pre-departure remarks" style="width:100%"></td></tr>
-          <tr><td>Roundtrip airfare</td><td><input class="ex" aria-label="Airfare amount" type="number" min="0" style="width:110px;text-align:right"></td><td><input aria-label="Airfare funding source" style="width:100%"></td><td><input aria-label="Airfare remarks" style="width:100%"></td></tr>
-          <tr><td>Accommodation</td><td><input class="ex" aria-label="Accommodation amount" type="number" min="0" style="width:110px;text-align:right"></td><td><input aria-label="Accommodation funding source" style="width:100%"></td><td><input aria-label="Accommodation remarks" style="width:100%"></td></tr>
-          <tr><td>Per diem</td><td><input class="ex" aria-label="Per diem amount" type="number" min="0" style="width:110px;text-align:right"></td><td><input aria-label="Per diem funding source" style="width:100%"></td><td><input aria-label="Per diem remarks" style="width:100%"></td></tr>
-          <tr><th>Total projected</th><th class="r num" id="exTotal">0</th><th colspan="2" id="exNote" class="muted" style="text-transform:none;letter-spacing:0;font-weight:400"></th></tr></table></div>
-        </div>
-        <div class="card" data-fs="3" hidden><h3>Required attachments</h3>
-          <div class="tbl" style="margin-top:10px"><table><tr><th>Document (from the form's checklist)</th><th>File</th></tr>
-          <tr><td>Copy of paper</td><td><button type="button" class="btn sec sm att">Choose file</button> <span class="muted">PDF, max 10 MB</span></td></tr>
-          <tr><td>Letter of acceptance or notification</td><td><button type="button" class="btn sec sm att">Choose file</button></td></tr>
-          <tr><td>Cover letter with endorsement from adviser, chair and associate dean</td><td><span class="muted">Replaced by in-system approvals (to confirm)</span></td></tr>
-          <tr><td>Proof of indexing (suggested)</td><td><button type="button" class="btn sec sm att">Choose file</button></td></tr></table></div>
-          <p class="muted" style="margin-top:8px">Files are renamed to <span class="mono">LN_FN-CONF-DocType-yyyymmdd.pdf</span> on upload.</p>
-        </div>
-        <div class="card" data-fs="4" hidden><h3>Review before submitting</h3><dl class="who" id="review" style="margin-top:8px"></dl>
-          <label style="display:flex;gap:8px;margin-top:12px;align-items:flex-start"><input type="checkbox" id="f_brand" style="margin-top:3px"><span>I will state De La Salle University, the College of Computer Studies and my degree program on all materials, and show the official DLSU and CCS logos, as the guidelines require.</span></label><div class="msg" id="brandMsg" style="color:var(--bad);font-size:12px"></div>
-          <div class="callout info" style="margin-top:12px">After you submit, you can no longer edit the form. Approvers can return it to you for corrections, and every version stays on record.</div></div>
-        <div id="formErr" class="callout bad" hidden style="margin-top:12px"></div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:space-between">
-          <div style="display:flex;gap:8px"><button type="button" class="btn sec" id="fBack">Back</button><button type="button" class="btn sec" id="fDraft">Save draft</button></div>
-          <div style="display:flex;gap:8px"><button type="button" class="btn sec" id="fFill">Fill example</button><button type="button" class="btn" id="fNext">Next</button></div>
-        </div>
-      </form>
-    </div>
-  </div>
+  <header><h2>Application form</h2><p class="muted">Five steps. Pick the academic year and term, your degree program and Thesis Adviser, and attach one PDF with all requirements. Use Fill example to see it work.</p></header>
+  <div id="formBody"></div>
+</section>
+
+<section class="view" id="v-par" hidden data-title="Post-activity report">
+  <header><h2>Post-activity report</h2><p class="muted">After the event: your actual expenses and one consolidated PDF with the post-conference documents. The Administrative Assistant verifies it.</p></header>
+  <div id="parBody"></div>
+</section>
+
+<section class="view" id="v-track" hidden data-title="Tracking">
+  <header><h2>Application tracking</h2><p class="muted">Every application, with its stage, who it is waiting on, and its funding source.</p></header>
+  <div id="trackBody"></div>
+</section>
+
+<section class="view" id="v-verify" hidden data-title="Verification">
+  <header><h2>Verify post-activity documents</h2><p class="muted">Tick each document found in the PDF, add remarks, set the approved amount and funding source per item, then verify or return.</p></header>
+  <div id="verifyBody"></div>
+</section>
+
+<section class="view" id="v-rpt" hidden data-title="Reimbursement report">
+  <header><h2>Reimbursement report</h2><p class="muted">Generated from the verified amounts, for submission to the Accounting Office. Print it or save it as a PDF.</p></header>
+  <div id="rptBody"></div>
+</section>
+
+<section class="view" id="v-records" hidden data-title="Sheet and Drive">
+  <header><h2>Google Sheet and Google Drive records</h2><p class="muted">All details encoded per application go to one Google Sheet row. All uploaded files go to one designated Drive folder, named with the reference number.</p></header>
+  <div id="recBody"></div>
+</section>
+
+<section class="view" id="v-notif" hidden data-title="Notifications">
+  <header><h2>Notifications</h2><p class="muted">In-app notices, and the matching email copies.</p></header>
+  <div id="notifBody"></div>
 </section>
 
 <!-- ===== WORKFLOW ===== -->
 <section class="view" id="v-flow" hidden data-title="Workflow">
-  <header><h2>Approval and reimbursement workflow</h2><p class="muted">Solid lines are the normal path. Dashed lines return the file for correction. The dotted line ends the application. Previous decisions and document versions are always kept.</p></header>
+  <header><h2>Approval and reimbursement workflow</h2><p class="muted">Solid lines are the normal path and run automatically after each decision. Dashed lines return the file to the student with remarks. The dotted line ends the application. Earlier decisions and every file version are always kept.</p></header>
   <p class="muted swipe">Scroll sideways to see every step.</p>
-  <div class="flow"><svg viewBox="0 0 1000 430" role="img" aria-label="Workflow from student submission through adviser, chair, associate dean and dean approval, then documents, verification, final approval, FAO report and completion">
+  <div class="flow"><svg viewBox="0 0 1000 484" role="img" aria-label="Phase 1: the student submits, then the thesis adviser, department chair, associate dean and dean decide in turn, and an approved grant is sent to the student. Phase 2: the student submits one post-activity PDF, the administrative assistant verifies it, a reimbursement report is generated for the Accounting Office, and the application completes.">
     <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
     <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--warn)"/></marker></defs>
-    <rect class="sw" x="4" y="8" width="992" height="200" rx="8"/><text class="sm" x="14" y="28">PHASES 1–3 · APPLICATION AND APPROVAL</text>
-    <rect class="sw" x="4" y="216" width="992" height="206" rx="8"/><text class="sm" x="14" y="236">PHASES 4–8 · DOCUMENTS, VERIFICATION, REIMBURSEMENT AND REPORT</text>
+    <rect class="sw" x="4" y="8" width="992" height="232" rx="8"/><text class="sm" x="14" y="28">PHASE 1 · APPLICATION AND ENDORSEMENT · ROUTING IS AUTOMATIC AFTER EACH DECISION</text>
+    <rect class="sw" x="4" y="248" width="992" height="196" rx="8"/><text class="sm" x="14" y="268">PHASE 2 · POST-ACTIVITY REPORT AND REIMBURSEMENT</text>
 
-    <g><rect class="nd2" x="20" y="60" width="120" height="56" rx="6"/><text x="80" y="84" text-anchor="middle" font-size="12.5" font-weight="600">Student</text><text class="sub" x="80" y="101" text-anchor="middle">submits application</text></g>
-    <g><rect class="nd" x="180" y="60" width="120" height="56" rx="6"/><text x="240" y="84" text-anchor="middle" font-size="12.5" font-weight="600">Adviser</text><text class="sub" x="240" y="101" text-anchor="middle">approve / return</text></g>
-    <g><rect class="nd" x="340" y="60" width="120" height="56" rx="6"/><text x="400" y="84" text-anchor="middle" font-size="12.5" font-weight="600">Department Chair</text><text class="sub" x="400" y="101" text-anchor="middle">approve / return</text></g>
-    <g><rect class="nd" x="500" y="60" width="120" height="56" rx="6"/><text x="560" y="84" text-anchor="middle" font-size="12.5" font-weight="600">Associate Dean</text><text class="sub" x="560" y="101" text-anchor="middle">approve / return</text></g>
-    <g><rect class="nd" x="660" y="60" width="120" height="56" rx="6"/><text x="720" y="84" text-anchor="middle" font-size="12.5" font-weight="600">Dean</text><text class="sub" x="720" y="101" text-anchor="middle">decides, sets funding</text></g>
-    <g><rect class="nd2" x="820" y="60" width="150" height="56" rx="6"/><text x="895" y="84" text-anchor="middle" font-size="12.5" font-weight="600">Approved</text><text class="sub" x="895" y="101" text-anchor="middle">student attends conference</text></g>
-    <path class="ln" d="M140 88H178" marker-end="url(#ar)"/><path class="ln" d="M300 88H338" marker-end="url(#ar)"/><path class="ln" d="M460 88H498" marker-end="url(#ar)"/><path class="ln" d="M620 88H658" marker-end="url(#ar)"/><path class="ln" d="M780 88H818" marker-end="url(#ar)"/>
-    <path class="ld" d="M240 116V145M400 116V145M560 116V145M720 116V145M720 145H80V118" marker-end="url(#aw)"/>
-    <text class="sm" x="96" y="162">Return for correction (student edits, same approver continues)</text>
-    <path class="lb" d="M770 116V176"/><text x="776" y="178" font-size="11" fill="var(--bad)">Reject: closed,</text><text x="776" y="192" font-size="11" fill="var(--bad)">reason kept</text>
-    <path class="ln" d="M895 116V246H80V263" marker-end="url(#ar)"/>
-    <text class="sm" x="500" y="260">Notice to student: documents due within 7 working days</text>
+    <g><rect class="nd2" x="16" y="56" width="124" height="72" rx="6"/><text x="78" y="82" text-anchor="middle" font-size="12.5" font-weight="600">Student</text><text class="sub" x="78" y="99" text-anchor="middle">form + one PDF</text><text class="sub" x="78" y="112" text-anchor="middle">AY, term, adviser</text></g>
+    <g><rect class="nd" x="164" y="56" width="124" height="72" rx="6"/><text x="226" y="82" text-anchor="middle" font-size="12.5" font-weight="600">Thesis Adviser</text><text class="sub" x="226" y="99" text-anchor="middle">set in the form</text><text class="sub" x="226" y="112" text-anchor="middle">endorse or return</text></g>
+    <g><rect class="nd" x="312" y="56" width="124" height="72" rx="6"/><text x="374" y="82" text-anchor="middle" font-size="12.5" font-weight="600">Dept. Chair</text><text class="sub" x="374" y="99" text-anchor="middle">by degree program</text><text class="sub" x="374" y="112" text-anchor="middle">endorse or return</text></g>
+    <g><rect class="nd" x="460" y="56" width="124" height="72" rx="6"/><text x="522" y="82" text-anchor="middle" font-size="12.5" font-weight="600">Associate Dean</text><text class="sub" x="522" y="99" text-anchor="middle">set once for all</text><text class="sub" x="522" y="112" text-anchor="middle">endorse or return</text></g>
+    <g><rect class="nd" x="608" y="56" width="148" height="72" rx="6"/><text x="682" y="82" text-anchor="middle" font-size="12.5" font-weight="600">Dean</text><text class="sub" x="682" y="99" text-anchor="middle">amount + funding source</text><text class="sub" x="682" y="112" text-anchor="middle">digital signature</text></g>
+    <g><rect class="nd2" x="780" y="56" width="204" height="72" rx="6"/><text x="882" y="82" text-anchor="middle" font-size="12.5" font-weight="600">Grant approved</text><text class="sub" x="882" y="99" text-anchor="middle">email + in-app notice</text><text class="sub" x="882" y="112" text-anchor="middle">to the student</text></g>
+    <path class="ln" d="M140 92H162" marker-end="url(#ar)"/><path class="ln" d="M288 92H310" marker-end="url(#ar)"/><path class="ln" d="M436 92H458" marker-end="url(#ar)"/><path class="ln" d="M584 92H606" marker-end="url(#ar)"/><path class="ln" d="M756 92H778" marker-end="url(#ar)"/>
+    <path class="ld" d="M226 128V176M374 128V176M522 128V176M682 128V176M682 176H78V130" marker-end="url(#aw)"/>
+    <text class="sm" x="92" y="194">Return with remarks: the student replies, uploads documents and resubmits. The same approver continues.</text>
+    <path class="lb" d="M880 128V186"/><text x="886" y="190" font-size="11" fill="var(--bad)">Reject (reason required):</text><text x="886" y="204" font-size="11" fill="var(--bad)">closed, history kept</text>
+    <text class="sm" x="92" y="226">Any approver can also write a comment to ask for clarification at any stage.</text>
 
-    <g><rect class="nd2" x="20" y="268" width="120" height="58" rx="6"/><text x="80" y="292" text-anchor="middle" font-size="12.5" font-weight="600">Student</text><text class="sub" x="80" y="309" text-anchor="middle">uploads each document</text></g>
-    <g><rect class="nd" x="168" y="268" width="120" height="58" rx="6"/><text x="228" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Admin Assistant</text><text class="sub" x="228" y="304" text-anchor="middle">checks documents</text><text class="sub" x="228" y="317" text-anchor="middle">and expenses</text></g>
-    <g><rect class="nd" x="316" y="268" width="120" height="58" rx="6"/><text x="376" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Verified amount</text><text class="sub" x="376" y="304" text-anchor="middle">entered with reason</text><text class="sub" x="376" y="317" text-anchor="middle">for any adjustment</text></g>
-    <g><rect class="nd" x="464" y="268" width="120" height="58" rx="6"/><text x="524" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Dean or Secretary</text><text class="sub" x="524" y="304" text-anchor="middle">records final amount</text><text class="sub" x="524" y="317" text-anchor="middle">and funding source</text></g>
-    <g><rect class="nd3" x="612" y="268" width="120" height="58" rx="6"/><text x="672" y="288" text-anchor="middle" font-size="12.5" font-weight="600">System</text><text class="sub" x="672" y="304" text-anchor="middle">generates FAO report</text><text class="sub" x="672" y="317" text-anchor="middle">(draft until template)</text></g>
-    <g><rect class="nd" x="752" y="268" width="112" height="58" rx="6"/><text x="808" y="288" text-anchor="middle" font-size="12.5" font-weight="600">Admin Assistant</text><text class="sub" x="808" y="304" text-anchor="middle">reviews, files</text></g>
-    <g><rect class="nd2" x="880" y="268" width="96" height="58" rx="6"/><text x="928" y="292" text-anchor="middle" font-size="12.5" font-weight="600">Completed</text><text class="sub" x="928" y="309" text-anchor="middle">records retained</text></g>
-    <path class="ln" d="M140 297H166" marker-end="url(#ar)"/><path class="ln" d="M288 297H314" marker-end="url(#ar)"/><path class="ln" d="M436 297H462" marker-end="url(#ar)"/><path class="ln" d="M584 297H610" marker-end="url(#ar)"/><path class="ln" d="M732 297H750" marker-end="url(#ar)"/><path class="ln" d="M864 297H878" marker-end="url(#ar)"/>
-    <path class="ld" d="M228 326V362H80V328" marker-end="url(#aw)"/><text class="sm" x="96" y="379">Return a document for correction (old version kept)</text>
-    <path class="ld" d="M524 326V345H400" /><text class="sm" x="410" y="359">Dean or Secretary may return amount</text>
-    <text class="sm" x="14" y="412">Solid: normal path · Dashed: return for correction · Dotted: reject. Every transition writes an audit row and, once per event, one email and one in-app notice.</text>
+    <g><rect class="nd2" x="16" y="292" width="150" height="72" rx="6"/><text x="91" y="318" text-anchor="middle" font-size="12.5" font-weight="600">Student</text><text class="sub" x="91" y="335" text-anchor="middle">one consolidated PDF</text><text class="sub" x="91" y="348" text-anchor="middle">actual expenses, rate</text></g>
+    <g><rect class="nd" x="204" y="292" width="170" height="72" rx="6"/><text x="289" y="318" text-anchor="middle" font-size="12.5" font-weight="600">Admin Assistant</text><text class="sub" x="289" y="335" text-anchor="middle">ticks each document</text><text class="sub" x="289" y="348" text-anchor="middle">amount + funding per item</text></g>
+    <g><rect class="nd3" x="412" y="292" width="150" height="72" rx="6"/><text x="487" y="318" text-anchor="middle" font-size="12.5" font-weight="600">Reimbursement</text><text class="sub" x="487" y="335" text-anchor="middle">report generated</text><text class="sub" x="487" y="348" text-anchor="middle">from the template</text></g>
+    <g><rect class="nd" x="600" y="292" width="150" height="72" rx="6"/><text x="675" y="318" text-anchor="middle" font-size="12.5" font-weight="600">Accounting Office</text><text class="sub" x="675" y="335" text-anchor="middle">receives the report</text></g>
+    <g><rect class="nd2" x="788" y="292" width="196" height="72" rx="6"/><text x="886" y="318" text-anchor="middle" font-size="12.5" font-weight="600">Completed</text><text class="sub" x="886" y="335" text-anchor="middle">student notified,</text><text class="sub" x="886" y="348" text-anchor="middle">records kept</text></g>
+    <path class="ln" d="M166 328H202" marker-end="url(#ar)"/><path class="ln" d="M374 328H410" marker-end="url(#ar)"/><path class="ln" d="M562 328H598" marker-end="url(#ar)"/><path class="ln" d="M750 328H786" marker-end="url(#ar)"/>
+    <path class="ld" d="M289 364V396H91V366" marker-end="url(#aw)"/><text class="sm" x="104" y="414">Return with remarks: the student corrects the PDF and resubmits.</text>
+    <text class="sm" x="14" y="466">Every action is written to the Approval History · every record goes to the Google Sheet · every file to Google Drive, named with the reference number (2627-Term1-001).</text>
   </svg></div>
 
   <h3 style="margin:26px 0 10px">Who may do what</h3>
   <div class="tbl"><table><tr><th>Action</th><th>Student</th><th>Adviser</th><th>Chair</th><th>Assoc. Dean</th><th>Dean</th><th>Admin Asst.</th><th>Secretary</th><th>Sys. Admin</th></tr>
-  <tr><td>Submit, upload, replace documents</td><td>Own only</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
-  <tr><td>Approve, return or reject grant</td><td>Never own</td><td>Assigned, step 1</td><td>Assigned, step 2</td><td>Step 3</td><td>Step 4 + funding</td><td>–</td><td>–</td><td>Audited override only</td></tr>
-  <tr><td>Verify documents, enter verified amount</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Yes</td><td>–</td><td>–</td></tr>
-  <tr><td>Record final reimbursement amount</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Yes</td><td>–</td><td>If permitted (to confirm)</td><td>–</td></tr>
-  <tr><td>Generate and file FAO report</td><td>–</td><td>–</td><td>–</td><td>–</td><td>View</td><td>Yes</td><td>View</td><td>–</td></tr>
-  <tr><td>Manage users, roles, guidelines</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Yes</td></tr></table></div>
-  <p class="muted" style="margin-top:8px">The Dean's authority to record the final amount and the Secretary's permission are assumptions to confirm. The backend would enforce this matrix on every request.</p>
+  <tr><td>Submit, reply, upload clarifications</td><td>Own only</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+  <tr><td>Endorse, return or reject</td><td>Never own</td><td>Assigned, step 1</td><td>Assigned, step 2</td><td>Step 3</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+  <tr><td>Approve grant, set amounts and funding source, e-sign</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Step 4 only</td><td>–</td><td>–</td><td>–</td></tr>
+  <tr><td>Comment to ask or give clarification</td><td>Own</td><td>Assigned</td><td>Assigned</td><td>Assigned</td><td>Assigned</td><td>After approval</td><td>–</td><td>–</td></tr>
+  <tr><td>Submit the post-activity report</td><td>Own only</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+  <tr><td>Verify documents, set reimbursement amounts and funding</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Yes</td><td>–</td><td>–</td></tr>
+  <tr><td>Generate and file the reimbursement report</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Yes</td><td>View</td><td>View</td></tr>
+  <tr><td>See every application</td><td>Own</td><td>Assigned</td><td>Assigned</td><td>Assigned</td><td>Assigned</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Send reminders</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Yes</td><td>Yes</td><td>Yes</td></tr>
+  <tr><td>Manage routing, funding sources, Google link</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>Yes</td></tr></table></div>
+  <p class="muted" style="margin-top:8px">These rules run in the simulation on every action, not only on buttons. The Simulation tab has security checks that try the refused combinations.</p>
 </section>
 
-<!-- ===== TRACKING ===== -->
-<section class="view" id="v-track" hidden data-title="Tracking table">
-  <header><h2>Application tracking table</h2><p class="muted">Search and filters work on the sample rows. Staff see all rows allowed by their role. Students see only their own, and advisers only those assigned to them.</p></header>
-  <div class="screen"><div class="screen-bar"><b>All applications</b><span class="mono">Role: Secretary (monitor)</span></div>
-  <div class="screen-body">
-    <div class="row">
-      <div class="field"><label for="t_q">Search</label><input id="t_q" type="search" placeholder="Student, reference, conference, department"></div>
-      <div class="field"><label for="t_s">Stage</label><select id="t_s"><option value="">All stages</option></select></div>
-      <div class="field"><label for="t_d">Department</label><select id="t_d"><option value="">All departments</option><option>Computer Technology</option><option>Information Systems</option><option>Software Technology</option></select></div>
-      <div class="field"><label for="t_f">Funding source</label><select id="t_f"><option value="">All</option><option>Dean's Office (sample)</option><option>College Fund (sample)</option><option>Not yet set</option></select></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center"><span class="muted" id="t_n"></span><button class="btn sec sm" data-toast="Sample only: would export the filtered rows.">Export filtered rows</button></div>
-    <div class="tbl"><table id="trk"><thead><tr><th>Reference</th><th>Student</th><th>Dept.</th><th>Conference</th><th>Current stage</th><th>Next action by</th><th>Funding</th><th class="r">Updated</th></tr></thead><tbody></tbody></table></div>
-  </div></div>
-</section>
-
-<!-- ===== VERIFY ===== -->
-<section class="view" id="v-verify" hidden data-title="Verification">
-  <header><h2>Document verification and reimbursement</h2><p class="muted">The Administrative Assistant works through the checklist. Try Verify and Return on a row, edit the verified amount and see the adjustment reason become required.</p></header>
-  <div class="screen"><div class="screen-bar"><b>CCS-CG-2026-0042 · Maria Santos (sample)</b><span class="mono">Role: Administrative Assistant</span></div>
-  <div class="screen-body">
-    <div class="grid g2" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
-      <div style="display:grid;gap:10px;min-width:0">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px"><h3>Document checklist</h3><span class="muted" id="vcount"></span></div>
-        <div class="tbl"><table id="vdocs"><thead><tr><th>Document</th><th>File (version)</th><th>Status</th><th>Action</th></tr></thead><tbody></tbody></table></div>
-      </div>
-      <div style="display:grid;gap:12px;align-content:start;min-width:0">
-        <h3>Expenses and amounts</h3>
-        <div class="tbl"><table><thead><tr><th>Expense</th><th class="r">Claimed (₱)</th><th class="r">Accepted (₱)</th></tr></thead><tbody id="vex"></tbody>
-        <tfoot><tr><th>Total</th><th class="r num" id="vclaim"></th><th class="r num" id="vacc"></th></tr></tfoot></table></div>
-        <div class="callout info">Conversion: USD 220 at ₱56.50 per USD = ₱12,430 (sample rate, with bank statement attached).</div>
-        <div class="row">
-          <div class="field"><label for="v_req">Requested by student (₱)</label><input id="v_req" value="30,000" readonly></div>
-          <div class="field"><label for="v_ver">Verified amount (₱)</label><input id="v_ver" type="number" min="0" value="28430"></div>
-          <div class="field"><label for="v_fin">Final approved (₱)</label><input id="v_fin" value="Dean or Secretary only" disabled></div>
-        </div>
-        <div class="field" id="v_rf"><label for="v_why">Reason for adjustment</label><textarea id="v_why" rows="2">Accommodation ₱6,500 excluded: the receipt covers nights outside the inclusive dates (day before to day after the conference).</textarea><div class="msg"></div></div>
-        <div id="vcap" class="muted"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="v_save">Save verified amount</button><button class="btn sec" data-go="fao">Preview FAO report</button></div>
-        <dl class="who muted"><dt>Verifier</dt><dd>A. Dela Cruz, Admin Assistant (sample)</dd><dt>Dates</dt><dd>Docs received 2026-11-24 · Verified 2026-11-27 (sample)</dd></dl>
-      </div>
-    </div>
-  </div></div>
-</section>
-
-<!-- ===== FAO ===== -->
-<section class="view" id="v-fao" hidden data-title="FAO report">
-  <header><h2>Sample FAO reimbursement report</h2><p class="muted">The official FAO template was not supplied, so this layout is invented for illustration and is marked as a draft. The fields are the ones your brief says the report must contain.</p></header>
-  <div class="paper">
-    <div class="wm">DRAFT</div>
-    <p style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#a02828;font-weight:600">Draft sample · not the official FAO format</p>
-    <h3 style="font-family:var(--f-display);margin:6px 0 2px;font-size:22px">Reimbursement Report · Student Conference Grant</h3>
-    <p style="color:#555;margin-bottom:14px">Application reference <b class="mono">CCS-CG-2026-0042</b> · Generated 2026-12-02 (sample) · Report copy v1</p>
-    <table><tr><th style="width:26%">Student</th><td>Maria Santos (fictional), BS Software Technology, 4th year</td><th style="width:18%">Funding source</th><td>Dean's Office (sample)</td></tr>
-    <tr><th>Conference</th><td>International Conference on Sample Computing (ICSC 2026)</td><th>Dates / venue</th><td>18–20 Nov 2026 · Kyoto, Japan</td></tr>
-    <tr><th>Paper</th><td>"Sample Title on Edge Inference" · Full paper · Scopus</td><th>Grant decision</th><td>Approved by Dean 2026-10-14 (sample)</td></tr></table>
-    <p style="margin:14px 0 6px;font-weight:600">Itemised expenses</p>
-    <table><tr><th>Expense type</th><th>Claimed (₱)</th><th>Verified (₱)</th><th>Documents</th><th>Remarks</th></tr>
-    <tr><td>Registration fee</td><td style="text-align:right">12,430.00</td><td style="text-align:right">12,430.00</td><td>Official receipt, bank statement</td><td>USD 220 × 56.50</td></tr>
-    <tr><td>Pre-departure fees</td><td style="text-align:right">1,200.00</td><td style="text-align:right">1,200.00</td><td>Official receipt</td><td></td></tr>
-    <tr><td>Roundtrip airfare</td><td style="text-align:right">11,800.00</td><td style="text-align:right">11,800.00</td><td>Itinerary receipt, invoice</td><td></td></tr>
-    <tr><td>Accommodation</td><td style="text-align:right">6,500.00</td><td style="text-align:right">0.00</td><td>Official receipt</td><td>Nights outside inclusive dates</td></tr>
-    <tr><td>Per diem</td><td style="text-align:right">3,000.00</td><td style="text-align:right">3,000.00</td><td>–</td><td></td></tr>
-    <tr><th>Total</th><th style="text-align:right">34,930.00</th><th style="text-align:right">28,430.00</th><th colspan="2"></th></tr></table>
-    <table style="margin-top:14px"><tr><th>Requested reimbursement</th><td style="text-align:right">30,000.00</td><th>Verified amount</th><td style="text-align:right">28,430.00</td><th>Final approved</th><td style="text-align:right"><b>28,430.00</b></td></tr></table>
-    <p style="margin:14px 0 6px;font-weight:600">Document verification: 11 of 11 verified (Student ID replaced after a correction request)</p>
-    <table><tr><th>Verified by</th><td>A. Dela Cruz, Administrative Assistant · 2026-11-27</td><th>Final amount recorded by</th><td>Dean (sample) · 2026-12-01</td></tr>
-    <tr><th>Approval history</th><td colspan="3">Adviser 10-03 · Chair 10-06 · Associate Dean 10-10 · Dean 10-14 (all sample dates, linked to the audit trail)</td></tr></table>
-  </div>
-  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><button class="btn sec" data-toast="Sample only: would download the report in the format the FAO requires.">Download</button><button class="btn" data-toast="Sample only: would record the report as reviewed and filed.">Mark reviewed and filed</button></div>
-</section>
-
-<!-- ===== SIMULATION ===== -->
 <section class="view" id="v-sim" hidden data-title="Simulation">
-  <header><h2>End-to-end simulation</h2><p class="muted">One fictional application, from submission to completion. You play each role in turn. At approval steps you can approve, return for correction or reject. The security buttons show what the backend refuses.</p></header>
-  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))">
-    <div class="screen">
-      <div class="screen-bar"><b>Current step</b><span class="mono" id="sRef">No reference yet</span></div>
-      <div class="screen-body">
-        <ol class="steps" id="sSteps"></ol>
-        <div class="card" style="background:var(--surface-2)">
-          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px"><span class="pill p-wait" id="sActor"></span><span class="pill p-idle" id="sStatus"></span></div>
-          <h3 id="sTitle" style="margin-top:8px"></h3><p class="muted" id="sDesc" style="margin-top:4px"></p>
-          <div id="sExtra" style="margin-top:10px"></div>
-          <div class="field" id="sReasonWrap" hidden style="margin-top:10px"><label for="sReason">Comment or reason</label><textarea id="sReason" rows="2" placeholder="Required for Reject and Return"></textarea><div class="msg" id="sMsg"></div></div>
-          <div id="sBtns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div>
-        </div>
-        <div class="card"><h4>Security checks (try them)</h4>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
-            <button class="btn sec sm" id="secSelf">Student tries to approve own application</button>
-            <button class="btn sec sm" id="secSkip">Dean tries to skip the sequence</button>
-            <button class="btn sec sm" id="secRole">Admin Assistant tries to set final amount</button></div></div>
-        <div style="display:flex;gap:8px"><button class="btn sec" id="sReset">Restart simulation</button></div>
-      </div>
-    </div>
-    <div style="display:grid;gap:14px;align-content:start;min-width:0">
-      <div class="card"><h4>Amounts</h4>
-        <div class="kpis" style="margin-top:8px"><div class="kpi"><b class="num" id="aReq">–</b><span>Requested (₱)</span></div><div class="kpi"><b class="num" id="aVer">–</b><span>Verified (₱)</span></div><div class="kpi"><b class="num" id="aFin">–</b><span>Final approved (₱)</span></div></div>
-        <p class="muted" style="margin-top:8px">Funding source: <b style="color:var(--fg)" id="aFund">not set</b></p></div>
-      <div class="card"><h4>Audit trail (append-only)</h4><div class="log" id="sLog" style="margin-top:8px"><div class="muted">No actions yet.</div></div></div>
-      <div class="card"><h4>Notification outbox</h4><div class="log" id="sMail" style="margin-top:8px"><div class="muted">Nothing sent yet.</div></div></div>
-    </div>
-  </div>
+  <header><h2>Simulation and security checks</h2><p class="muted">Run a whole application through every role in one click, try actions the rules refuse, and trigger reminders.</p></header>
+  <div id="simBody"></div>
 </section>
 
 <!-- ===== SCENARIOS ===== -->
@@ -681,7 +460,7 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
   <header><h2>Approval, rejection, correction and notification examples</h2><p class="muted">Static examples of what each case records and sends. Names, dates and links are fictional.</p></header>
   <div class="grid g2">
     <div class="card"><h3>Approval</h3>
-      <div class="tbl" style="margin-top:8px"><table style="min-width:0"><tr><th>Field</th><th>Recorded</th></tr><tr><td>Approver</td><td>Dr. Reyes (Adviser)</td></tr><tr><td>Decision</td><td><span class="pill p-ok">Approved</span></td></tr><tr><td>Comment</td><td>Endorsed.</td></tr><tr><td>Time</td><td class="mono">2026-10-03 15:40 +08:00</td></tr><tr><td>Result</td><td>Status becomes "Pending: Department Chair". Chair is notified. Student gets an in-app note.</td></tr></table></div></div>
+      <div class="tbl" style="margin-top:8px"><table style="min-width:0"><tr><th>Field</th><th>Recorded</th></tr><tr><td>Approver</td><td>Dr. Reyes (Adviser)</td></tr><tr><td>Decision</td><td><span class="pill p-ok">Endorsed</span></td></tr><tr><td>Comment</td><td>Endorsed.</td></tr><tr><td>Time</td><td class="mono">2026-10-03 15:40 +08:00</td></tr><tr><td>Result</td><td>Status becomes "Pending: Department Chair". Chair is notified. Student gets an in-app note.</td></tr></table></div></div>
     <div class="card"><h3>Rejection</h3>
       <div class="tbl" style="margin-top:8px"><table style="min-width:0"><tr><th>Field</th><th>Recorded</th></tr><tr><td>Approver</td><td>Associate Dean (sample)</td></tr><tr><td>Decision</td><td><span class="pill p-bad">Rejected</span></td></tr><tr><td>Reason</td><td>Required. Example: "Paper is not in a Scopus, ISI or ASEAN Citation listed proceedings."</td></tr><tr><td>Result</td><td>Application closes. Student gets an email and in-app notice with the reason. Earlier approvals stay visible.</td></tr></table></div></div>
     <div class="card"><h3>Return for correction</h3>
@@ -693,7 +472,7 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
   <div class="grid g2">
     <div class="mail"><div class="mail-h"><span><b>To:</b> chair.sample@dlsu.edu.ph</span><span><b>Subject:</b> [CCS-CG-2026-0042] Action required: review grant application</span></div>
       <div class="mail-b"><p>Maria Santos (BS-ST, sample) submitted a conference grant application that now needs your decision.</p>
-      <dl class="who"><dt>Reference</dt><dd class="mono">CCS-CG-2026-0042</dd><dt>Status</dt><dd>Pending: Department Chair</dd><dt>Required action</dt><dd>Approve, return for correction or reject</dd></dl>
+      <dl class="who"><dt>Reference</dt><dd class="mono">CCS-CG-2026-0042</dd><dt>Status</dt><dd>Pending: Department Chair</dd><dt>Required action</dt><dd>Endorse, return with remarks or reject</dd></dl>
       <p><a href="#" data-toast="Sample link only.">https://grants.example.edu/applications/CCS-CG-2026-0042</a></p></div></div>
     <div class="mail"><div class="mail-h"><span><b>To:</b> maria.santos@dlsu.edu.ph</span><span><b>Subject:</b> [CCS-CG-2026-0042] Application returned for correction</span></div>
       <div class="mail-b"><p>Your application was returned by the Department Chair. Please read the comment, update the application and submit it again.</p>
@@ -702,21 +481,102 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
   </div>
 </section>
 
+<section class="view" id="v-settings" hidden data-title="Settings">
+  <header><h2>Settings</h2><p class="muted">Routing, funding sources and the Google link. Only the System Administrator sees this tab.</p></header>
+  <div id="setBody"></div>
+</section>
+
+<!-- ===== OVERVIEW ===== -->
+<section class="view" id="v-overview" hidden data-title="Review &amp; suggestions">
+  <header><h2>What changed in 2.0, what I added, and what I need from you</h2>
+  <p class="muted">Version 2.0 is a working simulation. One application can now be followed through every role, and everything you enter is saved in this browser. It is still a prototype: nothing is deployed, and all names, amounts and dates are made up.</p></header>
+
+  <h3 style="margin:0 0 10px">Your requests and where each one is</h3>
+  <div class="tbl"><table><tr><th>Request</th><th>Where it is in the app</th></tr>
+    <tr><td>Department becomes Degree Program</td><td>Application form, step 1, and every filter. Choices are BSCS, BSIT and BSIS. You typed BSIT twice, so I assumed the third is BSIS. Please confirm.</td></tr>
+    <tr><td>Confirm that all requirements are attached; reminder of the list; one PDF</td><td>Application form, step 4. A reminder box lists the documents, the file must be one PDF, and the student ticks a confirmation. Submitting checks every required field and the attachment.</td></tr>
+    <tr><td>Rename files to AY-Term-Application Number</td><td>On submit the system assigns <span class="mono">2627-Term1-001</span> and saves the PDF as <span class="mono">2627-Term1-001.pdf</span>. Academic year and term are now fields in the form. Later versions get <span class="mono">-v2</span>, clarification files <span class="mono">-C1</span>, post-activity reports <span class="mono">-PAR</span>.</td></tr>
+    <tr><td>Should a Data Privacy clause be included?</td><td><b>Yes.</b> The form collects personal data and shares it with several offices, so consent should be recorded under the Data Privacy Act of 2012 (RA 10173). Step 5 shows a draft notice and a required checkbox. The time of consent is stored. The wording is a draft for your Data Protection Officer to review.</td></tr>
+    <tr><td>Thesis Adviser field sets the first signatory</td><td>Form step 1. The chosen adviser becomes the first endorser.</td></tr>
+    <tr><td>Routing: adviser, chair, associate dean, dean, automatic</td><td>Chair comes from the degree program. The Associate Dean is set once in Settings. After each decision the next person is notified by email and in-app.</td></tr>
+    <tr><td>Endorse, Return with remarks, Reject</td><td>Application page. Return keeps earlier decisions and, after the student resubmits, goes back to the same approver. Reject needs a reason and closes the application.</td></tr>
+    <tr><td>Dean approves, sets funding source, signs</td><td>Application page. The Dean sets an approved amount and funding source per expense line, and draws a digital signature. The grant total is capped at ₱30,000 international or ₱15,000 local.</td></tr>
+    <tr><td>Comments and clarifications, with uploads</td><td>Messages panel on the application page. Everyone on the application can write. The student can attach files.</td></tr>
+    <tr><td>Funding Source in the expense breakdown</td><td>The form shows the column as "Assigned by the Dean". The Dean fills it.</td></tr>
+    <tr><td>Preview documents before approving</td><td>Documents panel on the application page. PDFs and images open on the page. Each preview by an approver is written to the history.</td></tr>
+    <tr><td>Track status; dashboards per role</td><td>Dashboard. Approvers and staff get Assigned, Pending, Approved, Returned and Rejected. Students see a progress bar for each application.</td></tr>
+    <tr><td>Approval notifications by email and in-app</td><td>Notifications tab. The email copy is shown there. Real email needs the Google script below.</td></tr>
+    <tr><td>Post-activity report in one PDF</td><td>Post-activity report tab. Pre-defined expense lines, peso conversion rate, a checklist of the nine documents, and the PDF saved as <span class="mono">2627-Term1-001-PAR.pdf</span>.</td></tr>
+    <tr><td>Administrative Assistant verifies each document, edits amounts, sets funding</td><td>Verification tab. Tick each item found in the PDF, add remarks, set the approved amount and funding source per line, then Verify or Return.</td></tr>
+    <tr><td>Reimbursement report for the Accounting Office</td><td>Reimbursement report tab. Print or save as PDF, or download CSV. The layout is final in structure, but the Accounting Office template was not supplied, so please send it.</td></tr>
+    <tr><td>Approval History records every update</td><td>Bottom of the application page.</td></tr>
+    <tr><td>Google Sheet and Google Drive</td><td>Sheet &amp; Drive tab shows what each would hold. <span class="mono">google/Code.gs</span> is a ready Apps Script that writes the real rows, files and emails once its URL is pasted in Settings.</td></tr></table></div>
+
+  <h3 style="margin:26px 0 10px">Ideas I added</h3>
+  <div class="grid g2">
+    <div class="card"><h4>Reminders after 2 days</h4><p>Staff can send reminders for anything that has waited more than 2 days. The real build would run this every morning and could escalate.</p></div>
+    <div class="card"><h4>Eligibility advice, not blocking</h4><p>If a student already has an application in the same academic year, the review step and the approvers see a note. The grant is available once every academic year, but only people can judge exceptions.</p></div>
+    <div class="card"><h4>Cap checks</h4><p>The Dean cannot approve more than the student projected, or more than the travel limit. The Administrative Assistant cannot reimburse more than the Dean approved, and must explain any line that differs from the claim.</p></div>
+    <div class="card"><h4>Drafts and file versions</h4><p>Students can save a draft. Replaced files stay on record as earlier versions, and the Drive view marks them.</p></div>
+    <div class="card"><h4>Separation of duties, enforced</h4><p>Nobody acts on their own application, nobody skips a step, and only the Administrative Assistant verifies. Refused attempts are written to the history. The Simulation tab lets you try them.</p></div>
+    <div class="card"><h4>Routing table in Settings</h4><p>The System Administrator sets the Associate Dean, Dean, chair per degree program and the funding sources. Each application keeps its own copy of the signatories, so history is never rewritten.</p></div>
+    <div class="card"><h4>Printable report</h4><p>The reimbursement report prints cleanly to PDF, with the Dean's signature and signature blocks for the Accounting Office.</p></div>
+    <div class="card"><h4>Later: PDF merge helper</h4><p>A small tool that combines the student's separate files into the single PDF, so students do not need another program. Not built yet.</p></div>
+  </div>
+
+  <h3 style="margin:26px 0 10px">Honest limits of this prototype</h3>
+  <div class="card"><ul>
+    <li>Data is stored in this browser only. To follow one application across roles, sign out and sign in as the next role in the same browser.</li>
+    <li>The sign-in is a fixed demo password. Real sign-in would use Google limited to the DLSU domain.</li>
+    <li>The Google script uses a shared token, which is not user-level security. A production build should check the signed-in Google user on every request.</li>
+    <li>The Dean's signature is a drawn image kept with the grant. It is a convenience mark, not a certified digital signature. Please confirm what the Office of the Dean accepts.</li>
+    <li>The 7-working-day deadline skips weekends only. Holidays are not counted.</li>
+    <li>The sample PDFs for seeded applications are generated placeholders.</li>
+  </ul></div>
+
+  <h3 style="margin:26px 0 10px">Questions I still need answered</h3>
+  <div class="card"><ol>
+    <li>Is the third degree program BSIS? Should other programs, such as majors, be listed?</li>
+    <li>Can you send the Accounting Office reimbursement template so I match it exactly?</li>
+    <li>Should the Administrative Assistant also check the application when it is submitted ("validate submitted application"), or only the post-activity documents? Today only the post-activity documents are validated.</li>
+    <li>Is the Associate Dean the same person for every program, so one setting is enough?</li>
+    <li>Who is the Thesis Adviser signatory when the paper does not come from a thesis?</li>
+    <li>Does the Office of the Dean accept the in-system endorsements and the drawn signature in place of the signed cover letter?</li>
+    <li>May an approved reimbursement exceed the Dean's approved grant in special cases, and who approves that?</li>
+    <li>How long must documents and reports be kept, and may the write-up and poster be published?</li>
+    <li>What are the quotas per event, per faculty mentor and per academic year?</li>
+  </ol></div>
+
+  <h3 style="margin:26px 0 10px">Reference documents</h3>
+  <div class="grid g2">
+    <div class="card"><div class="tbl"><table><tr><th>Document</th><th>Status</th></tr>
+      <tr><td>Application for Grant for Undergraduate Students (.docx, footer "v. 2026.02.25")</td><td><span class="pill p-ok">Read</span></td></tr>
+      <tr><td>CCS Guidelines for Student Funding Support</td><td><span class="pill p-ok">Read (2 pages)</span></td></tr>
+      <tr><td>CCS Conference Grant Tracking Spreadsheet</td><td><span class="pill p-bad">Not found</span></td></tr>
+      <tr><td>Accounting Office reimbursement template</td><td><span class="pill p-warn">Not supplied</span></td></tr></table></div></div>
+    <div class="card"><h4>Facts taken from the form and guidelines</h4><ul>
+      <li>Up to ₱30,000 international and ₱15,000 local, subject to funds.</li>
+      <li>Once every academic year. Priority to first-time applicants. One student co-author funded per paper.</li>
+      <li>Paper in a Scopus, ISI or ASEAN Citation listed proceedings.</li>
+      <li>Within 7 working days after the event: a social media graphic and a 300 to 500 word article. Your list calls these the poster and the article write-up.</li></ul></div>
+  </div>
+</section>
+
 <!-- ===== VERSIONS ===== -->
 <section class="view" id="v-ver" hidden data-title="Versions">
-  <header><h2>Versions</h2><p class="muted">What changed in each version of the mockups, how versions are numbered, and where each one came from. Newest first.</p></header>
+  <header><h2>Versions</h2><p class="muted">What changed in each version of the system, how versions are numbered, and where each one came from. Newest first.</p></header>
   <div class="grid g3">
     <div class="card"><h3>Numbering</h3><p class="muted"><b>Major</b> (2.0): how people work changes, such as a new role or a new approval step. <b>Minor</b> (1.1): new features or a new look that leave existing steps alone. <b>Patch</b> (1.1.1): fixes only.</p></div>
     <div class="card"><h3>Status</h3><p class="muted"><b>Prototype</b>: for review, with fictional data. <b>Pilot</b>: used with real applications. <b>Released</b>: stable and supported.</p></div>
     <div class="card"><h3>Each entry answers</h3><p class="muted">What was added, changed and fixed, and what the version cannot do yet. Written for the people who review the mockups, not for developers.</p></div>
   </div>
   <h3 style="margin:26px 0 10px">Where each version came from</h3>
-  <div class="tbl"><table><tr><th>Version</th><th>Date</th><th>Source</th></tr><tr><td><b>1.0.0</b></td><td class="num">12 Oct 2026</td><td>Written in claude.ai as the CCS Grant Support Mockups artifact, last updated 12 Oct. It was copied into GitHub on 15 Oct at 00:50 as one commit (5756603), so edits before that are not recorded.</td></tr><tr><td><b>1.1.0 to 1.1.2</b></td><td class="num">15 Oct 2026</td><td>GitHub. One commit each, listed below.</td></tr><tr><td><b>1.2.0</b></td><td class="num">15 Oct 2026</td><td>GitHub. This version history change.</td></tr><tr><td><b>1.3.0</b></td><td class="num">15 Oct 2026</td><td>GitHub. Sign-in first and role tabs.</td></tr></table></div>
+  <div class="tbl"><table><tr><th>Version</th><th>Date</th><th>Source</th></tr><tr><td><b>1.0.0</b></td><td class="num">12 Oct 2026</td><td>Written in claude.ai as the CCS Grant Support Mockups artifact, last updated 12 Oct. It was copied into GitHub on 15 Oct at 00:50 as one commit (5756603), so edits before that are not recorded.</td></tr><tr><td><b>1.1.0 to 1.1.2</b></td><td class="num">15 Oct 2026</td><td>GitHub. One commit each, listed below.</td></tr><tr><td><b>1.2.0</b></td><td class="num">15 Oct 2026</td><td>GitHub. This version history change.</td></tr><tr><td><b>1.3.0</b></td><td class="num">15 Oct 2026</td><td>GitHub. Sign-in first and role tabs.</td></tr><tr><td><b>2.0.0</b></td><td class="num">15 Oct 2026</td><td>GitHub. Working routing, approvals, post-activity reports and Google records.</td></tr></table></div>
   <h3 style="margin:26px 0 10px">Version history</h3>
-  <div class="vlist"><article class="ventry cur"><div class="vhead"><h3>Version 1.3.0</h3><span class="vmeta">15 Oct 2026 · Prototype · current</span></div><p>The app now opens on a sign-in screen, then on a dashboard that matches the role. Tabs are grouped by role, and Review &amp; suggestions moves to the end, just before Versions.</p><div class="vgrid"><div><h4>Added</h4><ul><li><b>Sign-in screen</b> with eight sample accounts (student, adviser, chair, associate dean, dean, administrative assistant, secretary, project owner). Password <span class="mono">demo</span>.</li><li>The signed-in person shows in the header with a <b>Sign out</b> button.</li><li>Each role opens on its own <b>dashboard</b>: student, approver or admin staff.</li></ul></div><div><h4>Changed</h4><ul><li>Dashboards is now the first tab. <b>Review &amp; suggestions</b> is the last tab before Versions.</li><li>Each role sees only the tabs it needs. The project owner account sees all of them.</li><li>Header matches CCS Task Tracker: logo mark, version tag, subtitle and green favicon.</li></ul></div><div><h4>Known limits</h4><ul><li>The password is a fixed demo value and roles are not enforced on a server. This is a prototype.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.2.0</h3><span class="vmeta">15 Oct 2026 · Prototype</span></div><p>The full version history is recorded in the app, so any past change can be looked up here.</p><div class="vgrid"><div><h4>Added</h4><ul><li><b>Versions</b> tab with the numbering rules, a table of where each version came from, every version since the original, and the change log by commit.</li><li>A <span class="mono">CHANGELOG.md</span> file in the repository with the same history, readable on GitHub.</li><li>The version number in the header.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.1.2</h3><span class="vmeta">15 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a1eac1" target="_blank" rel="noopener" class="mono">8a1eac1</a></span></div><p>Fixes for phones.</p><div class="vgrid"><div><h4>Fixed</h4><ul><li>The tab strip sits in a sticky frosted bar, so page text no longer shows above it.</li><li>Buttons and chips are larger to tap on touch screens.</li><li>The verification list stacks into rows on phones, so Verify and Return can be reached. The toast is no longer squeezed.</li><li>An inline favicon replaces the missing one (no more 404 in the console).</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.1.1</h3><span class="vmeta">15 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/2e40619" target="_blank" rel="noopener" class="mono">2e40619</a></span></div><p>Colors and the theme switch now come from one shared stylesheet.</p><div class="vgrid"><div><h4>Changed</h4><ul><li>Colors, shadows, easing, type and the theme switch styles load from <span class="mono">ccs-design/ccs-tokens.css</span>, also used by CCS Task Tracker. This file keeps a few older variable names as aliases of the shared ones.</li><li>The resolved colors were checked and are identical to 1.1.0 in light and dark.</li></ul></div><div><h4>Known limits</h4><ul><li>The page needs a network connection to load the shared stylesheet. Opened offline, it loses its colors.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.1.0</h3><span class="vmeta">15 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a2df7c" target="_blank" rel="noopener" class="mono">8a2df7c</a></span></div><p>A visual refresh in the style of a macOS app, matching CCS Task Tracker 2.5. Every feature works as before.</p><div class="vgrid"><div><h4>Added</h4><ul><li><b>Dark theme</b> and a <b>theme switch</b> in the header: System, Light or Dark. The choice is remembered in this browser.</li><li>Motion that answers a press: press feedback 160ms, toasts 240ms in and 160ms out. Tab switches do not animate.</li><li>With Reduce motion turned on, movement is replaced by a 120ms fade.</li></ul></div><div><h4>Changed</h4><ul><li>New look: neutral surfaces, one blue accent, a frosted toolbar and segmented tabs. The system font replaces the downloaded fonts.</li><li>On phones the header scrolls away and only the tab strip stays pinned.</li><li>The tab strip scrolls sideways when it does not fit.</li></ul></div><div><h4>Fixed</h4><ul><li>Text in the Workflow diagram no longer runs past the edge of its boxes.</li><li>Progress steps inside cards stack correctly, pills no longer stretch, and small tables are no longer clipped.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.0.0</h3><span class="vmeta">12 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/5756603" target="_blank" rel="noopener" class="mono">5756603</a></span></div><p>The original CCS Grant Support Mockups: ten tabs of mockups and a working simulation, with fictional sample data.</p><div class="vgrid"><div><h4>Added</h4><ul><li>Ten tabs: Review &amp; suggestions, Dashboards, Guidelines, Application form, Workflow, Tracking table, Verification, FAO report, Simulation and Scenarios.</li><li>Dashboards for the student, the approver (Department Chair) and the admin staff.</li><li>Application form in five steps, built from the paper form, with an example you can fill in.</li><li>Approval and reimbursement workflow diagram and a who-may-do-what table.</li><li>Document verification, FAO report draft, and a step-by-step simulation with scenarios.</li><li>A green color scheme with Newsreader and IBM Plex fonts, following the device light or dark setting.</li></ul></div><div><h4>Known limits</h4><ul><li>The tracking spreadsheet and the FAO template were not supplied, so the FAO report is a draft placeholder.</li><li>Earlier edits made in claude.ai before 12 Oct were not kept. This is the first version on record.</li></ul></div></div></article></div>
+  <div class="vlist"><article class="ventry cur"><div class="vhead"><h3>Version 2.0.0</h3><span class="vmeta">15 Oct 2026 · Prototype · current</span></div><p>A working simulation. One application now travels through every role, with real routing rules, notifications, a post-activity report, verification and a reimbursement report. Because how people work changes (a new routing order, a Dean e-signature and a new verification step), this is a major version.</p><div class="vgrid"><div><h4>Added</h4><ul><li><b>Routing engine</b>: Thesis Adviser, Department Chair (by degree program), Associate Dean (set once), then Dean, automatic after each decision.</li><li><b>Endorse, Return with remarks, Reject</b>. Return keeps earlier decisions; Reject needs a reason.</li><li><b>Dean approval</b> with an approved amount and funding source per expense line, and a digital signature.</li><li><b>Comments and clarifications</b> with file uploads, between the student and the approvers.</li><li><b>Document preview</b> on the page for every approver.</li><li><b>Post-activity report</b> in one PDF with actual expenses and a peso conversion rate.</li><li><b>Verification</b> by the Administrative Assistant: tick each document, remark, approved amount and funding source per item.</li><li><b>Reimbursement report</b> for the Accounting Office, printable.</li><li><b>Notifications</b> by email and in-app, with reminders, and an Approval History for every update.</li><li><b>Google Sheet and Drive</b> view, plus <span class="mono">google/Code.gs</span> to make them real.</li><li><b>Settings</b>, <b>Simulation</b> with a full demo and security checks, and seed applications at every stage.</li></ul></div><div><h4>Changed</h4><ul><li><b>Department is now Degree Program</b> (BSCS, BSIT, BSIS).</li><li>Academic year and term are form fields. References and file names follow <span class="mono">2627-Term1-001</span>.</li><li>Students confirm that all requirements are in one PDF. A Thesis Adviser field and a Data Privacy consent were added.</li><li>The dashboards, tracking table, verification and report now read live data instead of fixed samples.</li><li>The Dean's final amount step was removed: the Dean sets the grant, and the Administrative Assistant sets the reimbursement.</li></ul></div><div><h4>Known limits</h4><ul><li>Data lives in one browser. Sign out and in to switch roles.</li><li>The Accounting Office template and the third degree program were not confirmed.</li><li>The drawn signature is not a certified digital signature.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.3.0</h3><span class="vmeta">15 Oct 2026 · Prototype · current</span></div><p>The app now opens on a sign-in screen, then on a dashboard that matches the role. Tabs are grouped by role, and Review &amp; suggestions moves to the end, just before Versions.</p><div class="vgrid"><div><h4>Added</h4><ul><li><b>Sign-in screen</b> with eight sample accounts (student, adviser, chair, associate dean, dean, administrative assistant, secretary, project owner). Password <span class="mono">demo</span>.</li><li>The signed-in person shows in the header with a <b>Sign out</b> button.</li><li>Each role opens on its own <b>dashboard</b>: student, approver or admin staff.</li></ul></div><div><h4>Changed</h4><ul><li>Dashboards is now the first tab. <b>Review &amp; suggestions</b> is the last tab before Versions.</li><li>Each role sees only the tabs it needs. The project owner account sees all of them.</li><li>Header matches CCS Task Tracker: logo mark, version tag, subtitle and green favicon.</li></ul></div><div><h4>Known limits</h4><ul><li>The password is a fixed demo value and roles are not enforced on a server. This is a prototype.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.2.0</h3><span class="vmeta">15 Oct 2026 · Prototype</span></div><p>The full version history is recorded in the app, so any past change can be looked up here.</p><div class="vgrid"><div><h4>Added</h4><ul><li><b>Versions</b> tab with the numbering rules, a table of where each version came from, every version since the original, and the change log by commit.</li><li>A <span class="mono">CHANGELOG.md</span> file in the repository with the same history, readable on GitHub.</li><li>The version number in the header.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.1.2</h3><span class="vmeta">15 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a1eac1" target="_blank" rel="noopener" class="mono">8a1eac1</a></span></div><p>Fixes for phones.</p><div class="vgrid"><div><h4>Fixed</h4><ul><li>The tab strip sits in a sticky frosted bar, so page text no longer shows above it.</li><li>Buttons and chips are larger to tap on touch screens.</li><li>The verification list stacks into rows on phones, so Verify and Return can be reached. The toast is no longer squeezed.</li><li>An inline favicon replaces the missing one (no more 404 in the console).</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.1.1</h3><span class="vmeta">15 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/2e40619" target="_blank" rel="noopener" class="mono">2e40619</a></span></div><p>Colors and the theme switch now come from one shared stylesheet.</p><div class="vgrid"><div><h4>Changed</h4><ul><li>Colors, shadows, easing, type and the theme switch styles load from <span class="mono">ccs-design/ccs-tokens.css</span>, also used by CCS Task Tracker. This file keeps a few older variable names as aliases of the shared ones.</li><li>The resolved colors were checked and are identical to 1.1.0 in light and dark.</li></ul></div><div><h4>Known limits</h4><ul><li>The page needs a network connection to load the shared stylesheet. Opened offline, it loses its colors.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.1.0</h3><span class="vmeta">15 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a2df7c" target="_blank" rel="noopener" class="mono">8a2df7c</a></span></div><p>A visual refresh in the style of a macOS app, matching CCS Task Tracker 2.5. Every feature works as before.</p><div class="vgrid"><div><h4>Added</h4><ul><li><b>Dark theme</b> and a <b>theme switch</b> in the header: System, Light or Dark. The choice is remembered in this browser.</li><li>Motion that answers a press: press feedback 160ms, toasts 240ms in and 160ms out. Tab switches do not animate.</li><li>With Reduce motion turned on, movement is replaced by a 120ms fade.</li></ul></div><div><h4>Changed</h4><ul><li>New look: neutral surfaces, one blue accent, a frosted toolbar and segmented tabs. The system font replaces the downloaded fonts.</li><li>On phones the header scrolls away and only the tab strip stays pinned.</li><li>The tab strip scrolls sideways when it does not fit.</li></ul></div><div><h4>Fixed</h4><ul><li>Text in the Workflow diagram no longer runs past the edge of its boxes.</li><li>Progress steps inside cards stack correctly, pills no longer stretch, and small tables are no longer clipped.</li></ul></div></div></article><article class="ventry"><div class="vhead"><h3>Version 1.0.0</h3><span class="vmeta">12 Oct 2026 · Prototype · commit <a href="https://github.com/zefanonuevo/ccs-scgss/commit/5756603" target="_blank" rel="noopener" class="mono">5756603</a></span></div><p>The original CCS Grant Support Mockups: ten tabs of mockups and a working simulation, with fictional sample data.</p><div class="vgrid"><div><h4>Added</h4><ul><li>Ten tabs: Review &amp; suggestions, Dashboards, Guidelines, Application form, Workflow, Tracking table, Verification, FAO report, Simulation and Scenarios.</li><li>Dashboards for the student, the approver (Department Chair) and the admin staff.</li><li>Application form in five steps, built from the paper form, with an example you can fill in.</li><li>Approval and reimbursement workflow diagram and a who-may-do-what table.</li><li>Document verification, FAO report draft, and a step-by-step simulation with scenarios.</li><li>A green color scheme with Newsreader and IBM Plex fonts, following the device light or dark setting.</li></ul></div><div><h4>Known limits</h4><ul><li>The tracking spreadsheet and the FAO template were not supplied, so the FAO report is a draft placeholder.</li><li>Earlier edits made in claude.ai before 12 Oct were not kept. This is the first version on record.</li></ul></div></div></article></div>
   <h3 style="margin:26px 0 10px">Change log by commit</h3>
-  <p class="muted" style="margin-bottom:8px">Every commit in the GitHub history, newest first. Times are UTC+8. Open a hash to see the exact change. The version 1.2.0 commit is added when it is published.</p>
-  <div class="tbl"><table><tr><th>Commit</th><th>When</th><th>Version</th><th>Change</th></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a1eac1" target="_blank" rel="noopener" class="mono">8a1eac1</a></td><td class="num">15 Oct 01:21</td><td class="mono">1.1.2</td><td>Mobile fixes: pinned tab bar, touch targets, favicon, verification list.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/2e40619" target="_blank" rel="noopener" class="mono">2e40619</a></td><td class="num">15 Oct 01:09</td><td class="mono">1.1.1</td><td>Load design tokens from the shared ccs-design stylesheet.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a2df7c" target="_blank" rel="noopener" class="mono">8a2df7c</a></td><td class="num">15 Oct 00:53</td><td class="mono">1.1.0</td><td>Redesign as a macOS-style app, matching CCS Task Tracker.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/5756603" target="_blank" rel="noopener" class="mono">5756603</a></td><td class="num">15 Oct 00:50</td><td class="mono">1.0.0</td><td>Added CCS Grant Support Mockups (original artifact) to GitHub.</td></tr></table></div>
+  <p class="muted" style="margin-bottom:8px">Every commit in the GitHub history, newest first. Times are UTC+8. Open a hash to see the exact change. Version 2.0.0 is published in the commit that adds this entry.</p>
+  <div class="tbl"><table><tr><th>Commit</th><th>When</th><th>Version</th><th>Change</th></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/2cb28a6" target="_blank" rel="noopener" class="mono">2cb28a6</a></td><td class="num">15 Oct 01:47</td><td class="mono">1.3.0</td><td>Sign in first, role dashboards and tabs, Review &amp; suggestions before Versions.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/14d23ab" target="_blank" rel="noopener" class="mono">14d23ab</a></td><td class="num">15 Oct 00:46</td><td class="mono">1.2.0</td><td>Green, white and black colors (design tokens v2), and the Versions tab.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a1eac1" target="_blank" rel="noopener" class="mono">8a1eac1</a></td><td class="num">15 Oct 01:21</td><td class="mono">1.1.2</td><td>Mobile fixes: pinned tab bar, touch targets, favicon, verification list.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/2e40619" target="_blank" rel="noopener" class="mono">2e40619</a></td><td class="num">15 Oct 01:09</td><td class="mono">1.1.1</td><td>Load design tokens from the shared ccs-design stylesheet.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/8a2df7c" target="_blank" rel="noopener" class="mono">8a2df7c</a></td><td class="num">15 Oct 00:53</td><td class="mono">1.1.0</td><td>Redesign as a macOS-style app, matching CCS Task Tracker.</td></tr><tr><td><a href="https://github.com/zefanonuevo/ccs-scgss/commit/5756603" target="_blank" rel="noopener" class="mono">5756603</a></td><td class="num">15 Oct 00:50</td><td class="mono">1.0.0</td><td>Added CCS Grant Support Mockups (original artifact) to GitHub.</td></tr></table></div>
 </section>
 
 </main>
@@ -726,10 +586,7 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
 "use strict";
 var $=function(s,r){return (r||document).querySelector(s)};
 var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
-var money=function(n){return Number(n).toLocaleString('en-PH')};
-var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
-
-/* ---------- theme switch ---------- */
+/* theme switch */
 (function(){var KEY='ccs-theme',root=document.documentElement,box=$('#theme');if(!box)return;
   function mode(){try{var m=localStorage.getItem(KEY);return m==='light'||m==='dark'?m:'system'}catch(e){return 'system'}}
   function apply(m){if(m==='light'||m==='dark')root.setAttribute('data-theme',m);else root.removeAttribute('data-theme');
@@ -738,335 +595,11 @@ var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'
   box.addEventListener('click',function(e){var b=e.target.closest('button[data-theme-set]');if(!b)return;var m=b.dataset.themeSet;
     try{if(m==='system')localStorage.removeItem(KEY);else localStorage.setItem(KEY,m)}catch(err){}apply(m)})})();
 
-/* ---------- navigation ---------- */
-var views=$$('.view'), tabsEl=$('#tabs');
-/* ---------- accounts, roles and tabs (sign in first) ---------- */
-var PASSWORD='demo';
-var ACCOUNTS=[
- {email:'maria.santos@college.example',name:'Maria Santos',role:'student',label:'Student, BS Software Technology'},
- {email:'adviser.reyes@college.example',name:'Dr. Paolo Reyes',role:'approver',label:'Thesis adviser'},
- {email:'chair.sample@college.example',name:'Dr. Luis Mercado',role:'approver',label:'Department Chair, Software Technology'},
- {email:'assoc.dean@college.example',name:'Dr. Carla Mendoza',role:'approver',label:'Associate Dean'},
- {email:'dean@college.example',name:'Dr. Elena Navarro',role:'approver',label:'Dean'},
- {email:'admin.assistant@college.example',name:'Rosa Delgado',role:'staff',label:'Administrative Assistant'},
- {email:'secretary@college.example',name:'Marites Valdez',role:'staff',label:'Secretary'},
- {email:'sysadmin@college.example',name:'Jun Bautista',role:'owner',label:'System Administrator, project owner'}
-];
-var TABS=[['dash','Dashboards'],['guide','Guidelines'],['form','Application form'],['track','Tracking table'],['verify','Verification'],['fao','FAO report'],['flow','Workflow'],['sim','Simulation'],['scen','Scenarios'],['overview','Review & suggestions'],['ver','Versions']];
-var ROLE_TABS={
- student:['dash','guide','form','flow','overview','ver'],
- approver:['dash','guide','track','flow','overview','ver'],
- staff:['dash','guide','track','verify','fao','flow','sim','scen','overview','ver'],
- owner:['dash','guide','form','track','verify','fao','flow','sim','scen','overview','ver']
-};
-var DASH_FOR={student:'student',approver:'approver',staff:'admin',owner:'student'};
-var user=null;
-var ini=function(n){var p=n.replace(/^(Dr|Prof|Ms|Mr)\.\s+/,'').split(' ');return (p[0][0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase()};
-function myTabs(){return user?TABS.filter(function(t){return ROLE_TABS[user.role].indexOf(t[0])>-1}):[]}
-function allowed(id){return myTabs().some(function(t){return t[0]===id})}
-function buildTabs(){tabsEl.innerHTML='';myTabs().forEach(function(t){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.dataset.v=t[0];b.textContent=t[1];tabsEl.appendChild(b)})}
-function tabFade(){tabsEl.classList.toggle('more',tabsEl.scrollWidth-tabsEl.clientWidth-tabsEl.scrollLeft>4)}
-tabsEl.addEventListener('scroll',tabFade,{passive:true});window.addEventListener('resize',tabFade);
-function show(id,push){
-  if(!user){return}
-  if(!$('#v-'+id)||!allowed(id)){if($('#v-'+id)&&push)toast('That page is not part of your role. Sign in as another sample account to see it.');id='dash'}
-  $('#login').hidden=true;var vbk=$('#ver-back');if(vbk)vbk.hidden=true;
-  views.forEach(function(v){v.hidden=v.id!=='v-'+id});
-  $$('#tabs button').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.v===id))});
-  var sel=$('#tabs button[aria-selected="true"]');if(sel){var l=sel.offsetLeft,r=l+sel.offsetWidth;if(l<tabsEl.scrollLeft)tabsEl.scrollLeft=Math.max(0,l-8);else if(r>tabsEl.scrollLeft+tabsEl.clientWidth)tabsEl.scrollLeft=r-tabsEl.clientWidth+8}
-  tabFade();
-  try{ if(push) history.replaceState(null,'','#'+id) }catch(e){}
-  window.scrollTo(0,0);
-}
-var toastEl=null,toastT=0,toastO=0;
-function toast(m){
-  if(!toastEl){toastEl=document.createElement('div');toastEl.className='toast';toastEl.setAttribute('role','status');document.body.appendChild(toastEl)}
-  toastEl.textContent=m;toastEl.classList.remove('out');toastEl.hidden=false;toastEl.style.animation='none';void toastEl.offsetWidth;toastEl.style.animation='';
-  clearTimeout(toastT);clearTimeout(toastO);
-  toastT=setTimeout(function(){toastEl.classList.add('out');toastO=setTimeout(function(){toastEl.hidden=true;toastEl.classList.remove('out')},180)},2600);
-}
-document.addEventListener('click',function(e){
-  var t=e.target.closest('[data-go],[data-toast],#tabs button');
-  if(!t) return;
-  if(t.dataset.go){e.preventDefault();show(t.dataset.go,true)}
-  else if(t.dataset.toast){e.preventDefault();toast(t.dataset.toast)}
-  else if(t.dataset.v){show(t.dataset.v,true)}
-});
-
-/* ---------- sign in ---------- */
-function buildLogin(){
-  var grp=function(title,list){return '<h3>'+title+'</h3>'+list.map(function(a){return '<button type="button" class="acc" data-fill="'+esc(a.email)+'"><span class="av">'+ini(a.name)+'</span><b>'+esc(a.name)+'</b><small>'+esc(a.label)+'</small></button>'}).join('')};
-  var by=function(r){return ACCOUNTS.filter(function(a){return a.role===r})};
-  $('#login').innerHTML='<div class="loginwrap"><section class="logincard" aria-labelledby="lg-h"><h2 id="lg-h">Sign in</h2>'+
-   '<p class="muted">Sign in with your college account to apply for a grant, approve one, or manage reimbursements.</p>'+
-   '<form id="loginform" novalidate><div class="field"><label for="l-email">Email</label><input id="l-email" type="email" value="'+esc(ACCOUNTS[0].email)+'" autocomplete="username"></div>'+
-   '<div class="field" style="margin-top:10px"><label for="l-pass">Password</label><input id="l-pass" type="password" value="'+PASSWORD+'" autocomplete="current-password"></div>'+
-   '<p class="err" id="l-err" role="alert" style="margin-top:8px"></p><button class="btn" type="submit" style="margin-top:12px;width:100%">Sign in</button></form>'+
-   '<p class="note">Prototype. It accepts the sample accounts on the right with the password <b class="mono">'+PASSWORD+'</b>. The real build signs in with Google, limited to the DLSU domain, and takes roles from its own table.</p>'+
-   '<p class="note"><button type="button" class="lnk" data-showver>See the full version history</button> (no sign-in needed)</p></section>'+
-   '<section class="accs" aria-label="Sample accounts"><h2>Sample accounts</h2><p class="note">Pick one to fill in the form, then press Sign in. Each role sees its own dashboard and tabs.</p>'+
-   grp('Student',by('student'))+grp('Approvers',by('approver'))+grp('Office staff',by('staff'))+grp('Project owner (every tab)',by('owner'))+'</section></div>';
-  var vb=$('#ver-back');if(!vb){vb=document.createElement('button');vb.type='button';vb.id='ver-back';vb.className='btn sec sm';vb.textContent='Back to sign in';vb.hidden=true;$('#v-ver').insertBefore(vb,$('#v-ver').firstChild)}
-}
-function doLogin(acc){
-  user=acc;
-  buildTabs();$('#tabbar').hidden=false;
-  $('#me').hidden=false;
-  $('#me').innerHTML='<span class="av">'+ini(acc.name)+'</span><span><b>'+esc(acc.name)+'</b><small>'+esc(acc.label)+'</small></span><button type="button" class="btn sm ghost" data-logout>Sign out</button>';
-  $$('[data-signed]').forEach(function(el){el.textContent='Signed in: '+acc.email+' · '+acc.label});
-  var d=DASH_FOR[acc.role];
-  $$('#dashSeg button').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.d===d))});
-  ['student','approver','admin'].forEach(function(k){$('#d-'+k).hidden=k!==d});
-  $('#dashSeg').hidden=acc.role!=='owner';
-  var h=startHash;startHash='';
-  show(h&&allowed(h)?h:'dash',true);
-}
-function logout(){user=null;$('#tabbar').hidden=true;$('#me').hidden=true;$('#me').innerHTML='';views.forEach(function(v){v.hidden=true});$('#login').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){}window.scrollTo(0,0)}
-document.addEventListener('submit',function(e){
-  if(e.target.id!=='loginform')return;e.preventDefault();
-  var em=$('#l-email').value.trim().toLowerCase(),pw=$('#l-pass').value;
-  var acc=ACCOUNTS.filter(function(a){return a.email===em})[0];
-  if(!acc||pw!==PASSWORD){$('#l-err').textContent='The email or password is not right. Pick a sample account on the right and try again.';$('#l-email').setAttribute('aria-invalid','true');return}
-  doLogin(acc)});
-document.addEventListener('click',function(e){
-  var f=e.target.closest('[data-fill]');
-  if(f){$('#l-email').value=f.dataset.fill;$('#l-pass').value=PASSWORD;$('#l-err').textContent='';$('#l-email').removeAttribute('aria-invalid');$('#loginform button[type=submit]').focus();return}
-  if(e.target.closest('[data-logout]')){logout();return}
-  if(e.target.closest('[data-showver]')){$('#login').hidden=true;views.forEach(function(v){v.hidden=v.id!=='v-ver'});$('#ver-back').hidden=false;window.scrollTo(0,0);return}
-  if(e.target.closest('#ver-back')){$('#ver-back').hidden=true;$('#v-ver').hidden=true;$('#login').hidden=false;window.scrollTo(0,0)}
-});
-
-/* ---------- dashboards ---------- */
-$$('#dashSeg button').forEach(function(b){b.addEventListener('click',function(){
-  $$('#dashSeg button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
-  ['student','approver','admin'].forEach(function(k){$('#d-'+k).hidden=k!==b.dataset.d});
-})});
-var q=[['CCS-CG-2026-0044','Paolo Ramos','Sample Symposium on Edge Computing (local)','Adviser approved 2026-10-03'],['CCS-CG-2026-0046','Sofia Lim','Sample Conference on Cloud Systems (international)','Adviser approved 2026-10-09']];
-q.forEach(function(r){var tr=document.createElement('tr');tr.innerHTML='<td class="mono">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td class="muted">'+r[3]+'</td><td><button class="btn sm" data-toast="Sample only: opens the application details page.">Review</button></td>';$('#queue').appendChild(tr)});
-var stages=[['Pending approval',11],['Approved, conference ahead',9],['Awaiting documents',7],['Documents under review',6],['Final amount pending',3],['Completed',8],['Rejected',4]];
-stages.forEach(function(s){var d=document.createElement('div');d.className='bar';d.innerHTML='<span>'+s[0]+'</span><span class="bar-t"><i style="width:'+Math.round(s[1]/11*100)+'%"></i></span><b class="num">'+s[1]+'</b>';$('#bars').appendChild(d)});
-
-/* ---------- application form ---------- */
-var fi=0, fCards=$$('[data-fs]'), fSteps=$$('#fsteps li'), submitted=false;
-function fShow(){
-  fCards.forEach(function(c){c.hidden=+c.dataset.fs!==fi});
-  fSteps.forEach(function(s,i){s.className=i<fi?'done':(i===fi?'now':'')});
-  $('#fBack').disabled=fi===0||submitted;
-  $('#fNext').textContent=fi===4?'Submit application':'Next';
-  if(fi===4) buildReview();
-}
-function expTotal(){var t=0;$$('.ex').forEach(function(i){t+=Number(i.value)||0});return t}
-function expUpdate(){
-  var t=expTotal();$('#exTotal').textContent=money(t);
-  var cap=Number($('#f_scope').value)||0;
-  $('#exNote').textContent=cap?(t>cap?'Projected total is above the limit of ₱'+money(cap)+' stated on the form. The subsidy is capped at that limit (to confirm).':'Within the limit of ₱'+money(cap)+' stated on the form.'):'Choose international or local travel in step 1 to see the limit.';
-}
-$$('.ex').forEach(function(i){i.addEventListener('input',expUpdate)});
-$('#f_scope').addEventListener('change',expUpdate);
-function validateStep(){
-  var ok=true,first=null;
-  $$('[data-fs="'+fi+'"] .field').forEach(function(f){
-    var c=f.querySelector('input,select,textarea');if(!c||!c.required)return;
-    var bad=!String(c.value).trim();f.classList.toggle('err',bad);
-    var m=f.querySelector('.msg');if(m)m.textContent=bad?'This field is required.':'';
-    if(bad){ok=false;first=first||c}
-  });
-  if(fi===4){var bm=$('#brandMsg');if(!$('#f_brand').checked){ok=false;bm.textContent='Tick this box to confirm the branding requirements.'}else bm.textContent=''}
-  if(fi===2&&expTotal()<=0){ok=false;$('#formErr').hidden=false;$('#formErr').textContent='Enter at least one projected expense amount.'}
-  else $('#formErr').hidden=true;
-  if(!ok&&first)first.focus();
-  return ok;
-}
-function buildReview(){
-  var rows=[['Type of event',$('#f_etype').value],['Student',$('#f_name').value+' · '+$('#f_dept').value+' · year '+$('#f_year').value],['Conference',$('#f_conf').value+' · '+$('#f_dates').value+' · '+$('#f_venue').value],['Organizer',$('#f_org').value],['Travel',$('#f_scope').selectedOptions[0].textContent],['Paper',$('#f_title').value+' ('+$('#f_ptype').value+', '+$('#f_class').value+', '+$('#f_index').value+')'],['Projected total','₱'+money(expTotal())]];
-  $('#review').innerHTML=rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>'}).join('');
-}
-$('#fNext').addEventListener('click',function(){
-  if(submitted)return;
-  if(!validateStep())return;
-  if(fi<4){fi++;fShow();return}
-  submitted=true;$('#refPrev').textContent='CCS-CG-2026-0043 (sample)';
-  $('#formErr').hidden=false;$('#formErr').className='callout ok';$('#formErr').textContent='Submitted as CCS-CG-2026-0043. Your adviser was notified by email and in-app. You can follow the status from your dashboard.';
-  $('#fNext').disabled=true;$('#fBack').disabled=true;$('#fDraft').disabled=true;$('#fFill').disabled=true;
-});
-$('#fBack').addEventListener('click',function(){if(fi>0){fi--;$('#formErr').hidden=true;fShow()}});
-$('#fDraft').addEventListener('click',function(){toast('Draft saved (sample). You can return to it any time.')});
-$('#fFill').addEventListener('click',function(){
-  var v={f_name:'Maria Santos',f_dept:'Software Technology',f_year:'4',f_conf:'International Conference on Sample Computing (ICSC 2026)',f_dates:'18–20 Nov 2026',f_venue:'Kyoto, Japan',f_org:'Sample Computing Society',f_etype:'Conference',f_scope:'30000',f_index:'Scopus',f_title:'Sample Title on Edge Inference'};
-  Object.keys(v).forEach(function(k){$('#'+k).value=v[k]});
-  var amts=[12430,1200,11800,6500,3000];$$('.ex').forEach(function(i,n){i.value=amts[n]});expUpdate();toast('Example data filled in.');
-});
-expUpdate();fShow();
-
-/* ---------- tracking table ---------- */
-var TR=[
-['CCS-CG-2026-0044','Paolo Ramos','Software Technology','Sample Symposium on Edge Computing','Pending approval','Department Chair','Not yet set','10-05'],
-['CCS-CG-2026-0042','Maria Santos','Software Technology','ICSC 2026 (Kyoto)','Documents under review','Administrative Assistant',"Dean's Office (sample)",'11-27'],
-['CCS-CG-2026-0041','Lea Mendoza','Information Systems','Sample Conference on Data Systems','Returned for correction','Student','Not yet set','10-04'],
-['CCS-CG-2026-0040','Jorge Villanueva','Computer Technology','Sample Workshop on Embedded Systems','Pending approval','Adviser','Not yet set','10-06'],
-['CCS-CG-2026-0039','Anna Cruz','Information Systems','Sample Congress on Human-Computer Interaction','Awaiting documents','Student','College Fund (sample)','11-02'],
-['CCS-CG-2026-0037','Ramon Dizon','Computer Technology','Sample Forum on Networks','Final amount pending','Dean',"Dean's Office (sample)",'11-26'],
-['CCS-CG-2026-0035','Carla Uy','Software Technology','Sample Summit on AI','Approved, conference ahead','Student',"Dean's Office (sample)",'10-01'],
-['CCS-CG-2026-0030','Ivan Garcia','Information Systems','Sample Meeting on Information Retrieval','Completed','None','College Fund (sample)','10-08'],
-['CCS-CG-2026-0021','Tina Lopez','Computer Technology','Sample Meeting on Robotics','Rejected','None','Not yet set','09-18'],
-['CCS-CG-2026-0011','Maria Santos','Software Technology','Sample Seminar on Software Testing (local)','Rejected','None','Not yet set','06-12']];
-var pc={'Pending approval':'p-wait','Returned for correction':'p-warn','Documents under review':'p-wait','Awaiting documents':'p-warn','Final amount pending':'p-wait','Approved, conference ahead':'p-ok','Completed':'p-ok','Rejected':'p-bad'};
-var sset={};TR.forEach(function(r){sset[r[4]]=1});Object.keys(sset).forEach(function(s){var o=document.createElement('option');o.textContent=s;$('#t_s').appendChild(o)});
-function trk(){
-  var qq=$('#t_q').value.toLowerCase().trim(),s=$('#t_s').value,d=$('#t_d').value,f=$('#t_f').value;
-  var rows=TR.filter(function(r){return (!qq||r.slice(0,4).concat([r[2]]).join(' ').toLowerCase().indexOf(qq)>-1)&&(!s||r[4]===s)&&(!d||r[2]===d)&&(!f||r[6]===f)});
-  $('#trk tbody').innerHTML=rows.map(function(r){return '<tr><td class="mono">'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td><span class="pill '+pc[r[4]]+'">'+r[4]+'</span></td><td>'+r[5]+'</td><td>'+r[6]+'</td><td class="r mono">'+r[7]+'</td></tr>'}).join('')||'<tr><td colspan="8" class="muted">No applications match these filters.</td></tr>';
-  $('#t_n').textContent=rows.length+' of '+TR.length+' sample applications (dates are month-day, 2026)';
-}
-['t_q','t_s','t_d','t_f'].forEach(function(id){$('#'+id).addEventListener('input',trk)});trk();
-
-/* ---------- verification screen ---------- */
-var DOCS=[['Proof of acceptance or invitation','LN_FN-ICSC-Notification-20261105.pdf v1','verified'],['Conference paper','LN_FN-ICSC-Paper-20261105.pdf v1','verified'],['Scanned official receipts or invoices','LN_FN-ICSC-Receipts-20261121.pdf v1','verified'],['Copy of billing statement','LN_FN-ICSC-Billing-20261121.pdf v1','verified'],['Currency conversion rate and details','LN_FN-ICSC-FX-20261121.pdf v1','verified'],['Itinerary receipt and invoice','LN_FN-ICSC-Itinerary-20261121.pdf v1','verified'],['Student ID','LN_FN-ICSC-StudentID-20261121.jpg v1 (blurry)','returned'],['Article for CCS website or newsletter (300–500 words)','LN_FN-ICSC-Article-20261121.docx v1 (412 words)','submitted'],['High-resolution social media graphic','LN_FN-ICSC-Graphic-20261121.png v1','submitted'],['Other supporting documents','Not required for this application','na'],['Conference report','LN_FN-ICSC-Report-20261122.pdf v1','submitted']];
-var vp={verified:['p-ok','Verified'],returned:['p-warn','Returned, awaiting student'],submitted:['p-wait','Submitted'],na:['p-idle','Not applicable'],missing:['p-bad','Missing']};
-function vdocs(){
-  $('#vdocs tbody').innerHTML=DOCS.map(function(d,i){
-    var act=d[2]==='submitted'?'<button class="btn sm" data-vv="'+i+'">Verify</button> <button class="btn warn sm" data-vr="'+i+'">Return</button>':'<span class="muted">–</span>';
-    return '<tr><td>'+d[0]+'</td><td class="mono">'+esc(d[1])+'</td><td><span class="pill '+vp[d[2]][0]+'">'+vp[d[2]][1]+'</span></td><td>'+act+'</td></tr>'}).join('');
-  var app=DOCS.filter(function(d){return d[2]!=='na'}),ok=app.filter(function(d){return d[2]==='verified'}).length;
-  $('#vcount').textContent=ok+' of '+app.length+' verified';
-}
-$('#vdocs').addEventListener('click',function(e){
-  var b=e.target.closest('button');if(!b)return;
-  if(b.dataset.vv){DOCS[b.dataset.vv][2]='verified';toast('Marked verified. Recorded with your name and the time.')}
-  else if(b.dataset.vr){DOCS[b.dataset.vr][2]='returned';toast('Returned to the student with a reason. The old version stays on file.')}
-  vdocs();
-});
-var EX=[['Registration fee',12430,12430],['Pre-departure fees',1200,1200],['Roundtrip airfare',11800,11800],['Accommodation',6500,0],['Per diem',3000,3000]];
-var cl=0,ac=0;$('#vex').innerHTML=EX.map(function(r){cl+=r[1];ac+=r[2];return '<tr><td>'+r[0]+'</td><td class="r num">'+money(r[1])+'</td><td class="r num">'+money(r[2])+'</td></tr>'}).join('');
-$('#vclaim').textContent=money(cl);$('#vacc').textContent=money(ac);
-function vcheck(){
-  var v=Number($('#v_ver').value),why=$('#v_why').value.trim(),f=$('#v_rf'),m=f.querySelector('.msg'),msg='';
-  if(!(v>=0)||$('#v_ver').value==='')msg='Enter the verified amount.';
-  else if(v>30000)msg='The verified amount is above the ₱30,000 international limit on the form.';
-  else if(v!==30000&&!why)msg='Explain why the verified amount differs from the requested ₱30,000.';
-  f.classList.toggle('err',!!msg&&/Explain/.test(msg));m.textContent=msg;
-  $('#vcap').textContent=v!==ac?'Note: the accepted expense total is ₱'+money(ac)+'. A different verified amount needs a reason.':'';
-  return !msg;
-}
-$('#v_ver').addEventListener('input',vcheck);$('#v_why').addEventListener('input',vcheck);
-$('#v_save').addEventListener('click',function(){if(vcheck())toast('Saved. Requested, verified and final amounts are stored as separate values.')});
-vdocs();vcheck();
-
-/* ---------- simulation ---------- */
-var LBL=['Submit','Adviser','Chair','Assoc. Dean','Dean','Conference','Documents','Verify','Correction','Verified amt','Final amt','FAO report','Filed'];
-var S=[
- {k:'submit',who:'Student · Maria Santos',t:'Submit the application',d:'The form passes validation. The system assigns a reference number and notifies the adviser.',b:[['Submit','go']]},
- {k:'appr',who:'Adviser · Dr. Reyes',role:'Adviser',next:'Department Chair',t:'Adviser decision',d:'Review the application and the attached paper, acceptance letter and proof of indexing.'},
- {k:'appr',who:'Department Chair · Dr. Tan',role:'Department Chair',next:'Associate Dean',t:'Department Chair decision',d:'Only available after the adviser has approved.'},
- {k:'appr',who:'Associate Dean · Dr. Lim',role:'Associate Dean',next:'Dean',t:'Associate Dean decision',d:'Only available after the Chair has approved.'},
- {k:'appr',who:'Dean · Dr. Ong',role:'Dean',next:null,t:'Dean decision and funding source',d:'The Dean approves or rejects the grant and indicates the funding source.',fund:true},
- {k:'conf',who:'System',t:'Conference takes place (18–20 Nov 2026)',d:'The grant is approved. After the conference ends, the student has 7 working days to submit the article, graphic and reimbursement documents, as the guidelines require.',b:[['Advance to the end of the conference','go']]},
- {k:'upload',who:'Student · Maria Santos',t:'Upload documents and request reimbursement',d:'Each of the 11 documents has its own upload field, including the 300–500 word article and the graphic. The student itemises expenses and requests ₱30,000.',b:[['Upload all documents and submit request','go']]},
- {k:'verify1',who:'Administrative Assistant · A. Dela Cruz',t:'Check the documents',d:'The Student ID photo is blurry. You can return it for correction, or verify everything.',b:[['Return Student ID for correction','warn'],['Verify all documents','go']]},
- {k:'replace',who:'Student · Maria Santos',t:'Replace the Student ID',d:'A new version is uploaded. Version 1 stays on record.',b:[['Upload new Student ID (v2)','go']]},
- {k:'verify2',who:'Administrative Assistant · A. Dela Cruz',t:'Verify and enter the verified amount',d:'All documents verified. Accommodation ₱6,500 is outside the inclusive dates, so the accepted total is ₱28,430. A reason is required because it differs from the requested ₱30,000.',amt:'ver'},
- {k:'final',who:'Dean · Dr. Ong',t:'Record the final reimbursement amount',d:'Confirm or change the amount. A change from the verified amount needs a reason.',amt:'fin'},
- {k:'report',who:'System',t:'Generate the FAO report (draft)',d:'Report fields are filled from stored records. It stays a draft until the official FAO template is supplied.',b:[['Generate report','go']]},
- {k:'file',who:'Administrative Assistant · A. Dela Cruz',t:'Review the report and mark it filed',d:'The generated copy is linked to the application.',b:[['Mark reviewed and filed','go']]}
-];
-var sim;
-function fmt(d){return new Date(d.getTime()+8*3600e3).toISOString().slice(0,16).replace('T',' ')}
-function reset(){sim={i:0,status:'Draft',ref:null,log:[],mail:[],keys:{},clock:new Date(Date.UTC(2026,9,2,1,14)),req:30000,ver:null,fin:null,fund:null,state:'run',ret:null,n:0,skipped:false};render()}
-function tick(h){sim.clock=new Date(sim.clock.getTime()+h*3600e3)}
-function log(who,what,cls){sim.log.unshift({t:fmt(sim.clock),who:who,what:what,cls:cls||''})}
-function mail(ev,to,subj){var key=ev+':'+(sim.ref||'new')+':'+to+':'+sim.n;if(sim.keys[key])return;sim.keys[key]=1;sim.mail.unshift({to:to,subj:'['+(sim.ref||'new')+'] '+subj,t:fmt(sim.clock),status:sim.status})}
-function setStatus(s){sim.status=s}
-function render(){
-  $('#sSteps').innerHTML=LBL.map(function(l,i){
-    var c=''; if(sim.state==='rejected'&&i===sim.i)c='bad'; else if(sim.state==='done'||i<sim.i||(i===8&&sim.skipped&&sim.i>8))c='done'; else if(i===sim.i&&sim.state!=='rejected')c='now';
-    return '<li class="'+c+'">'+l+'</li>'}).join('');
-  $('#sRef').textContent=sim.ref||'No reference yet';
-  var st=$('#sStatus');st.textContent=sim.status;
-  st.className='pill '+(sim.state==='rejected'?'p-bad':sim.state==='done'?'p-ok':sim.status.indexOf('Returned')===0?'p-warn':'p-idle');
-  $('#aReq').textContent=sim.ref?money(sim.req):'–';$('#aVer').textContent=sim.ver==null?'–':money(sim.ver);$('#aFin').textContent=sim.fin==null?'–':money(sim.fin);$('#aFund').textContent=sim.fund||'not set';
-  $('#sLog').innerHTML=sim.log.length?sim.log.map(function(l){return '<div'+(l.cls?' style="background:var(--bad-soft)"':'')+'><span><b>'+esc(l.who)+'</b> · '+esc(l.what)+'</span><span class="mono muted">'+l.t+' +08:00</span></div>'}).join(''):'<div class="muted">No actions yet.</div>';
-  $('#sMail').innerHTML=sim.mail.length?sim.mail.map(function(m){return '<div><span><b>To '+esc(m.to)+'</b> · '+esc(m.subj)+'</span><span class="mono muted">'+m.t+' · email + in-app · status: '+esc(m.status)+'</span></div>'}).join(''):'<div class="muted">Nothing sent yet.</div>';
-  var btns=$('#sBtns'),extra=$('#sExtra'),rw=$('#sReasonWrap');btns.innerHTML='';extra.innerHTML='';rw.hidden=true;$('#sMsg').textContent='';$('#sReason').value='';
-  if(sim.state==='rejected'){setCard('System','Application closed','The application was rejected. The reason, the earlier approvals and all documents stay on record. The student sees the reason.');return}
-  if(sim.state==='done'){setCard('System','Completed','The application is complete. Decisions, documents, amounts and the report copy are retained.');return}
-  if(sim.ret){setCard('Student · Maria Santos','Edit and resubmit','Returned by '+sim.ret.by+': "'+sim.ret.why+'". After the student resubmits, the file goes back to the same approver, not to the start.');addBtn('Resubmit with corrections','go',resubmit);return}
-  var s=S[sim.i];setCard(s.who,s.t,s.d);
-  if(s.k==='appr'){
-    rw.hidden=false;
-    if(s.fund){extra.innerHTML='<div class="field"><label for="sFund">Funding source (required to approve)</label><select id="sFund"><option value="">Select</option><option>Dean\'s Office (sample)</option><option>College Fund (sample)</option></select></div>'}
-    addBtn('Approve','go',function(){decide('Approve')});addBtn('Return for correction','warn',function(){decide('Return')});addBtn('Reject','bad',function(){decide('Reject')});
-  }else if(s.amt==='ver'){
-    rw.hidden=false;extra.innerHTML='<div class="field"><label for="sVer">Verified amount (₱)</label><input id="sVer" type="number" min="0" value="28430"></div>';
-    addBtn('Save verified amount','go',saveVer);
-  }else if(s.amt==='fin'){
-    rw.hidden=false;extra.innerHTML='<div class="field"><label for="sFin">Final approved amount (₱)</label><input id="sFin" type="number" min="0" value="'+sim.ver+'"></div>';
-    addBtn('Approve final amount','go',saveFin);addBtn('Return to Administrative Assistant','warn',retFin);
-  }else{ s.b.forEach(function(b,n){addBtn(b[0],b[1],function(){act(n)})}) }
-}
-function setCard(w,t,d){$('#sActor').textContent=w;$('#sTitle').textContent=t;$('#sDesc').textContent=d}
-function addBtn(label,cls,fn){var b=document.createElement('button');b.type='button';b.className='btn'+(cls==='go'?'':' '+cls);b.textContent=label;b.addEventListener('click',fn);$('#sBtns').appendChild(b)}
-function need(msg){$('#sMsg').textContent=msg;$('#sReasonWrap').classList.add('err');$('#sReason').focus()}
-function reason(){return $('#sReason').value.trim()}
-function decide(kind){
-  var s=S[sim.i],r=reason();$('#sReasonWrap').classList.remove('err');
-  if((kind==='Reject'||kind==='Return')&&!r){need(kind==='Reject'?'A reason is required to reject.':'A comment is required to return the file.');return}
-  if(kind==='Approve'&&s.fund){var f=$('#sFund').value;if(!f){toast('Select a funding source before approving.');return}sim.fund=f}
-  tick(26);
-  if(kind==='Approve'){
-    log(s.who,'Approved'+(sim.fund&&s.fund?' · funding: '+sim.fund:'')+(r?' · "'+r+'"':''));
-    if(s.next){setStatus('Pending: '+s.next);sim.i++;mail('approval_required',s.next,'Action required: review grant application');mail('step_approved','Student','Approved by '+s.role+', now with '+s.next)}
-    else{setStatus('Approved: conference pending');sim.i++;mail('grant_approved','Student','Your grant is approved. Funding source recorded.')}
-  }else if(kind==='Return'){
-    log(s.who,'Returned for correction · "'+r+'"');setStatus('Returned for correction');sim.ret={by:s.role,why:r};mail('returned','Student','Application returned for correction');
-  }else{
-    log(s.who,'Rejected · "'+r+'"');setStatus('Rejected');sim.state='rejected';mail('rejected','Student','Application rejected');
-  }
-  render();
-}
-function resubmit(){tick(20);sim.n++;var by=sim.ret.by;sim.ret=null;log('Student · Maria Santos','Resubmitted with corrections (new version saved, old version kept)');setStatus('Pending: '+by);mail('approval_required',by,'Action required: resubmitted application');render()}
-function act(n){
-  var s=S[sim.i];tick(24);
-  if(s.k==='submit'){sim.ref='CCS-CG-2026-0042';log(s.who,'Submitted. Reference '+sim.ref+' assigned.');setStatus('Pending: Adviser');mail('submitted','Student','Application submitted');mail('approval_required','Adviser','Action required: review grant application');sim.i=1}
-  else if(s.k==='conf'){sim.clock=new Date(Date.UTC(2026,10,21,2,0));log('System','Conference ended. 7-working-day clock for documents started.');setStatus('Documents due');mail('docs_due','Student','Documents due within 7 working days');sim.i=6}
-  else if(s.k==='upload'){log(s.who,'Uploaded 11 documents; requested ₱30,000 with itemised expenses');setStatus('Documents submitted');mail('reimb_submitted','Administrative Assistant','Reimbursement request submitted');sim.i=7}
-  else if(s.k==='verify1'){
-    if(n===0){log(s.who,'Returned Student ID (blurry photo); other documents verified');setStatus('Returned: documents');mail('doc_returned','Student','Document returned: Student ID');sim.i=8}
-    else{log(s.who,'Verified all 11 documents');setStatus('Documents verified');sim.skipped=true;sim.i=9}
-  }
-  else if(s.k==='replace'){log(s.who,'Replaced Student ID (v2)');setStatus('Documents under review');mail('doc_replaced','Administrative Assistant','Replacement uploaded: Student ID');sim.i=9}
-  else if(s.k==='report'){log('System','FAO report generated (DRAFT, copy v1 linked to application)');setStatus('Report ready for review');mail('report_ready','Administrative Assistant','Reimbursement report ready for review');sim.i=12}
-  else if(s.k==='file'){log(s.who,'Report reviewed and marked filed');setStatus('Completed');sim.state='done';sim.i=12;mail('completed','Student','Reimbursement completed')}
-  render();
-}
-function saveVer(){
-  var v=Number($('#sVer').value),r=reason();$('#sReasonWrap').classList.remove('err');
-  if($('#sVer').value===''||!(v>=0)){toast('Enter the verified amount.');return}
-  if(v>30000){toast('Above the ₱30,000 limit on the form.');return}
-  if(v!==sim.req&&!r){need('Explain why the verified amount differs from the requested amount.');return}
-  tick(48);sim.ver=v;log(S[9].who,'Documents verified. Verified amount ₱'+money(v)+(r?' · reason: "'+r+'"':''));setStatus('Verified: awaiting final approval');mail('verified','Dean','Verified amount ready for final approval');sim.i=10;render();
-}
-function saveFin(){
-  var v=Number($('#sFin').value),r=reason();$('#sReasonWrap').classList.remove('err');
-  if($('#sFin').value===''||!(v>=0)){toast('Enter the final amount.');return}
-  if(v>sim.ver){toast('The final amount cannot exceed the verified amount in this simulation.');return}
-  if(v!==sim.ver&&!r){need('Explain why the final amount differs from the verified amount.');return}
-  tick(20);sim.fin=v;log(S[10].who,'Final amount ₱'+money(v)+' approved · funding: '+sim.fund+(r?' · "'+r+'"':''));setStatus('Reimbursement approved');mail('reimb_approved','Student','Reimbursement approved');sim.i=11;render();
-}
-function retFin(){var r=reason();$('#sReasonWrap').classList.remove('err');if(!r){need('A comment is required to return the amount.');return}tick(10);log(S[10].who,'Returned amount to Administrative Assistant · "'+r+'"');setStatus('Returned: verification');sim.ver=null;sim.n++;mail('amount_returned','Administrative Assistant','Verified amount returned for review');sim.i=9;render()}
-function deny(who,what){tick(0.1);log(who,'DENIED (403) · '+what,'bad');render();toast('Refused by the backend and written to the audit trail.')}
-$('#secSelf').addEventListener('click',function(){deny('Student · Maria Santos','tried to approve own application '+(sim.ref||'(draft)')+'. Applicants cannot approve their own file.')});
-$('#secSkip').addEventListener('click',function(){
-  if(sim.state!=='run'||sim.i>3){toast('The approval sequence is not active now. Restart to try this.');return}
-  var nxt=sim.i===0?'Student submission':S[sim.i].role;
-  deny('Dean · Dr. Ong','tried to approve out of sequence. Next required step: '+nxt+'.')});
-$('#secRole').addEventListener('click',function(){deny('Administrative Assistant · A. Dela Cruz','tried to record the final reimbursement amount. Only the Dean, or a permitted Secretary, may do this.')});
-$('#sReset').addEventListener('click',reset);
-reset();
-
-var h='';try{h=location.hash.slice(1)}catch(e){}
-var startHash='';
-startHash=h;buildLogin();
 })();
 </script>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ui2.js"></script>
+<script>CCS.start();</script>
 
 </body></html>

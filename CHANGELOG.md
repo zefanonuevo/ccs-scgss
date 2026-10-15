@@ -12,10 +12,45 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 1.1.0 to 1.1.2 | 15 Oct 2026 | GitHub. One commit each, listed below. |
 | 1.2.0 | 15 Oct 2026 | GitHub. This version history change. |
 | 1.3.0 | 15 Oct 2026 | GitHub. Sign-in first and role tabs. |
+| 2.0.0 | 15 Oct 2026 | GitHub. Working routing, approvals, post-activity reports and Google records. |
 
 # Versions
 
-## 1.3.0 (15 Oct 2026 · Prototype · current)
+## 2.0.0 (15 Oct 2026 · Prototype · current)
+
+A working simulation. One application now travels through every role, with real routing rules, notifications, a post-activity report, verification and a reimbursement report. Because how people work changes (a new routing order, a Dean e-signature and a new verification step), this is a major version.
+
+### Added
+
+- **Routing engine**: Thesis Adviser (set in the form), Department Chair (set by degree program), Associate Dean (set once in Settings), then Dean. Each step starts automatically after the previous decision, with an email and an in-app notice.
+- **Endorse, Return with remarks, Reject.** Return keeps earlier decisions and goes back to the same approver after the student resubmits. Reject needs a reason and closes the application.
+- **Dean approval** with an approved amount and funding source per expense line, capped at ₱30,000 international or ₱15,000 local, and a drawn digital signature.
+- **Comments and clarifications** between the student and the approvers, with file uploads.
+- **Document preview** on the page for every approver; each preview is written to the history.
+- **Post-activity report**: actual expenses on the five pre-defined lines, peso conversion rate, a checklist of the nine post-conference documents, and one consolidated PDF.
+- **Verification** by the Administrative Assistant: tick each document found in the PDF, add remarks, set the approved amount and funding source per item, then verify or return.
+- **Reimbursement report** for the Accounting Office, printable to PDF, with a CSV download.
+- **Dashboards** with Assigned, Pending, Approved, Returned and Rejected for approvers and staff, and a progress bar for students.
+- **Approval History** for every update, including denied attempts.
+- **Sheet & Drive** view of what the Google Sheet row and Drive folder hold, and `google/Code.gs`, an Apps Script that writes the real rows, files and emails.
+- **Settings** for routing, funding sources and the Google link; **Simulation** with a full demo, security checks and a reminder check; seeded applications at every stage; a Notifications tab; a Tracking tab with filters and CSV export.
+- Data Privacy consent (a draft notice for the Data Protection Officer to review), Thesis Adviser, academic year and term fields, and a confirmation that all requirements are in one PDF.
+
+### Changed
+
+- **Department is now Degree Program** (BSCS, BSIT, BSIS; the third was typed as BSIT twice, so BSIS is assumed).
+- References and file names follow `AY-Term-Number`, for example `2627-Term1-001` (`-v2` for new versions, `-C1` for clarification files, `-PAR` for post-activity reports).
+- The dashboards, tracking table, verification and report read live data instead of fixed samples. Data is saved in the browser.
+- The Dean's final-amount step was removed: the Dean sets the grant, and the Administrative Assistant sets the reimbursement.
+- Review & suggestions was rewritten around these changes.
+
+### Known limits
+
+- Data lives in one browser; sign out and in to switch roles. Google sync only runs when a script URL is set.
+- The Accounting Office template was not supplied, so the report layout is final in structure but may need re-laying out.
+- The drawn signature is not a certified digital signature. The 7-working-day deadline skips weekends, not holidays.
+
+## 1.3.0 (15 Oct 2026 · Prototype · commit 2cb28a6)
 
 The app now opens on a sign-in screen, then on a dashboard that matches the role. Tabs are grouped by role, and Review & suggestions moves to the end, just before Versions.
 
