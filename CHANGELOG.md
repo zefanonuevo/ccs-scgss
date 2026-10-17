@@ -14,10 +14,20 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 1.3.0 | 15 Oct 2026 | GitHub. Sign-in first and role tabs. |
 | 2.0.0 | 15 Oct 2026 | GitHub. Working routing, approvals, post-activity reports and Google records. |
 | 2.0.1 | 15 Oct 2026 | GitHub. Report template wording. |
+| 2.1.0 | 18 Oct 2026 | GitHub. CCS Portal colors. |
 
 # Versions
 
-## 2.0.1 (15 Oct 2026 · Prototype · current)
+## 2.1.0 (18 Oct 2026 · Prototype · current)
+
+The colors now match the CCS Portal website. Every feature works as before.
+
+### Changed
+
+- Light and dark colors follow the portal palette: Ink, Forest, Mint, Paper and Amber. Text, lines and surfaces are slightly different shades; the green accent is unchanged.
+- The header version tag now reads v2.1.0.
+
+## 2.0.1 (15 Oct 2026 · Prototype)
 
 Wording fixes only.
 
