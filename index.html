@@ -11,6 +11,13 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b5d45'/%3E%3Cpath d='M8 11h16M8 16h11M8 21h7' stroke='white' stroke-width='2.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://zefanonuevo.github.io/ccs-design/ccs-tokens.css?v=2">
 <style>
+/* Portal palette (from ccs-portal-website tokens.css), applied over the shared ccs-design tokens.
+   Ink, Forest, Mint, Paper, Amber. Same variable names as ccs-design, so nothing else changes. */
+:root{--paper:#f4f7f3;--surface:#ffffff;--raised:#ffffff;--ink:#111a15;--muted:#4d5d55;--line:#cfdbd3;--accent:#0b5d45;--accent-fill:#0b5d45;--accent-ink:#ffffff;--accent-soft:#dcebe2;--warn:#8a5a00;--warn-soft:#f3e7cf}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#0b130f;--surface:#121d17;--raised:#17261e;--ink:#f4f7f3;--muted:#9fb3a8;--line:#243529;--accent:#5fcfa5;--accent-ink:#06251a;--accent-soft:#183b2e;--warn:#e6b765;--warn-soft:#3a2c12}}
+:root[data-theme="dark"]{--paper:#0b130f;--surface:#121d17;--raised:#17261e;--ink:#f4f7f3;--muted:#9fb3a8;--line:#243529;--accent:#5fcfa5;--accent-ink:#06251a;--accent-soft:#183b2e;--warn:#e6b765;--warn-soft:#3a2c12}
+</style>
+<style>
 /* Layout: sticky frosted toolbar with a segmented tab strip; one view at a time in a 1120px column.
    Shared tokens (color, shadow, easing, type, theme switch) load from ccs-design. Older names used by this file resolve to them: */
 :root{
