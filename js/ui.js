@@ -1,4 +1,4 @@
-/* CCS SCGSS v2.0 screens, part 1: sign-in, navigation, dashboards, application page, application form, post-activity report. */
+/* CCS SCGSS v3.0 screens, part 1: sign-in, navigation, dashboards, application page, application form, post-activity report. */
 (function(C){
 "use strict";
 const {$,$$,money,esc,fmtT,fmtD,fmtSize,pad3,round2}=C.u;
@@ -11,7 +11,7 @@ const opt=(v,l,sel)=>'<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(l
 const ini=n=>{const p=n.replace(/^(Dr|Prof|Ms|Mr)\.\s+/,'').split(' ');return (p[0][0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase()};
 const pill=a=>{const i=C.info(a);return '<span class="pill '+i.cls+'">'+esc(i.label)+'</span>'};
 const stepsHTML=a=>{const st=C.stepState(a);return '<ol class="steps">'+C.STEP_LABELS.map((l,i)=>'<li class="'+st[i]+'">'+l+'</li>').join('')+'</ol>'};
-const isStaff=()=>['admin','secretary','sysadmin'].indexOf(u().role)>-1;
+const isStaff=()=>['admin','sysadmin'].indexOf(u().role)>-1;
 const msgs=C.toast=m=>toast(m);
 
 /* ---------- tabs and roles ---------- */
@@ -20,7 +20,7 @@ const ALL=TABS.map(t=>t[0]);
 const APPR=['dash','notif','guide','flow','overview','ver'];
 const ROLE_TABS={student:['dash','form','par','notif','guide','flow','overview','ver'],adviser:APPR,chair:APPR,assoc:APPR,dean:APPR,
   admin:['dash','track','verify','rpt','records','notif','guide','flow','sim','scen','overview','ver'],
-  secretary:['dash','track','rpt','records','notif','guide','flow','scen','overview','ver'],sysadmin:ALL};
+  sysadmin:ALL};
 const views=$$('.view'),tabsEl=$('#tabs');
 const myTabs=()=>u()?TABS.filter(t=>ROLE_TABS[u().role].indexOf(t[0])>-1):[];
 const allowed=id=>myTabs().some(t=>t[0]===id);
@@ -82,11 +82,12 @@ function buildLogin(){
    '<p class="note">Data entered here is saved in this browser only, so you can sign in as each role in turn and watch one application move.</p>'+
    '<p class="note"><button type="button" class="lnk" data-showver>See the full version history</button> (no sign-in needed)</p></section>'+
    '<section class="accs" aria-label="Sample accounts"><h2>Sample accounts</h2><p class="note">Pick one, then press Sign in. Each role sees its own dashboard and tabs.</p>'+
-   grp('Student',by('student'))+grp('Thesis advisers',by('adviser'))+grp('Department chairs (one per degree program)',by('chair'))+grp('Associate Dean and Dean',by('assoc','dean'))+grp('Office staff',by('admin','secretary'))+grp('Project owner (every tab)',by('sysadmin'))+'</section></div>';
+   grp('Student',by('student'))+grp('Thesis advisers',by('adviser'))+grp('Department chairs (one per degree program)',by('chair'))+grp('Associate Dean and Dean',by('assoc','dean'))+grp('Office staff',by('admin'))+grp('Project owner (every tab)',by('sysadmin'))+'</section></div>';
   if(!$('#ver-back')){const vb=document.createElement('button');vb.type='button';vb.id='ver-back';vb.className='btn sec sm';vb.textContent='Back to sign in';vb.hidden=true;$('#v-ver').insertBefore(vb,$('#v-ver').firstChild)}
 }
 function doLogin(acc,hash){
   state.user=acc;try{sessionStorage.setItem('ccs-scgss-user',acc.email)}catch(e){}
+  E.autoRemind();
   buildTabs();$('#tabbar').hidden=false;$('#me').hidden=false;
   $('#me').innerHTML='<span class="av">'+ini(acc.name)+'</span><span><b>'+esc(acc.name)+'</b><small>'+esc(acc.label)+'</small></span><button type="button" class="btn sm ghost" data-logout>Sign out</button>';
   show(hash&&allowed(hash)?hash:'dash',true);
@@ -101,10 +102,9 @@ document.addEventListener('submit',e=>{
 
 /* ---------- shared pieces ---------- */
 const kpi=(n,l)=>'<div class="kpi"><b>'+n+'</b><span>'+l+'</span></div>';
-const fundOptions=sel=>'<option value="">Select</option>'+D().settings.funding.map(f=>opt(f,f,f===sel)).join('');
 function canView(a){const r=u().role,e=u().email;
   if(r==='student')return a.studentEmail===e;
-  if(CHAIN.indexOf(r)>-1)return a.route[r]===e;
+  if(CHAIN.indexOf(r)>-1)return CHAIN.some(k=>a.route[k]===e);
   return true;}
 function listTable(list,o){
   o=o||{};
@@ -114,30 +114,37 @@ function listTable(list,o){
     return '<tr><td><button class="lnk mono" data-open="'+a.id+'">'+esc(a.ref)+'</button></td>'+(o.noStudent?'':'<td>'+esc(a.studentName)+' <span class="muted">· '+a.program+'</span></td>')+
     '<td>'+esc(a.conf.title)+'<div class="muted">'+fmtD(a.conf.start)+(a.conf.end!==a.conf.start?' to '+fmtD(a.conf.end):'')+' · '+esc(a.conf.venue)+'</div></td>'+
     '<td class="r num">'+money(C.projected(a))+(a.grant?'<div class="muted">grant '+money(a.grant.total)+'</div>':'')+'</td>'+
-    '<td><span class="pill '+i.cls+'">'+esc(i.label)+'</span>'+(a.status==='pending'?'<div class="muted">'+esc(i.who)+'</div>':'')+'</td>'+
+    '<td><span class="pill '+i.cls+'">'+esc(i.label)+'</span>'+(a.status==='pending'?'<div class="muted">'+esc(i.who)+'</div>':'')+'</td>'+(o.rfp?'<td class="mono">'+(a.report?esc(a.report.rfp):'<span class="muted">–</span>')+'</td>':'')+
     '<td class="mono muted">'+fmtT(a.updated).slice(5)+'</td><td>'+(o.action?o.action(a):'<button class="btn sm sec" data-open="'+a.id+'">Open</button>')+'</td></tr>'}).join('');
-  return '<div class="tbl"><table class="lt"><thead><tr><th>Reference</th>'+(o.noStudent?'':'<th>Student</th>')+'<th>Conference</th><th class="r">Projected (₱)</th><th>Status</th><th>Updated</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="tbl"><table class="lt"><thead><tr><th>Reference</th>'+(o.noStudent?'':'<th>Student</th>')+'<th>Conference</th><th class="r">Projected (₱)</th><th>Status</th>'+(o.rfp?'<th>RFP</th>':'')+'<th>Updated</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function matches(a,q){return !q||[a.ref,a.studentName,a.conf.title,a.program,a.conf.venue,C.info(a).label].join(' ').toLowerCase().indexOf(q.toLowerCase())>-1}
 C.listTable=listTable;C.pill=pill;C.stepsHTML=stepsHTML;C.matches=matches;
 
 /* ---------- dashboards ---------- */
 let dashF='pending',dashQ='';
-function approverBuckets(role,email){
-  const mine=D().apps.filter(a=>a.route[role]===email);
-  return {assigned:mine,pending:mine.filter(a=>a.status==='pending'&&CHAIN[a.stage]===role),
-    approved:mine.filter(a=>a.decisions[role]&&['endorsed','approved'].indexOf(a.decisions[role].d)>-1),
-    returned:mine.filter(a=>a.status==='returned'&&a.returned.role===role),rejected:mine.filter(a=>a.status==='rejected'&&a.rejected.role===role)};
+const dashP={ay:'',term:''}; /* period filter for the approver and staff dashboards */
+const periodApps=()=>D().apps.filter(a=>(!dashP.ay||a.ay===dashP.ay)&&(!dashP.term||a.term===dashP.term));
+const periodLabel=()=>(dashP.ay?ayLabel(dashP.ay):'All academic years')+' · '+(dashP.term?dashP.term.replace('Term','Term '):'All terms');
+function periodBar(){
+  return '<div class="row" style="max-width:560px;margin:12px 0 0"><div class="field"><label for="dp_ay">Academic year</label><select id="dp_ay"><option value="">All academic years</option>'+C.AYS.map(v=>opt(v,ayLabel(v),dashP.ay===v)).join('')+'</select></div>'+
+   '<div class="field"><label for="dp_term">Term</label><select id="dp_term"><option value="">All terms</option>'+C.TERMS.map(v=>opt(v,v.replace('Term','Term '),dashP.term===v)).join('')+'</select></div></div>';
 }
-function staffBuckets(){
-  const all=D().apps;
+/* an approver may hold more than one signing step on an application (for example a Chair who is also the Thesis Adviser), so buckets follow the person, not the role */
+function approverBuckets(email,apps){
+  const mine=apps.filter(a=>CHAIN.some(k=>a.route[k]===email));
+  return {assigned:mine,pending:mine.filter(a=>a.status==='pending'&&a.route[CHAIN[a.stage]]===email),
+    approved:mine.filter(a=>Object.keys(a.decisions).some(k=>a.decisions[k].email===email&&['endorsed','approved'].indexOf(a.decisions[k].d)>-1)),
+    returned:mine.filter(a=>a.status==='returned'&&a.route[a.returned.role]===email),rejected:mine.filter(a=>a.status==='rejected'&&a.route[a.rejected.role]===email)};
+}
+function staffBuckets(all){
   return {assigned:all,pending:all.filter(a=>a.status==='approved'&&a.post.status==='submitted'),approved:all.filter(a=>a.status==='verified'||a.status==='completed'),
     returned:all.filter(a=>a.status==='returned'||(a.status==='approved'&&a.post.status==='returned')),rejected:all.filter(a=>a.status==='rejected')};
 }
 const CHIPS=[['assigned','Assigned'],['pending','Pending'],['approved','Approved'],['returned','Returned'],['rejected','Rejected']];
 const CHIP_HELP={
   approver:{assigned:'Every application routed to you',pending:'Waiting for your decision now',approved:'You endorsed or approved',returned:'You returned to the student',rejected:'You rejected'},
-  staff:{assigned:'All applications',pending:'Reports waiting for verification',approved:'Verified or completed',returned:'Returned to students',rejected:'Rejected'}};
+  staff:{assigned:'All applications',pending:'Reports waiting for verification',approved:'Verified or filed at the FAO',returned:'Returned to students',rejected:'Rejected'}};
 function chipsHTML(b,help){return '<div class="kpis chips">'+CHIPS.map(c=>'<button type="button" class="kpi" data-act="dfilter" data-f="'+c[0]+'" aria-pressed="'+(dashF===c[0])+'"><b>'+b[c[0]].length+'</b><span>'+c[1]+' <small class="muted">· '+help[c[0]]+'</small></span></button>').join('')+'</div>'}
 function dashList(b,o){
   const list=b[dashF].filter(a=>matches(a,dashQ));
@@ -146,23 +153,25 @@ function dashList(b,o){
 }
 ACT.dfilter=t=>{dashF=t.dataset.f;R.dash()};
 document.addEventListener('input',e=>{if(e.target.id==='dsearch'){dashQ=e.target.value;const p=e.target.selectionStart;R.dash();const el=$('#dsearch');if(el){el.focus();el.setSelectionRange(p,p)}}});
+document.addEventListener('change',e=>{if(e.target.id==='dp_ay'||e.target.id==='dp_term'){dashP[e.target.id==='dp_ay'?'ay':'term']=e.target.value;R.dash()}});
 R.dash=function(){
   const r=u().role,body=$('#dashBody');
   if(r==='student')body.innerHTML=dashStudent();
   else if(CHAIN.indexOf(r)>-1){
-    const b=approverBuckets(r,u().email);
-    body.innerHTML='<header><h2>'+esc(CH[r].label)+' dashboard</h2><p class="muted">Your applications by status. Pick a box to filter the list. You can act only when it is your turn.</p></header>'+
+    const apps=periodApps(),b=approverBuckets(u().email,apps);
+    const granted=b.approved.filter(a=>a.grant&&a.grant.byEmail===u().email);
+    body.innerHTML='<header><h2>'+esc(u().label)+' dashboard</h2><p class="muted">Your applications by status. Pick a box to filter the list. You can act only when it is your turn.</p></header>'+
       (b.pending.length?'<div class="callout info"><b>'+b.pending.length+'</b> application'+(b.pending.length>1?'s':'')+' waiting for your decision.</div>':'<div class="callout ok">Nothing is waiting for you.</div>')+
-      chipsHTML(b,CHIP_HELP.approver)+(r==='dean'?'<div class="kpis" style="margin-top:12px">'+kpi('₱'+money(C.total(b.approved.filter(a=>a.grant).map(a=>({v:a.grant.total})),'v')),'Total grants you approved')+'</div>':'')+
-      '<div class="card" style="margin-top:14px">'+dashList(b,{action:a=>a.status==='pending'&&CHAIN[a.stage]===r?'<button class="btn sm" data-open="'+a.id+'">Review</button>':'<button class="btn sm sec" data-open="'+a.id+'">Open</button>'})+'</div>';
+      periodBar()+chipsHTML(b,CHIP_HELP.approver)+(r==='dean'?'<div class="kpis" style="margin-top:12px">'+kpi('₱'+money(C.total(granted.map(a=>({v:a.grant.total})),'v')),'Total grants approved · '+periodLabel())+kpi(granted.length,'Grants approved in this period')+'</div>':'')+
+      '<div class="card" style="margin-top:14px">'+dashList(b,{action:a=>a.status==='pending'&&a.route[CHAIN[a.stage]]===u().email?'<button class="btn sm" data-open="'+a.id+'">Review</button>':'<button class="btn sm sec" data-open="'+a.id+'">Open</button>'})+'</div>';
   }else{
-    const b=staffBuckets(),all=D().apps,wait=all.filter(a=>['completed','rejected'].indexOf(a.status)<0&&Date.now()-a.updated>2*864e5);
-    const grants=C.total(all.filter(a=>a.grant).map(a=>({v:a.grant.total})),'v'),reimb=C.total(all.filter(a=>a.post.verify&&a.post.verify.total!=null&&!a.post.verify.draft).map(a=>({v:a.post.verify.total})),'v');
-    body.innerHTML='<header><h2>'+esc(u().label)+' dashboard</h2><p class="muted">'+(r==='admin'?'Validate post-activity documents, edit reimbursement amounts, and generate the reimbursement report.':r==='secretary'?'Monitor every application. You can view and send reminders, but not verify or approve.':'All applications, with every tab available for testing.')+'</p></header>'+
-      chipsHTML(b,CHIP_HELP.staff)+
-      '<div class="kpis" style="margin-top:12px">'+kpi('₱'+money(grants),'Grants approved by the Dean')+kpi('₱'+money(reimb),'Reimbursement approved')+kpi(wait.length,'Waiting more than 2 days')+kpi(D().notifs.filter(n=>n.to===u().email&&!n.read).length,'Unread notifications')+'</div>'+
+    const all=periodApps(),b=staffBuckets(all),wait=all.filter(a=>['completed','rejected'].indexOf(a.status)<0&&Date.now()-a.updated>2*864e5);
+    const grants=C.total(all.filter(a=>a.grant).map(a=>({v:a.grant.total})),'v'),reimb=C.total(all.filter(a=>a.post.verify&&a.post.verify.total!=null&&!a.post.verify.draft).map(a=>({v:a.post.verify.total})),'v'),filed=all.filter(a=>a.status==='completed');
+    body.innerHTML='<header><h2>'+esc(u().label)+' dashboard</h2><p class="muted">'+(r==='admin'?'Validate post-activity documents, edit reimbursement items, download the reimbursement report and record the RFP.':'All applications, with every tab available for testing.')+'</p></header>'+
+      periodBar()+chipsHTML(b,CHIP_HELP.staff)+
+      '<div class="kpis" style="margin-top:12px">'+kpi('₱'+money(grants),'Grants approved by the Dean · '+periodLabel())+kpi('₱'+money(reimb),'Reimbursement approved')+kpi(filed.length,'Filed at FAO (RFP recorded)')+kpi(all.filter(a=>a.status==='verified').length,'Verified, RFP still to record')+kpi(wait.length,'Waiting more than 2 days')+kpi(D().notifs.filter(n=>n.to===u().email&&!n.read).length,'Unread notifications')+'</div>'+
       '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+(wait.length?'<button class="btn sec" data-act="sweep">Send reminders for the '+wait.length+' waiting</button>':'')+'<button class="btn sec" data-go="track">Open the tracking table</button></div>'+
-      '<div class="card" style="margin-top:14px">'+dashList(b,{action:a=>{
+      '<div class="card" style="margin-top:14px">'+dashList(b,{rfp:true,action:a=>{
         if(r==='admin'&&a.status==='approved'&&a.post.status==='submitted')return '<button class="btn sm" data-act="verifyopen" data-id="'+a.id+'">Verify</button>';
         if(a.status==='verified'||a.status==='completed')return '<button class="btn sm sec" data-act="rptopen" data-id="'+a.id+'">Report</button>';
         return '<button class="btn sm sec" data-open="'+a.id+'">Open</button>'}})+'</div>';
@@ -173,11 +182,12 @@ ACT.verifyopen=t=>{C.verifySel=t.dataset.id;show('verify',true)};
 ACT.rptopen=t=>{C.rptSel=t.dataset.id;show('rpt',true)};
 function dashStudent(){
   const mine=D().apps.filter(a=>a.studentEmail===u().email).sort((x,y)=>y.updated-x.updated),n=D().notifs.filter(x=>x.to===u().email);
-  const needs=[];
+  const needs=[],today=C.manilaToday();
   mine.forEach(a=>{
     if(a.status==='returned')needs.push('<div class="callout"><b>'+a.ref+'</b> was returned by your '+CH[a.returned.role].label+': "'+esc(a.returned.why)+'" <button class="btn sm" data-open="'+a.id+'" style="margin-left:8px">Reply or edit</button></div>');
-    if(a.status==='approved'&&a.post.status==='none')needs.push('<div class="callout info"><b>'+a.ref+'</b> is approved. Submit the post-activity report (one PDF) by <b>'+fmtD(C.dueDate(a))+'</b> (7 working days after '+fmtD(a.conf.end)+'). <button class="btn sm" data-act="gopar" data-id="'+a.id+'" style="margin-left:8px">Submit report</button></div>');
-    if(a.status==='approved'&&a.post.status==='returned')needs.push('<div class="callout"><b>'+a.ref+'</b> post-activity report was returned: "'+esc(a.post.verify&&a.post.verify.overall||'see remarks')+'" <button class="btn sm" data-act="gopar" data-id="'+a.id+'" style="margin-left:8px">Correct and resubmit</button></div>');
+    if(a.status==='approved'&&a.post.status==='none'){const left=C.daysBetween(today,C.dueDate(a)),late=left<0;
+      needs.push('<div class="callout '+(late?'':'info')+'"><b>'+a.ref+'</b> is approved. Submit the post-activity report and reimbursement requirements (one PDF) by <b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after '+fmtD(a.conf.end)+')'+(today>=a.conf.end?(late?'. <b>It is overdue by '+(-left)+' day'+(left===-1?'':'s')+'.</b>':'. '+left+' day'+(left===1?'':'s')+' left.'):'. You will get a reminder by email and in-app.')+' <button class="btn sm" data-act="gopar" data-id="'+a.id+'" style="margin-left:8px">Submit report</button></div>')}
+    if(a.status==='approved'&&a.post.status==='returned')needs.push('<div class="callout"><b>'+a.ref+'</b> post-activity requirements were returned: "'+esc(a.post.verify&&a.post.verify.overall||'see remarks')+'" <button class="btn sm" data-act="gopar" data-id="'+a.id+'" style="margin-left:8px">Correct and resubmit</button></div>');
   });
   const cnt=g=>mine.filter(a=>C.info(a).group===g).length;
   return '<header><h2>My grants</h2><p class="muted">Follow each application from submission to reimbursement. Open one for the documents, messages and full history.</p></header>'+
@@ -185,7 +195,7 @@ function dashStudent(){
    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:14px 0"><button class="btn" data-go="form">Start new application</button><button class="btn sec" data-go="guide">View guidelines</button></div>'+
    (needs.length?'<h3 style="margin:8px 0">Needs your action</h3><div style="display:grid;gap:8px">'+needs.join('')+'</div>':'<div class="callout ok">Nothing needs your action right now.</div>')+
    '<div class="grid g2" style="margin-top:14px;align-items:start"><div style="display:grid;gap:14px">'+(mine.map(a=>{const i=C.info(a);return '<div class="card"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px"><div><span class="mono">'+esc(a.ref)+'</span><h3>'+esc(a.conf.title)+'</h3><span class="muted">'+esc(a.conf.venue)+' · '+fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+'</span></div><span class="pill '+i.cls+'">'+esc(i.label)+'</span></div>'+stepsHTML(a)+
-     '<p class="muted">'+(a.status==='pending'?'With the <b style="color:var(--fg)">'+i.by+'</b>, '+esc(i.who)+'.':a.status==='returned'?'Next action: <b style="color:var(--fg)">you</b> reply to the remarks.':a.status==='approved'&&a.post.status==='none'?'Approved: ₱'+money(a.grant.total)+' · '+esc(a.grant.fund)+'. Next action: <b style="color:var(--fg)">you</b> submit the report.':a.status==='rejected'?'Reason: '+esc(a.rejected.why):a.status==='verified'||a.status==='completed'?'Approved reimbursement ₱'+money(a.post.verify.total)+'.':'Waiting for the '+i.by+'.')+'</p>'+
+     '<p class="muted">'+(a.status==='pending'?'With the <b style="color:var(--fg)">'+i.by+'</b>, '+esc(i.who)+'.':a.status==='returned'?'Next action: <b style="color:var(--fg)">you</b> reply to the remarks.':a.status==='approved'&&a.post.status==='none'?'Approved grant: ₱'+money(a.grant.total)+'. Next action: <b style="color:var(--fg)">you</b> submit the report by '+fmtD(C.dueDate(a))+'.':a.status==='rejected'?'Reason: '+esc(a.rejected.why):a.status==='completed'?'Approved reimbursement ₱'+money(a.post.verify.total)+'. Processed at the FAO under RFP <b style="color:var(--fg)">'+esc(a.report.rfp)+'</b>. You may check with the FAO after 5 to 10 working days for an update.':a.status==='verified'?'Approved reimbursement ₱'+money(a.post.verify.total)+'. The Administrative Assistant will file it at the FAO.':'Waiting for the '+i.by+'.')+'</p>'+
      '<div style="margin-top:8px"><button class="btn sm sec" data-open="'+a.id+'">Open</button></div></div>'}).join('')||'<div class="card muted">You have no applications yet. Start one with the button above.</div>')+'</div>'+
    '<div class="card"><h4>Latest notifications</h4><div class="log" style="border:0;max-height:none;margin-top:8px">'+(n.slice(0,6).map(x=>'<div'+(x.read?'':' class="unread"')+'><b>'+esc(x.title)+'</b><span class="muted">'+esc(x.body.slice(0,140))+(x.body.length>140?'…':'')+'</span><span class="mono muted">'+fmtT(x.at)+' · <button class="lnk" data-open="'+x.appId+'">open</button></span></div>').join('')||'<div class="muted">No notifications yet.</div>')+'</div><p style="margin-top:8px"><button class="lnk" data-go="notif">See all</button></p></div></div>';
 }
@@ -247,58 +257,63 @@ function factsHTML(a){
   return '<dl class="who">'+p('Student',a.studentName+' · ID '+a.sid+' · '+a.program+' · year '+a.year)+p('Thesis Adviser',C.nameOf(a.route.adviser))+p('Department Chair',C.nameOf(a.route.chair)+' ('+a.program+')')+p('Associate Dean',C.nameOf(a.route.assoc))+p('Dean',C.nameOf(a.route.dean))+
    p('Conference',a.conf.title)+p('Dates · venue',fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+' · '+a.conf.venue)+p('Organizer · type',a.conf.org+' · '+a.conf.etype)+p('Travel',a.conf.scope==='international'?'International (limit ₱30,000)':'Local (limit ₱15,000)')+
    p('Paper',a.paper.title+' · '+a.paper.ptype+' · '+a.paper.cls)+p('Indexed in',a.paper.index)+p('Co-authors',[a.paper.coF&&'Faculty: '+a.paper.coF,a.paper.coS&&'Student: '+a.paper.coS].filter(Boolean).join(' · '))+
-   p('Privacy consent',a.privacy?'Accepted '+fmtT(a.privacy.at):'')+p('Grant',a.grant?'₱'+money(a.grant.total)+' · '+a.grant.fund+' · e-signed by '+a.grant.by:'Not yet approved')+'</dl>';
+   p('Privacy consent',a.privacy?'Accepted '+fmtT(a.privacy.at):'')+p('Grant',a.grant?'₱'+money(a.grant.total)+' · e-signed by '+a.grant.by:'Not yet approved')+'</dl>';
 }
 function expensesHTML(a,editDean){
   const rows=a.expenses.map((x,i)=>'<tr><td>'+esc(x.type)+'</td><td class="r num">'+money(x.amount)+'</td>'+
-    (editDean?'<td class="r"><input class="dl-appr" type="number" min="0" max="'+x.amount+'" value="'+x.amount+'" aria-label="Approved amount for '+esc(x.type)+'" style="width:110px;text-align:right"></td><td><select class="dl-fund" aria-label="Funding source for '+esc(x.type)+'">'+fundOptions('')+'</select></td>'
-    :'<td class="r num">'+(x.approved==null?'<span class="muted">pending</span>':money(x.approved))+'</td><td>'+(x.fund?esc(x.fund):'<span class="muted">Assigned by the Dean</span>')+'</td>')+'<td class="muted">'+esc(x.remarks)+'</td></tr>').join('');
+    (editDean?'<td class="r"><input class="dl-appr" type="number" min="0" step="0.01" max="'+x.amount+'" value="'+x.amount+'" aria-label="Approved amount for '+esc(x.type)+'" style="width:110px;text-align:right"></td><td><input class="dl-fund" type="text" maxlength="80" placeholder="e.g. Dean\'s Office fund" aria-label="Funding source for '+esc(x.type)+'" style="width:100%"></td>'
+    :'<td class="r num">'+(x.approved==null?'<span class="muted">pending</span>':money(x.approved))+'</td><td>'+(x.fund?esc(x.fund):(x.approved===0?'<span class="muted">Not funded</span>':'<span class="muted">Assigned by the Dean</span>'))+'</td>')+'<td class="muted">'+esc(x.remarks)+'</td></tr>').join('');
   const pt=C.projected(a);
-  return '<div class="tbl"><table><thead><tr><th>Expense</th><th class="r">Projected (₱)</th><th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Total</th><th class="r num">'+money(pt)+'</th><th class="r num" id="dl_total">'+(a.grant?money(a.grant.total):editDean?money(pt):'–')+'</th><th colspan="2" class="muted" id="dl_note" style="text-transform:none;letter-spacing:0;font-weight:400"></th></tr></tfoot></table></div>';
+  return '<div class="tbl"><table><thead><tr><th>Expense</th><th class="r">Projected (₱)</th><th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Total</th><th class="r num">'+money(pt)+'</th><th class="r num" id="dl_total">'+(a.grant?money(a.grant.total):editDean?money(pt):'–')+'</th><th colspan="2" class="muted" id="dl_note" style="text-transform:none;letter-spacing:0;font-weight:400"></th></tr></tfoot></table></div>'+(editDean?'<p class="muted" style="margin-top:6px">Set the approved amount and the funding source for each line. A line can be 0 when it is not funded; it then needs no funding source.</p>':'');
 }
 function historyHTML(a){
   return '<div class="tbl"><table><thead><tr><th>When</th><th>By</th><th>Action</th><th>Details</th></tr></thead><tbody>'+a.history.slice().reverse().map(h=>'<tr'+(h.cls?' class="denied"':'')+'><td class="mono muted">'+fmtT(h.at)+'</td><td>'+esc(h.by)+(h.role!=='system'?'<div class="muted">'+esc(ROLE_NAME[h.role]||h.role)+'</div>':'')+'</td><td><b>'+esc(h.action)+'</b></td><td>'+esc(h.note)+'</td></tr>').join('')+'</tbody></table></div>';
 }
 C.historyHTML=historyHTML;
+function whoLabel(a,e){return e===a.studentEmail?a.studentName+' (Student)':C.acct(e)?C.acct(e).name+' ('+C.acct(e).label+')':e}
 function commentsHTML(a){
-  const canSay=a.studentEmail===u().email||Object.keys(a.route).some(k=>a.route[k]===u().email)||(u().role==='admin'&&['approved','verified','completed'].indexOf(a.status)>-1);
-  return '<div class="thread">'+(a.comments.map(c=>'<div class="cm'+(c.email===u().email?' mine':'')+'"><div class="cm-h"><b>'+esc(c.by)+'</b> <span class="muted">· '+esc(ROLE_NAME[c.role])+' · '+fmtT(c.at)+'</span></div>'+(c.text?'<p>'+esc(c.text).replace(/\n/g,'<br>')+'</p>':'')+(c.files.length?'<p>'+c.files.map(id=>'<button class="btn sm sec" data-act="preview" data-id="'+id+'">'+esc(D().files[id].name)+'</button>').join(' ')+'</p>':'')+'</div>').join('')||'<p class="muted">No messages yet. Use this for clarifications between the student and the people who review the application.</p>')+'</div>'+
-   (canSay?'<div class="field" style="margin-top:10px"><label for="c_text">Message</label><textarea id="c_text" rows="3" placeholder="Ask for or give a clarification"></textarea></div><div class="field" style="margin-top:8px"><label for="c_files">Attach documents (optional)</label><input id="c_files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"><small>PDF, JPG or PNG, 10 MB each. Saved as '+esc(a.ref)+'-C1, -C2 and so on.</small></div><div class="msg" id="c_msg" style="color:var(--bad);font-size:12px"></div><button class="btn" data-act="comment" style="margin-top:8px">Send message</button>':'');
+  const me=u().email,canSay=a.studentEmail===me||CHAIN.some(k=>a.route[k]===me)||u().role==='admin';
+  const rc=C.participants(a).filter(e=>e!==me),def=C.counterparts(a,u());
+  return '<div class="thread">'+(a.comments.map(c=>'<div class="cm'+(c.email===me?' mine':'')+'"><div class="cm-h"><b>'+esc(c.by)+'</b> <span class="muted">· '+esc(ROLE_NAME[c.role])+(c.to&&c.to.length?' → '+esc(c.to.map(e=>C.nameOf(e)).join(', ')):'')+' · '+fmtT(c.at)+'</span></div>'+(c.text?'<p>'+esc(c.text).replace(/\n/g,'<br>')+'</p>':'')+(c.files.length?'<p>'+c.files.map(id=>'<button class="btn sm sec" data-act="preview" data-id="'+id+'">'+esc(D().files[id].name)+'</button>').join(' ')+'</p>':'')+'</div>').join('')||'<p class="muted">No messages yet. Use this to ask for or give a clarification: the student, each signatory and the Administrative Assistant can write to one another here.</p>')+'</div>'+
+   (canSay?'<fieldset class="field" style="margin-top:10px;border:0;padding:0"><legend class="muted" style="font-size:12px">Send to</legend><div style="display:flex;flex-wrap:wrap;gap:4px 14px">'+rc.map(e=>'<label class="chk"><input type="checkbox" class="c-to" value="'+esc(e)+'"'+(def.indexOf(e)>-1?' checked':'')+'><span>'+esc(whoLabel(a,e))+'</span></label>').join('')+'</div><small>Everyone on the application can read the thread. Only the people you tick are notified by email and in-app.</small></fieldset>'+
+    '<div class="field" style="margin-top:10px"><label for="c_text">Message</label><textarea id="c_text" rows="3" placeholder="Ask for or give a clarification"></textarea></div><div class="field" style="margin-top:8px"><label for="c_files">Attach documents (optional)</label><input id="c_files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"><small>PDF, JPG or PNG, 10 MB each. Saved as '+esc(a.ref)+'-C1, -C2 and so on.</small></div><div class="msg" id="c_msg" style="color:var(--bad);font-size:12px"></div><button class="btn" data-act="comment" style="margin-top:8px">Send message</button>':'');
 }
 function actionHTML(a){
-  const r=u().role,i=C.info(a);let h='';
-  if(r==='student'&&a.studentEmail===u().email){
+  const r=u().role,me=u().email,i=C.info(a);let h='';
+  if(r==='student'&&a.studentEmail===me){
     if(a.status==='returned')h+='<div class="card"><h3>Returned to you</h3><div class="callout"><b>'+esc(a.returned.by)+'</b> ('+CH[a.returned.role].label+'): '+esc(a.returned.why)+'</div><p class="muted" style="margin:8px 0">Earlier decisions are kept. After you resubmit, the file goes back to the '+CH[a.returned.role].label+', not to the start.</p>'+
       '<div class="field"><label for="r_text">Your reply</label><textarea id="r_text" rows="3" placeholder="Explain what you changed or attached"></textarea></div><div class="field" style="margin-top:8px"><label for="r_files">Attach documents (optional)</label><input id="r_files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"></div><div class="msg" id="r_msg" style="color:var(--bad);font-size:12px"></div>'+
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button class="btn sec" data-act="editapp">Edit the application</button><button class="btn" data-act="resubmit">Resubmit with my reply</button></div></div>';
-    else if(a.status==='approved'&&['none','returned'].indexOf(a.post.status)>-1)h+='<div class="card"><h3>Next: post-activity report</h3><p>Due <b>'+fmtD(C.dueDate(a))+'</b>. One consolidated PDF with all the documents, plus your actual expenses.</p><button class="btn" style="margin-top:8px" data-act="gopar" data-id="'+a.id+'">'+(a.post.status==='returned'?'Correct and resubmit the report':'Submit post-activity report')+'</button></div>';
-    else h+='<div class="card"><h3>Status</h3><p>'+esc(i.label)+'. '+(a.status==='pending'?'Waiting for the '+i.by+'.':'')+'</p></div>';
+    else if(a.status==='approved'&&['none','returned'].indexOf(a.post.status)>-1)h+='<div class="card"><h3>Next: post-activity report</h3><p>Due <b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after the event). One consolidated PDF with all the documents, plus the receipts you are claiming.</p><button class="btn" style="margin-top:8px" data-act="gopar" data-id="'+a.id+'">'+(a.post.status==='returned'?'Correct and resubmit the report':'Submit post-activity report')+'</button></div>';
+    else h+='<div class="card"><h3>Status</h3><p>'+esc(i.label)+'. '+(a.status==='pending'?'Waiting for the '+i.by+'.':a.status==='completed'?'You may check with the FAO after 5 to 10 working days for an update.':'')+'</p></div>';
   }
-  else if(CHAIN.indexOf(r)>-1&&a.route[r]===u().email){
-    const mine=a.status==='pending'&&CHAIN[a.stage]===r,d=a.decisions[r];
+  else if(CHAIN.some(k=>a.route[k]===me)){
+    const s=CHAIN[a.stage],mine=a.status==='pending'&&a.route[s]===me;
+    const done=CHAIN.filter(k=>a.decisions[k]&&a.decisions[k].email===me&&a.decisions[k].d!=='returned').map(k=>CH[k].label+': '+a.decisions[k].d+' '+fmtT(a.decisions[k].at)).join(' · ');
     if(mine){
-      const dean=r==='dean',total=C.filesOf(a).filter(f=>!f.superseded).length;
-      h+='<div class="card"><h3>Your decision as '+CH[r].label+'</h3><p class="muted">Preview the documents first. <b id="viewcount">'+viewedCount(a)+'</b> of '+total+' previewed by you.</p>'+
-       (dean?'<div class="field" style="margin-top:10px"><label for="d_fund">Funding source for the grant</label><select id="d_fund">'+fundOptions('')+'</select><small>Applies to every line below unless you change a line.</small></div>'+
-        '<div class="field" style="margin-top:10px"><label>Your digital signature</label><canvas id="sigpad" class="sigpad" aria-label="Signature pad. Draw your signature."></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><button type="button" class="btn sm sec" data-act="sigclear">Clear</button><button type="button" class="btn sm sec" data-act="sigsaved">Use my saved signature</button><button type="button" class="btn sm sec" data-act="sigsample">Insert sample signature</button></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="d_remember"> Remember my signature on this browser</label></div>':'')+
-       '<div class="field" style="margin-top:10px"><label for="d_note">Remarks <span class="muted">(required to Return or Reject)</span></label><textarea id="d_note" rows="3"></textarea></div><div class="msg" id="d_msg" style="color:var(--bad);font-size:12px"></div>'+
-       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="decide" data-k="'+(dean?'approve':'endorse')+'">'+(dean?'Approve and sign':'Endorse')+'</button><button class="btn warn" data-act="decide" data-k="return">Return with remarks</button><button class="btn bad" data-act="decide" data-k="reject">Reject…</button></div></div>';
-    }else h+='<div class="card"><h3>Your part</h3><p>'+(d?'You '+d.d+' this application on '+fmtT(d.at)+'.':a.status==='pending'?'It is not your turn yet. It is with the '+i.by+'.':esc(i.label)+'.')+'</p></div>';
+      const dean=s==='dean',total=C.filesOf(a).filter(f=>!f.superseded).length;
+      h+='<div class="card"><h3>Your decision as '+CH[s].label+'</h3><p class="muted">Preview the documents first. <b id="viewcount">'+viewedCount(a)+'</b> of '+total+' previewed by you.</p>'+
+       (dean?'<div class="field" style="margin-top:10px"><label>Your digital signature</label><canvas id="sigpad" class="sigpad" aria-label="Signature pad. Draw your signature."></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><button type="button" class="btn sm sec" data-act="sigclear">Clear</button><button type="button" class="btn sm sec" data-act="sigsaved">Use my saved signature</button><button type="button" class="btn sm sec" data-act="sigupload">Upload a signature image</button><button type="button" class="btn sm sec" data-act="sigsample">Insert sample signature</button><input type="file" id="sigfile" accept="image/png,image/jpeg" hidden></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="d_remember"> Remember my signature on this browser</label><small>Only the Dean signs. The endorsers appear on the reimbursement report with the date they endorsed.</small></div>':'')+
+       '<div class="field" style="margin-top:10px"><label for="d_note">Remarks <span class="muted">(required to Return or Reject)</span></label><textarea id="d_note" rows="3"></textarea></div><div class="msg" id="d_msg" style="color:var(--bad);font-size:12px"></div><div id="d_confirm"></div>'+
+       '<div id="d_btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="decide" data-k="'+(dean?'approve':'endorse')+'">'+(dean?'Review and approve':'Endorse')+'</button><button class="btn warn" data-act="decide" data-k="return">Return with remarks</button><button class="btn bad" data-act="decide" data-k="reject">Reject…</button></div></div>';
+    }else h+='<div class="card"><h3>Your part</h3><p>'+(done?esc(done)+'.':a.status==='pending'?'It is not your turn yet. It is with the '+i.by+'.':esc(i.label)+'.')+'</p></div>';
   }
   else if(r==='admin'){
-    h+='<div class="card"><h3>Administrative Assistant</h3>'+(a.status==='approved'&&a.post.status==='submitted'?'<button class="btn" data-act="verifyopen" data-id="'+a.id+'">Verify post-activity documents</button>':a.status==='verified'||a.status==='completed'?'<button class="btn" data-act="rptopen" data-id="'+a.id+'">Open reimbursement report</button>':'<p class="muted">'+esc(i.label)+'. Nothing to verify yet.</p>')+'</div>';
+    h+='<div class="card"><h3>Administrative Assistant</h3>'+(a.status==='approved'&&a.post.status==='submitted'?'<button class="btn" data-act="verifyopen" data-id="'+a.id+'">Verify post-activity documents</button>':a.status==='verified'||a.status==='completed'?'<button class="btn" data-act="rptopen" data-id="'+a.id+'">Open reimbursement report</button>':'<p class="muted">'+esc(i.label)+'. Nothing to verify yet.</p>')+'<p class="muted" style="margin-top:8px">To clarify something with the student, a signatory or the Dean, use <b>Messages and clarifications</b> below.</p></div>';
   }
-  if(['admin','secretary','sysadmin'].indexOf(r)>-1&&['completed','rejected'].indexOf(a.status)<0)h+='<div class="card"><h4>Reminder</h4><p class="muted">Send an email and in-app reminder to whoever is holding this application.</p><button class="btn sec sm" style="margin-top:6px" data-act="remind" data-id="'+a.id+'">Send reminder</button></div>';
+  if(['admin','sysadmin'].indexOf(r)>-1&&['completed','rejected'].indexOf(a.status)<0)h+='<div class="card"><h4>Reminder</h4><p class="muted">Send an email and in-app reminder to whoever is holding this application.</p><button class="btn sec sm" style="margin-top:6px" data-act="remind" data-id="'+a.id+'">Send reminder</button></div>';
   return h;
 }
 function postHTML(a){
   if(a.post.status==='none')return '';
-  const p=a.post,v=p.verify;
+  const p=a.post,v=p.verify,ok=v&&!v.draft;
+  const flagged=v&&v.returns?C.REQ_POST.filter(r=>v.returns[r[0]]):[];
   return '<div class="card"><h3>Post-activity report <span class="pill '+(p.status==='verified'?'p-ok':p.status==='returned'?'p-warn':'p-wait')+'">'+p.status+'</span></h3>'+
-   '<p class="muted">Currency '+esc(p.cur)+' · peso rate '+p.rate+' · submitted '+fmtT(p.submittedAt)+(p.cycle>1?' (version '+p.cycle+')':'')+'</p>'+
-   '<div class="tbl" style="margin-top:8px"><table><thead><tr><th>Expense</th><th class="r">Claimed (₱)</th>'+(v&&!v.draft?'<th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th>':'')+'</tr></thead><tbody>'+
-   p.lines.map((l,i)=>'<tr><td>'+esc(l.type)+'</td><td class="r num">'+money(l.claimed)+'</td>'+(v&&!v.draft?'<td class="r num">'+money(v.lines[i].approved)+'</td><td>'+esc(v.lines[i].fund)+'</td><td class="muted">'+esc(v.lines[i].why)+'</td>':'')+'</tr>').join('')+
-   '</tbody><tfoot><tr><th>Total</th><th class="r num">'+money(p.claimedTotal)+'</th>'+(v&&!v.draft?'<th class="r num">'+money(v.total)+'</th><th colspan="2"></th>':'')+'</tr></tfoot></table></div>'+
+   '<p class="muted">Submitted '+fmtT(p.submittedAt)+(p.cycle>1?' (version '+p.cycle+'; earlier versions stay on record)':'')+'</p>'+
+   (p.status==='returned'&&flagged.length?'<div class="callout" style="margin-top:8px"><b>Requirements returned:</b> '+flagged.map(r=>esc(r[1])+(v.remarks[r[0]]?' ('+esc(v.remarks[r[0]])+')':'')).join('; ')+'</div>':'')+
+   '<div class="tbl" style="margin-top:8px"><table><thead><tr><th>Expense</th><th>OR or invoice no.</th><th>Merchant</th><th class="r">For reimbursement (₱)</th>'+(ok?'<th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th>':'')+'</tr></thead><tbody>'+
+   p.items.map((l,i)=>{const w=ok?v.items[i]:null;return '<tr><td>'+esc(l.type)+'</td><td class="mono">'+esc(w?w.or:l.or)+'</td><td>'+esc(w?w.merchant:l.merchant)+'</td><td class="r num">'+money(l.amount)+'</td>'+(w?'<td class="r num">'+money(w.approved)+'</td><td>'+esc(w.fund)+'</td><td class="muted">'+esc(w.why)+'</td>':'')+'</tr>'}).join('')+
+   '</tbody><tfoot><tr><th colspan="3">Total (approved grant ₱'+money(a.grant.total)+')</th><th class="r num">'+money(p.claimedTotal)+'</th>'+(ok?'<th class="r num">'+money(v.total)+'</th><th colspan="2"></th>':'')+'</tr></tfoot></table></div>'+
    '<h4 style="margin-top:12px">Documents the student says are in the PDF</h4><p class="muted">'+C.REQ_POST.map(r=>(p.docs[r[0]]?'✓ ':'✗ ')+r[1]).join(' · ')+'</p>'+(p.missingNote?'<p class="muted">Note: '+esc(p.missingNote)+'</p>':'')+'</div>';
 }
 C.postHTML=postHTML;
@@ -325,7 +340,18 @@ function dlTotals(){
   $('#dl_note').style.color=t>cap?'var(--bad)':'';
 }
 document.addEventListener('input',e=>{if(e.target.classList.contains('dl-appr'))dlTotals()});
-document.addEventListener('change',e=>{if(e.target.id==='d_fund'){$$('.dl-fund').forEach(s=>{s.value=e.target.value})}});
+document.addEventListener('change',e=>{
+  if(e.target.id==='sigfile'){
+    const f=e.target.files[0];if(!f)return;
+    if(f.size>2*1048576){toast('The signature image must be under 2 MB.');e.target.value='';return}
+    const rd=new FileReader();
+    rd.onload=()=>{const img=new Image(),cv=$('#sigpad');img.onload=()=>{ACT.sigclear();const k=Math.min((cv._w-20)/img.width,(cv._h-20)/img.height),w=img.width*k,h=img.height*k;cv._x.drawImage(img,(cv._w-w)/2,(cv._h-h)/2,w,h);cv.dataset.signed='1'};img.src=rd.result};
+    rd.readAsDataURL(f);e.target.value='';
+  }
+});
+ACT.sigupload=()=>{const el=$('#sigfile');if(el)el.click()};
+/* The Dean first sees a summary and confirms. Nothing is recorded until Confirm approval. */
+let pendingApproval=null;
 ACT.decide=function(t){
   const a=D().apps.find(x=>x.id===state.curApp),k=t.dataset.k,note=$('#d_note').value.trim(),msg=$('#d_msg');msg.textContent='';
   let res;
@@ -334,16 +360,36 @@ ACT.decide=function(t){
   else if(k==='reject'){if(!note){msg.textContent='A reason is required to reject.';$('#d_note').focus();return}if(!confirm('Reject this application? It will be closed and the student notified.'))return;res=E.reject(u(),a,note)}
   else{
     const cv=$('#sigpad'),signed=cv&&cv.dataset.signed==='1';
-    res=E.approveGrant(u(),a,{fund:$('#d_fund').value,signature:signed?cv.toDataURL('image/png'):'',note,lines:$$('.dl-appr').map((i,n)=>({approved:i.value,fund:$$('.dl-fund')[n].value}))});
-    if(res.ok&&$('#d_remember').checked){D().sigs[u().email]=cv.toDataURL('image/png');C.save()}
+    const o={signature:signed?cv.toDataURL('image/png'):'',note,lines:$$('.dl-appr').map((i,n)=>({approved:i.value,fund:$$('.dl-fund')[n].value}))};
+    const chk=E.approveGrant(u(),a,Object.assign({dry:true},o));
+    if(chk.err){msg.textContent=chk.err;toast(chk.err);return}
+    pendingApproval=o;
+    const rows=a.expenses.map((x,n)=>({type:x.type,amt:Number(o.lines[n].approved),fund:String(o.lines[n].fund).trim()})).filter(x=>x.amt>0);
+    $('#d_confirm').innerHTML='<div class="callout info" style="margin-top:10px" role="group" aria-label="Confirm the grant approval"><b>Confirm the grant approval</b>'+
+      '<div class="tbl" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Approved (₱)</th><th>Funding source</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.type)+'</td><td class="r num">'+money(x.amt)+'</td><td>'+esc(x.fund)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Total</th><th class="r num">'+money(chk.total)+'</th><th class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">Limit ₱'+money(C.CAP[a.conf.scope])+' ('+a.conf.scope+')</th></tr></tfoot></table></div>'+
+      '<p style="margin-top:8px">Your signature:</p><img class="sigimg" src="'+o.signature+'" alt="Your signature">'+
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="confirmapprove">Confirm approval</button><button class="btn sec" data-act="cancelconfirm">Go back and edit</button></div></div>';
+    $('#d_btns').style.display='none';$('#d_confirm').scrollIntoView({block:'nearest',behavior:'smooth'});
+    return;
   }
   if(res.err){msg.textContent=res.err;toast(res.err);return}
-  toast(k==='endorse'?'Endorsed. The next approver was notified by email and in-app.':k==='approve'?'Grant approved and signed. The student was notified by email and in-app.':k==='return'?'Returned to the student with your remarks.':'Rejected. The student was notified.');
+  toast(k==='endorse'?'Endorsed. The next approver was notified by email and in-app.':k==='return'?'Returned to the student with your remarks.':'Rejected. The student was notified.');
+  R.app();
+};
+ACT.cancelconfirm=()=>{pendingApproval=null;$('#d_confirm').innerHTML='';$('#d_btns').style.display='flex'};
+ACT.confirmapprove=function(){
+  const a=D().apps.find(x=>x.id===state.curApp),msg=$('#d_msg'),keep=$('#d_remember')&&$('#d_remember').checked;
+  if(!pendingApproval)return;
+  const res=E.approveGrant(u(),a,Object.assign({confirm:true},pendingApproval));
+  if(res.err){msg.textContent=res.err;toast(res.err);return}
+  if(keep){D().sigs[u().email]=pendingApproval.signature;C.save()}
+  pendingApproval=null;
+  toast('Grant approved and signed. The student was notified by email and in-app.');
   R.app();
 };
 ACT.comment=function(t){
-  const a=D().apps.find(x=>x.id===state.curApp),text=$('#c_text').value,fl=$('#c_files').files;
-  const done=ids=>{const r=E.comment(u(),a,text,ids);if(r.err){$('#c_msg').textContent=r.err;return}toast('Message sent. The other party was notified.');R.app()};
+  const a=D().apps.find(x=>x.id===state.curApp),text=$('#c_text').value,fl=$('#c_files').files,to=$$('.c-to').filter(c=>c.checked).map(c=>c.value);
+  const done=ids=>{const r=E.comment(u(),a,text,ids,to);if(r.err){$('#c_msg').textContent=r.err;return}toast('Message sent. The people you chose were notified.');R.app()};
   if(fl.length)stageFiles(fl).then(done).catch(e=>{$('#c_msg').textContent=e.message});else done([]);
 };
 ACT.resubmit=function(){
@@ -357,7 +403,7 @@ ACT.remind=function(t){const a=D().apps.find(x=>x.id===t.dataset.id),r=E.remind(
 const FS={step:0,mode:'new',appId:null,file:null,done:null};
 const FSTEPS=['1 Student & conference','2 Paper','3 Expenses','4 Requirements','5 Review & submit'];
 function formHTML(){
-  const adv=C.ACCOUNTS.filter(a=>a.role==='adviser');
+  const adv=C.advisers();
   return '<ol class="steps" id="fsteps">'+FSTEPS.map(s=>'<li>'+s+'</li>').join('')+'</ol><form id="appForm" novalidate>'+
   '<div class="card" data-fs="0"><h3>Application period</h3><p class="muted">The academic year and term become part of the reference number and file names, for example <span class="mono">2627-Term1-001</span>.</p>'+
    '<div class="row" style="margin-top:10px"><div class="field"><label for="f_ay">Academic year</label><select id="f_ay">'+C.AYS.map(v=>opt(v,ayLabel(v)+' ('+v+')',v==='2627')).join('')+'</select><div class="msg"></div></div>'+
@@ -367,11 +413,11 @@ function formHTML(){
    '<div class="field"><label for="f_sid">Student ID number</label><input id="f_sid" inputmode="numeric"><div class="msg"></div></div>'+
    '<div class="field"><label for="f_prog">Degree program</label><select id="f_prog"><option value="">Select</option>'+C.PROGRAMS.map(p=>opt(p[0],p[0]+' · '+p[1],p[0]===u().program)).join('')+'</select><small>Decides your Department Chair.</small><div class="msg"></div></div>'+
    '<div class="field"><label for="f_year">Year level</label><select id="f_year"><option value="">Select</option>'+[1,2,3,4,5].map(n=>opt(n,n)).join('')+'</select><div class="msg"></div></div>'+
-   '<div class="field"><label for="f_adv">Thesis Adviser</label><select id="f_adv"><option value="">Select</option>'+adv.map(a=>opt(a.email,a.name)).join('')+'</select><small>Your adviser is the first endorser and signs for the thesis.</small><div class="msg"></div></div></div>'+
+   '<div class="field"><label for="f_adv">Thesis Adviser</label><select id="f_adv"><option value="">Select</option>'+adv.map(a=>opt(a.email,a.name+(a.role==='adviser'?'':' · '+a.label))).join('')+'</select><small>Your adviser is the first endorser. If your adviser is also your Chair or Associate Dean, they endorse once and the repeated step is skipped. If the Dean is your adviser, the alternate approver signs the grant.</small><div class="msg"></div></div></div>'+
    '<h3 style="margin-top:18px">Conference details</h3><div class="row" style="margin-top:10px">'+
    '<div class="field"><label for="f_conf">Conference title</label><input id="f_conf"><div class="msg"></div></div>'+
    '<div class="field"><label for="f_start">Start date</label><input id="f_start" type="date"><div class="msg"></div></div>'+
-   '<div class="field"><label for="f_end">End date</label><input id="f_end" type="date"><small>The post-activity report is due 7 working days after this date.</small><div class="msg"></div></div>'+
+   '<div class="field"><label for="f_end">End date</label><input id="f_end" type="date"><small>The post-activity report and reimbursement requirements are due '+C.PAR_DAYS+' days after this date.</small><div class="msg"></div></div>'+
    '<div class="field"><label for="f_venue">Venue</label><input id="f_venue"><div class="msg"></div></div>'+
    '<div class="field"><label for="f_org">Organizer</label><input id="f_org"><div class="msg"></div></div>'+
    '<div class="field"><label for="f_etype">Type of event</label><select id="f_etype"><option value="">Select</option>'+['Conference','Competition','Exhibit','Public forum','Other'].map(v=>opt(v,v)).join('')+'</select><div class="msg"></div></div>'+
@@ -382,7 +428,7 @@ function formHTML(){
    '<div class="field"><label for="f_index">Indexed in</label><select id="f_index"><option value="">Select</option><option>Scopus</option><option>ISI</option><option>ASEAN Citation</option></select><small>Attach proof in step 4.</small><div class="msg"></div></div></div>'+
    '<div class="field" style="margin-top:12px"><label for="f_title">Title of paper</label><input id="f_title"><div class="msg"></div></div>'+
    '<div class="row" style="margin-top:12px"><div class="field"><label for="f_cof">Co-authors (faculty)</label><input id="f_cof"></div><div class="field"><label for="f_cos">Co-authors (student)</label><input id="f_cos"><small>Only one student co-author is funded per paper.</small></div></div></div>'+
-  '<div class="card" data-fs="2" hidden><h3>Breakdown of projected expenses</h3><p class="muted">Include the day before the conference until the day after. The Dean assigns the funding source and the approved amount when approving the grant.</p>'+
+  '<div class="card" data-fs="2" hidden><h3>Breakdown of projected expenses</h3><p class="muted">Include the day before the conference until the day after. The total cannot be more than ₱30,000 for international or ₱15,000 for local travel. The Dean assigns the approved amount and the funding source of each line when approving the grant.</p>'+
    '<div class="tbl" style="margin-top:10px"><table><thead><tr><th>Expense type</th><th class="r">Amount (₱)</th><th>Funding source</th><th>Remarks</th></tr></thead><tbody>'+
    C.EXPENSE_TYPES.map((t,i)=>'<tr><td>'+t+'</td><td><input class="ex" aria-label="'+t+' amount" type="number" min="0" style="width:110px;text-align:right"></td><td class="muted">Assigned by the Dean</td><td><input class="exr" aria-label="'+t+' remarks" style="width:100%"></td></tr>').join('')+
    '</tbody><tfoot><tr><th>Total projected</th><th class="r num" id="exTotal">0</th><th colspan="2" id="exNote" class="muted" style="text-transform:none;letter-spacing:0;font-weight:400"></th></tr></tfoot></table></div><div class="msg" id="m_ex_0" style="color:var(--bad);font-size:12px;margin-top:6px"></div></div>'+
@@ -435,7 +481,8 @@ function refUpdate(){
 function expUpdate(){
   const t=C.total(readForm().exp.map(x=>({v:x.amount})),'v');$('#exTotal').textContent=money(t);
   const cap=C.CAP[$('#f_scope').value];
-  $('#exNote').textContent=cap?(t>cap?'Above the ₱'+money(cap)+' limit stated on the form. The Dean can approve up to that limit.':'Within the ₱'+money(cap)+' limit stated on the form.'):'Choose international or local travel in step 1 to see the limit.';
+  $('#exNote').textContent=cap?(t>cap?'Above the ₱'+money(cap)+' limit by ₱'+money(round2(t-cap))+'. Reduce the amounts: the application cannot be submitted.':'Within the ₱'+money(cap)+' limit for '+$('#f_scope').value+' travel.'):'Choose international or local travel in step 1 to see the limit.';
+  $('#exNote').style.color=cap&&t>cap?'var(--bad)':'';
 }
 function showErrs(errs){
   $$('#appForm .msg').forEach(m=>m.textContent='');$$('#appForm .field').forEach(f=>f.classList.remove('invalid'));
@@ -485,7 +532,7 @@ ACT.ffill=function(){
   const m=C.registerFile({orig:'consolidated-requirements.pdf',size:pdf.size,type:'application/pdf',by:u().name});
   C.FILES.put(m.id,pdf).then(()=>{
     writeForm({ay:'2627',term:'Term1',sid:'12145678',prog:u().program||'BSCS',year:'4',adv:'adviser.reyes@college.example',conf:'Sample International Conference on Applied Computing (SICAC 2027)',start:'2027-01-18',end:'2027-01-20',venue:'Tokyo, Japan',org:'Sample Applied Computing Society',etype:'Conference',scope:'international',cls:'Paper presenter',ptype:'Full paper',index:'Scopus',title:'Sample Title on Federated Learning',cof:'Dr. Paolo Reyes',cos:'',
-      exp:[11000,1500,12000,5500,0].map((n,i)=>({amount:n||'',remarks:''})),file:{id:m.id,orig:m.orig,size:m.size},attConfirm:true,privacy:true,brand:true});
+      exp:[10000,1500,10500,5500,0].map((n,i)=>({amount:n||'',remarks:''})),file:{id:m.id,orig:m.orig,size:m.size},attConfirm:true,privacy:true,brand:true});
     toast('Example data filled in, with a sample PDF attached.');if(FS.step===4)buildReview();
   });
 };
@@ -508,67 +555,82 @@ ACT.fnew=()=>{FS.done=null;FS.mode='new';FS.appId=null;FS.file=null;R.form()};
 ACT.editapp=()=>{FS.done=null;FS.mode='edit';FS.appId=state.curApp;show('form',true)};
 
 /* ---------- post-activity report (student) ---------- */
-const PS={appId:null,file:null,done:null};
+const PS={appId:null,file:null,done:null,rows:[]};
+const blankRow=type=>({type:type||C.EXPENSE_TYPES[0],or:'',merchant:'',amount:''});
+function parRow(r,i){
+  return '<tr><td><select class="pr-type" aria-label="Expense type">'+C.EXPENSE_TYPES.map(t=>opt(t,t,r.type===t)).join('')+'</select></td>'+
+   '<td><input class="pr-or" aria-label="OR or invoice number" value="'+esc(r.or)+'" maxlength="40"></td><td><input class="pr-mer" aria-label="Merchant name" value="'+esc(r.merchant)+'" maxlength="80"></td>'+
+   '<td class="r"><input class="pr-amt" type="number" min="0" step="0.01" aria-label="Amount to be reimbursed in pesos" value="'+esc(r.amount)+'" style="width:120px;text-align:right"></td>'+
+   '<td><button type="button" class="btn sm ghost" data-act="parrm" data-i="'+i+'" aria-label="Remove this receipt">Remove</button></td></tr>';
+}
+const readRows=()=>$$('#parRows tr').map(tr=>({type:tr.querySelector('.pr-type').value,or:tr.querySelector('.pr-or').value,merchant:tr.querySelector('.pr-mer').value,amount:tr.querySelector('.pr-amt').value}));
+function renderRows(){$('#parRows').innerHTML=PS.rows.map(parRow).join('');parCalc()}
+ACT.paradd=()=>{PS.rows=readRows();PS.rows.push(blankRow());renderRows()};
+ACT.parrm=t=>{PS.rows=readRows();PS.rows.splice(+t.dataset.i,1);if(!PS.rows.length)PS.rows.push(blankRow());renderRows()};
 R.par=function(){
+  if($('#parRows'))PS.rows=readRows();
   const body=$('#parBody'),all=D().apps.filter(a=>a.studentEmail===u().email),open=all.filter(a=>a.status==='approved'&&['none','returned'].indexOf(a.post.status)>-1);
   if(PS.done){body.innerHTML=PS.done;return}
+  const prevApp=PS.appId;
   if(C.parSel&&open.some(a=>a.id===C.parSel))PS.appId=C.parSel;C.parSel=null;
   if(!open.some(a=>a.id===PS.appId))PS.appId=open[0]&&open[0].id;
   const other=all.filter(a=>a.status==='approved'&&a.post.status==='submitted'||a.status==='verified'||a.status==='completed');
   if(!open.length){body.innerHTML='<div class="callout">You have no approved grant waiting for a post-activity report.</div>'+(other.length?'<div class="card" style="margin-top:12px"><h3>Already submitted</h3>'+listTable(other,{noStudent:true})+'</div>':'')+'<p style="margin-top:12px"><button class="btn sec" data-go="dash">Back to dashboard</button></p>';return}
   const a=D().apps.find(x=>x.id===PS.appId),p=a.post,v=p.verify;
-  const pre=p.lines||[];
+  if(a.id!==prevApp||!PS.rows.length)PS.rows=p.items&&p.items.length?p.items.map(x=>({type:x.type,or:x.or,merchant:x.merchant,amount:x.amount})):a.expenses.filter(x=>x.approved>0).map(x=>blankRow(x.type));
+  const flagged=v&&v.returns?C.REQ_POST.filter(r=>v.returns[r[0]]):[];
+  const left=C.daysBetween(C.manilaToday(),C.dueDate(a));
   body.innerHTML='<div class="screen"><div class="screen-bar"><b>Post-activity report</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body">'+
    (open.length>1?'<div class="field"><label for="p_app">Application</label><select id="p_app">'+open.map(x=>opt(x.id,x.ref+' · '+x.conf.title,x.id===a.id)).join('')+'</select></div>':'')+
-   '<div class="grid g2"><dl class="who"><dt>Conference</dt><dd>'+esc(a.conf.title)+'</dd><dt>Dates</dt><dd>'+fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+'</dd><dt>Due</dt><dd><b>'+fmtD(C.dueDate(a))+'</b> (7 working days after the end date; holidays not counted)</dd><dt>Grant approved</dt><dd>₱'+money(a.grant.total)+' · '+esc(a.grant.fund)+'</dd></dl>'+
+   '<div class="grid g2"><dl class="who"><dt>Conference</dt><dd>'+esc(a.conf.title)+'</dd><dt>Dates</dt><dd>'+fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+'</dd><dt>Due</dt><dd><b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after the end date)'+(C.manilaToday()>=a.conf.end?(left<0?' · <b style="color:var(--bad)">overdue by '+(-left)+' day'+(left===-1?'':'s')+'</b>':' · '+left+' day'+(left===1?'':'s')+' left'):'')+'</dd><dt>Approved grant</dt><dd><b>₱'+money(a.grant.total)+'</b></dd></dl>'+
    '<div class="callout info"><b>Reminder: put all post-conference documents in ONE consolidated PDF:</b><ol>'+C.REQ_POST.map(r=>'<li>'+r[1]+'</li>').join('')+'</ol></div></div>'+
-   (a.post.status==='returned'?'<div class="callout"><b>Returned by the Administrative Assistant:</b> '+esc(v&&v.overall||'see the remarks below')+(v?'<ul>'+C.REQ_POST.filter(r=>v.remarks[r[0]]).map(r=>'<li>'+r[1]+': '+esc(v.remarks[r[0]])+'</li>').join('')+'</ul>':'')+'</div>':'')+
-   '<h3>Actual expenses, from your receipts or invoices</h3><div class="row" style="max-width:520px"><div class="field"><label for="p_cur">Currency on the receipts</label><select id="p_cur">'+['PHP','USD','EUR','JPY','SGD','Other'].map(c=>opt(c,c,(p.cur||(a.conf.scope==='local'?'PHP':'USD'))===c)).join('')+'</select></div><div class="field"><label for="p_rate">Peso conversion rate (₱ per 1 unit)</label><input id="p_rate" type="number" min="0" step="0.0001" value="'+(p.rate||(a.conf.scope==='local'?1:''))+'"><small>Use 1 for pesos. Attach the proof (bank or card statement).</small></div></div>'+
-   '<div class="tbl"><table><thead><tr><th>Expense (pre-defined)</th><th class="r">Dean-approved (₱)</th><th class="r">Amount on receipts</th><th class="r">In pesos (₱)</th></tr></thead><tbody>'+
-   C.EXPENSE_TYPES.map((t,i)=>'<tr><td>'+t+'</td><td class="r num">'+money(a.expenses[i].approved)+'</td><td class="r"><input class="pl-orig" type="number" min="0" step="0.01" aria-label="'+t+' amount on receipts" value="'+(pre[i]?pre[i].orig:'')+'" style="width:120px;text-align:right"></td><td class="r num pl-peso">0</td></tr>').join('')+
-   '</tbody><tfoot><tr><th>Total</th><th class="r num">'+money(a.grant.total)+'</th><th></th><th class="r num" id="pl_total">0</th></tr></tfoot></table></div><div class="msg" id="p_msg_lines" style="color:var(--bad);font-size:12px"></div>'+
-   '<h3>Documents included in the PDF</h3><div class="chk-grid">'+C.REQ_POST.map(r=>'<label class="chk"><input type="checkbox" class="pl-doc" data-k="'+r[0]+'"'+((p.docs||{})[r[0]]?' checked':'')+'><span>'+r[1]+'</span></label>').join('')+'</div>'+
+   (a.post.status==='returned'?'<div class="callout"><b>Returned by the Administrative Assistant:</b> '+esc(v&&v.overall||'see the remarks below')+(flagged.length?'<br><b>Requirements to clarify or resubmit:</b>':'')+(v?'<ul>'+flagged.map(r=>'<li>'+r[1]+(v.remarks[r[0]]?': '+esc(v.remarks[r[0]]):'')+'</li>').join('')+C.REQ_POST.filter(r=>!v.returns[r[0]]&&v.remarks[r[0]]).map(r=>'<li>'+r[1]+': '+esc(v.remarks[r[0]])+'</li>').join('')+'</ul>':'')+'<span class="muted">Upload the corrected PDF. It is saved as a new version (for example '+esc(a.ref)+'-PAR-v'+(p.cycle+1)+') and the original stays on record.</span></div>':'')+
+   '<h3>Receipts and amounts to be reimbursed</h3><p class="muted">List each receipt or invoice. Amounts are in pesos. The total cannot be more than your approved grant of ₱'+money(a.grant.total)+'.</p>'+
+   '<div class="tbl"><table><thead><tr><th>Expense</th><th>OR or invoice no.</th><th>Merchant name</th><th class="r">Amount (₱)</th><th></th></tr></thead><tbody id="parRows"></tbody><tfoot><tr><th colspan="3">Total to be reimbursed</th><th class="r num" id="pl_total">0</th><th></th></tr></tfoot></table></div>'+
+   '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px"><button type="button" class="btn sec sm" data-act="paradd">Add a receipt</button><span id="pl_note" class="muted" data-grant="'+a.grant.total+'"></span></div><div class="msg" id="p_msg_lines" style="color:var(--bad);font-size:12px"></div>'+
+   '<h3 style="margin-top:16px">Documents included in the PDF</h3><div class="chk-grid">'+C.REQ_POST.map(r=>'<label class="chk"><input type="checkbox" class="pl-doc" data-k="'+r[0]+'"'+((p.docs||{})[r[0]]?' checked':'')+'><span>'+r[1]+'</span></label>').join('')+'</div>'+
    '<div class="field" style="margin-top:8px"><label for="p_missing">If something is not included, say why</label><textarea id="p_missing" rows="2">'+esc(p.missingNote||'')+'</textarea></div>'+
    '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px"><input id="p_file" type="file" accept="application/pdf,.pdf" hidden><button type="button" class="btn sec" data-act="parpick">Choose the consolidated PDF</button><span id="p_attname" class="muted">No file chosen.</span><button type="button" class="btn sm sec" id="p_prev" data-act="preview" data-id="" hidden>Preview</button></div>'+
    '<p class="muted" style="margin-top:6px">Saved as <b class="mono">'+esc(a.ref)+'-PAR'+(p.cycle?'-v'+(p.cycle+1):'')+'.pdf</b>, in the designated Google Drive folder.</p>'+viewerHTML()+
-   '<div id="p_err" class="callout bad" hidden style="margin-top:10px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" data-act="parsubmit">Submit post-activity report</button><button class="btn sec" data-act="parfill">Fill example</button></div></div></div>';
-  PS.file=null;parCalc();
+   '<div id="p_err" class="callout bad" hidden style="margin-top:10px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="parSubmit" data-act="parsubmit">Submit post-activity report</button><button class="btn sec" data-act="parfill">Fill example</button></div></div></div>';
+  PS.file=null;renderRows();
 };
 function parCalc(){
-  const rate=Number($('#p_rate').value)||0;let t=0;
-  $$('.pl-orig').forEach((i,n)=>{const v=round2((Number(i.value)||0)*rate);t+=v;$$('.pl-peso')[n].textContent=money(v)});
-  $('#pl_total').textContent=money(round2(t));
+  const note=$('#pl_note');if(!note)return;
+  const t=round2($$('.pr-amt').reduce((s,i)=>s+(Number(i.value)||0),0)),g=Number(note.dataset.grant),over=t>g;
+  $('#pl_total').textContent=money(t);
+  note.textContent=over?'Above your approved grant of ₱'+money(g)+' by ₱'+money(round2(t-g))+'. It will not be accepted. Reduce the amounts.':'Within your approved grant of ₱'+money(g)+'.';
+  note.style.color=over?'var(--bad)':'';
+  const b=$('#parSubmit');if(b)b.disabled=over;
 }
-document.addEventListener('input',e=>{if(e.target.classList&&(e.target.classList.contains('pl-orig')||e.target.id==='p_rate'))parCalc()});
+document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('pr-amt'))parCalc()});
 document.addEventListener('change',e=>{
-  if(e.target.id==='p_app'){PS.appId=e.target.value;R.par()}
-  if(e.target.id==='p_cur'&&e.target.value==='PHP'){$('#p_rate').value=1;parCalc()}
+  if(e.target.id==='p_app'){PS.appId=e.target.value;PS.rows=[];R.par()}
   if(e.target.id==='p_file'){const f=e.target.files[0];if(!f)return;if(!/\.pdf$/i.test(f.name)||f.size>10*1048576){toast('The report must be a single PDF under 10 MB.');e.target.value='';return}
     const m=C.registerFile({orig:f.name,size:f.size,type:'application/pdf',by:u().name});C.FILES.put(m.id,f).then(()=>{PS.file={id:m.id,orig:m.orig,size:m.size};parFile()})}
 });
 function parFile(){const f=PS.file;$('#p_attname').textContent=f?f.orig+' ('+fmtSize(f.size)+')':'No file chosen.';$('#p_prev').hidden=!f;$('#p_prev').dataset.id=f?f.id:''}
 ACT.parpick=()=>$('#p_file').click();
 ACT.parfill=function(){
-  const a=D().apps.find(x=>x.id===PS.appId),loc=a.conf.scope==='local';
-  $('#p_cur').value=loc?'PHP':'USD';$('#p_rate').value=loc?1:56.5;
-  $$('.pl-orig').forEach((i,n)=>{const ap=a.expenses[n].approved||0;i.value=loc?ap:round2(ap/56.5)});
-  $$('.pl-doc').forEach(c=>c.checked=true);parCalc();
+  const a=D().apps.find(x=>x.id===PS.appId),shops={'Registration fee':'Sample Conference Secretariat','Pre-departure fees':'Sample Visa Center','Roundtrip airfare':'Sample Airlines','Accommodation':'Sample Hotel','Per diem':'Sample Meals Co.'};
+  PS.rows=a.expenses.filter(x=>x.approved>0).map((x,n)=>({type:x.type,or:'OR-'+(5100+n),merchant:shops[x.type],amount:x.approved}));renderRows();
+  $$('.pl-doc').forEach(c=>c.checked=true);
   const pdf=C.makePdf('Post-activity documents (sample)',['SAMPLE FILE for the demo.'].concat(C.REQ_POST.map((r,i)=>(i+1)+'. '+r[1])));
   const m=C.registerFile({orig:'post-activity-documents.pdf',size:pdf.size,type:'application/pdf',by:u().name});
   C.FILES.put(m.id,pdf).then(()=>{PS.file={id:m.id,orig:m.orig,size:m.size};parFile();toast('Example data filled in, with a sample PDF attached.')});
 };
 ACT.parsubmit=function(){
   const a=D().apps.find(x=>x.id===PS.appId),docs={};$$('.pl-doc').forEach(c=>docs[c.dataset.k]=c.checked);
-  const res=E.submitPost(u(),a,{file:PS.file,cur:$('#p_cur').value,rate:$('#p_rate').value,lines:$$('.pl-orig').map(i=>({orig:i.value})),docs,missingNote:$('#p_missing').value});
+  const res=E.submitPost(u(),a,{file:PS.file,items:readRows(),docs,missingNote:$('#p_missing').value});
   if(res.err){const b=$('#p_err');b.hidden=false;b.textContent=res.err;b.scrollIntoView({block:'center'});return}
   PS.done='<div class="screen"><div class="screen-bar"><b>Report submitted</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body"><div class="callout ok"><b>Submitted.</b> Saved as <span class="mono">'+esc(D().files[a.post.fileId].name)+'</span>. The Administrative Assistant was notified and will verify your documents.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-open="'+a.id+'">Open the application</button><button class="btn sec" data-act="parnew">Back</button></div></div></div>';
-  PS.file=null;R.par();
+  PS.file=null;PS.rows=[];R.par();
 };
 ACT.parnew=()=>{PS.done=null;R.par()};
 
 /* ---------- start ---------- */
 C.start=function(){
-  C.load();buildLogin();
+  C.load();E.autoRemind();buildLogin();
   let em=null;try{em=sessionStorage.getItem('ccs-scgss-user')}catch(e){}
   let h='';try{h=location.hash.slice(1)}catch(e){}
   const acc=em&&C.acct(em);if(acc)doLogin(acc,h);

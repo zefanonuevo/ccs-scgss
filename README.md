@@ -1,6 +1,6 @@
 # CCS Student Conference Grant Support System (SCGSS)
 
-A working simulation of the CCS student conference grant process: application form, automatic routing (Thesis Adviser, Department Chair, Associate Dean, Dean), post-activity report, document verification, and the reimbursement report.
+A working simulation of the CCS student conference grant process: application form, automatic routing (Thesis Adviser, Department Chair, Associate Dean, Dean), post-activity report with itemised receipts, document verification, the reimbursement report, and filing at the FAO with an RFP number.
 
 **Live:** https://zefanonuevo.github.io/ccs-scgss/ (or open `index.html` in a browser while online)
 
@@ -18,8 +18,8 @@ Open the live page, sign in with a sample account (password `demo`) and follow o
 | Thesis Adviser | adviser.reyes@college.example, adviser.villanueva@college.example |
 | Department Chair | chair.cs@, chair.it@, chair.is@college.example |
 | Associate Dean, Dean | assoc.dean@, dean@college.example |
+| Alternate approver (signs when the Dean is the Thesis Adviser) | oic.dean@college.example |
 | Administrative Assistant | admin.assistant@college.example |
-| Secretary | secretary@college.example |
 | System Administrator | sysadmin@college.example (sees every tab) |
 
 ## Files

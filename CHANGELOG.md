@@ -15,10 +15,53 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 2.0.0 | 15 Oct 2026 | GitHub. Working routing, approvals, post-activity reports and Google records. |
 | 2.0.1 | 15 Oct 2026 | GitHub. Report template wording. |
 | 2.1.0 | 18 Oct 2026 | GitHub. CCS Portal colors. |
+| 3.0.0 | 20 Oct 2026 | GitHub. Feedback round: reimbursement, Dean approval, RFP and reminders. |
 
 # Versions
 
-## 2.1.0 (18 Oct 2026 · Prototype · current)
+## 3.0.0 (20 Oct 2026 · Prototype · current)
+
+The feedback round on reimbursement, the Dean's approval and the FAO. Because how people work changes (receipts are itemised, the Dean confirms before signing, the Administrative Assistant records an RFP, the report deadline is 15 days with automatic reminders, and the Secretary role is gone), this is a major version.
+
+### Added
+
+- **Receipts list** in the post-activity report: expense, OR or invoice no., merchant and amount. The total cannot be above the approved grant: Submit is disabled and the rule is checked again on submit.
+- **Dean's confirmation**: Review and approve opens a summary (lines, total against the limit, signature) with Confirm approval. The funding source is typed on each line of the breakdown; a line can be 0. The signature can be drawn or uploaded.
+- **RFP number** when the report is filed at the FAO. The student is notified (email and in-app) that the request was processed and may check with the FAO after 5 to 10 working days.
+- **Download Reimbursement Report** (PDF) as soon as the amounts are verified, in the verification screen and in the report tab.
+- **Period filter** (academic year and term) on the Dean, approver and staff dashboards. An RFP column in the dashboard, the tracking table and the Google Sheet.
+- **Automatic reminders** to students for the post-activity report and reimbursement requirements, by email and in-app, at 15, 7, 3 and 1 days before the due date, on the due date, and every 3 days when overdue.
+- **Return requirements**: the Administrative Assistant flags which documents to clarify or resubmit, and the student sees the list.
+- **Send to** in Messages and clarifications: the Administrative Assistant can write to the student, any signatory and the Dean on any application.
+- **Adviser who is also a signatory**: the adviser list includes the Chair, Associate Dean and Dean. A person endorses once and a repeated step is skipped. If the Dean is the adviser, the alternate approver from Settings approves the grant. An adviser demo in the Simulation tab.
+- **Review and suggestions** tab: where each feedback item is, eight suggestions (including DocuSeal) and seven questions.
+
+### Changed
+
+- The proposed budget is blocked above ₱30,000 (international) or ₱15,000 (local).
+- The student sees only the approved grant when reporting. Amounts are in pesos.
+- The Administrative Assistant sees the total grant first and can correct the amount, funding source, OR or invoice no. and merchant of each item, with a remark.
+- The reimbursement report shows only the final approved amounts.
+- The post-activity report is due 15 days after the event (was 7 working days).
+- A corrected report is saved as a new version (v2); the original stays on record.
+- "Accounting Office" is now "FAO".
+- Data is stored under a new key, so earlier demo data in the browser is replaced by the new sample data.
+
+### Removed
+
+- The currency dropdown and the conversion rate field.
+- The funding source from the Dean's final decision, the funding source list in Settings, and every funding dropdown.
+- "Documents verified" from the reimbursement report, and the claimed, rate and unused balance columns.
+- The Secretary role and account.
+
+### Known limits
+
+- The downloaded report is a plain text PDF; the printed copy carries the Dean's signature image.
+- Reminders run when the app is opened. The real build needs a daily job.
+- DocuSeal is a suggestion only; nothing is built.
+- Several rules are proposals to confirm: see Review & suggestions.
+
+## 2.1.0 (18 Oct 2026 · Prototype)
 
 The colors now match the CCS Portal website. Every feature works as before.
 
