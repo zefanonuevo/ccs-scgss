@@ -16,10 +16,20 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 2.0.1 | 15 Oct 2026 | GitHub. Report template wording. |
 | 2.1.0 | 18 Oct 2026 | GitHub. CCS Portal colors. |
 | 3.0.0 | 20 Oct 2026 | GitHub. Feedback round: reimbursement, Dean approval, RFP and reminders. |
+| 3.0.1 | 20 Oct 2026 | GitHub. Messages and Documents layout fixes. |
 
 # Versions
 
-## 3.0.0 (20 Oct 2026 · Prototype · current)
+## 3.0.1 (20 Oct 2026 · Prototype · current)
+
+Layout fixes on the application page.
+
+### Fixed
+
+- **Send to** in Messages: recipients are compact tick buttons that wrap, instead of wide boxes with text pushed to the side.
+- **Documents** are a list of cards with Preview and Download always visible, instead of a table that scrolled sideways.
+
+## 3.0.0 (20 Oct 2026 · Prototype)
 
 The feedback round on reimbursement, the Dean's approval and the FAO. Because how people work changes (receipts are itemised, the Dean confirms before signing, the Administrative Assistant records an RFP, the report deadline is 15 days with automatic reminders, and the Secretary role is gone), this is a major version.
 
