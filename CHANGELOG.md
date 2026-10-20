@@ -17,10 +17,19 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 2.1.0 | 18 Oct 2026 | GitHub. CCS Portal colors. |
 | 3.0.0 | 20 Oct 2026 | GitHub. Feedback round: reimbursement, Dean approval, RFP and reminders. |
 | 3.0.1 | 20 Oct 2026 | GitHub. Messages and Documents layout fixes. |
+| 3.0.2 | 20 Oct 2026 | GitHub. Expense table on phones. |
 
 # Versions
 
-## 3.0.1 (20 Oct 2026 · Prototype · current)
+## 3.0.2 (20 Oct 2026 · Prototype · current)
+
+Phone layout fix.
+
+### Fixed
+
+- The expense table on the application page turns into one card per expense on phones, so the Approved and Funding source columns are no longer cut off. The Dean can fill the amounts and funding sources there too.
+
+## 3.0.1 (20 Oct 2026 · Prototype · commit d86073e)
 
 Layout fixes on the application page.
 
