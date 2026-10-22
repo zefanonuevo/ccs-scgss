@@ -256,9 +256,10 @@ function advance(a){
   a.stage++;
   while(a.stage<CHAIN.length-1){
     const n=CHAIN[a.stage],who=a.route[n];
-    if(!endorsedBy(a,who))break;
-    a.decisions[n]={d:'skipped',at:now(),by:nameOf(who),email:who};
-    hist(a,null,'Step skipped','The '+CH[n].label+' step was skipped: '+nameOf(who)+' already endorsed this application as another signatory.');
+    const inPlace=n==='assoc'&&a.route.dean===who; /* the Dean is the adviser: the Associate Dean only approves the grant */
+    if(!inPlace&&!endorsedBy(a,who))break;
+    a.decisions[n]={d:'skipped',at:now(),by:nameOf(who),email:who,inPlace};
+    hist(a,null,'Step skipped',inPlace?'The Associate Dean endorsement was skipped: '+nameOf(who)+' will approve the grant in the Dean\'s place instead.':'The '+CH[n].label+' step was skipped: '+nameOf(who)+' already endorsed this application as another signatory.');
     a.stage++;
   }
 }

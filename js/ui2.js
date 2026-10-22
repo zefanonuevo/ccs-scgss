@@ -101,6 +101,7 @@ const dShort=ts=>fmtD(fmtT(ts).slice(0,10));
 /* an endorser appears with the date they endorsed. If the same person already endorsed as the Thesis Adviser, the repeated step shows that date and says so. */
 function signInfo(a,r){
   const d=a.decisions[r];if(!d)return '';
+  if(d.d==='skipped'&&d.inPlace)return 'Not required: approves the grant in the Dean\'s place';
   if(d.d==='skipped'){const k=C.CHAIN.find(x=>a.decisions[x]&&a.decisions[x].email===d.email&&a.decisions[x].d==='endorsed');return 'Endorsed on '+(k?dShort(a.decisions[k].at)+' as '+CH[k].label:'')}
   return 'Endorsed on '+dShort(d.at);
 }
@@ -263,7 +264,8 @@ function runAdviserDemo(){
   log.push(['System','Now pending: '+C.info(a).label+' (the Associate Dean step was skipped)']);
   r=E.submit(S,demoForm(S,de,'Demo Conference: the adviser is the Dean'));step(S.name,'Submitted; the Dean is the Thesis Adviser',r);a=r.app;
   log.push(['System','The Dean cannot approve the grant for their own advisee, so the Associate Dean, '+C.nameOf(a.route.dean)+', approves it in the Dean\'s place']);
-  step(de.name,'Endorsed as Thesis Adviser',E.endorse(de,a,'Endorsed.'));step(ch.name,'Endorsed (Department Chair)',E.endorse(ch,a,'Endorsed.'));step(as.name,'Endorsed (Associate Dean)',E.endorse(as,a,'Endorsed.'));
+  step(de.name,'Endorsed as Thesis Adviser',E.endorse(de,a,'Endorsed.'));step(ch.name,'Endorsed (Department Chair). The Associate Dean endorsement was skipped',E.endorse(ch,a,'Endorsed.'));
+  log.push(['System','Now pending: '+C.info(a).label]);
   const denied=E.approveGrant(de,a,{signature:C.sampleSig(),confirm:true,amount:5000,fund:'x'});
   log.push([de.name,'Tried to approve the grant for their own advisee: '+(denied.err||'allowed')]);
   step(as.name,"Approved the grant in the Dean's place",E.approveGrant(as,a,{signature:C.sampleSig(),confirm:true,amount:5000,fund:"Dean's Office",note:'Approved.'}));

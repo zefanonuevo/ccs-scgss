@@ -19,10 +19,19 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 3.0.1 | 20 Oct 2026 | GitHub. Messages and Documents layout fixes. |
 | 3.0.2 | 20 Oct 2026 | GitHub. Expense table on phones. |
 | 3.1.0 | 22 Oct 2026 | GitHub. Event location limits, one grant amount, signer rules, signed report download. |
+| 3.1.1 | 22 Oct 2026 | GitHub. Associate Dean endorsement skipped when the Dean is the adviser. |
 
 # Versions
 
-## 3.1.0 (22 Oct 2026 · Prototype · current)
+## 3.1.1 (22 Oct 2026 · Prototype · current)
+
+One rule change.
+
+### Changed
+
+- When the Dean is the Thesis Adviser, the Associate Dean no longer endorses. The Associate Dean only approves the grant in the Dean's place. The history and the report say so.
+
+## 3.1.0 (22 Oct 2026 · Prototype · commit 9ace6ff)
 
 University grant limits by event location, one grant amount from the Dean, new rules when the Thesis Adviser is also a signatory, and one signed report download.
 
