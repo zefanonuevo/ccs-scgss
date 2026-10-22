@@ -19,7 +19,10 @@ C.u={$,$$,money,esc,pad3,fmtT,fmtD,fmtSize,addWorkdays,round2,now};
 /* ---------- constants ---------- */
 const PROGRAMS=[['BSCS','BS Computer Science'],['BSIT','BS Information Technology'],['BSIS','BS Information Systems']];
 const AYS=['2526','2627','2728'], TERMS=['Term1','Term2','Term3'];
-const CAP={international:30000,local:15000};
+/* Grant limit set by the University, by where the event takes place */
+const REGIONS=[['ncr','NCR (Metro Manila)',6000],['luzon','Luzon, outside NCR',8000],['icb','Ilocos, Cagayan or Bicol',10000],['vismin','Visayas or Mindanao',12000],['intl','International',15000]];
+const CAP={};REGIONS.forEach(r=>CAP[r[0]]=r[2]);
+const regionLabel=k=>{const r=REGIONS.filter(x=>x[0]===k)[0];return r?r[1]:k};
 const PAR_DAYS=15; /* the post-activity report and reimbursement requirements are due this many days after the event */
 const ADVISER_ROLES=['adviser','chair','assoc','dean'];
 const EXPENSE_TYPES=['Registration fee','Pre-departure fees','Roundtrip airfare','Accommodation','Per diem'];
@@ -39,11 +42,10 @@ const ACCOUNTS=[
  {email:'chair.is@college.example',name:'Dr. Ben Lim',role:'chair',program:'BSIS',label:'Department Chair, BSIS'},
  {email:'assoc.dean@college.example',name:'Dr. Carla Mendoza',role:'assoc',label:'Associate Dean'},
  {email:'dean@college.example',name:'Dr. Elena Navarro',role:'dean',label:'Dean'},
- {email:'oic.dean@college.example',name:'Dr. Rafael Ocampo',role:'dean',label:'Alternate approver for the Dean'},
  {email:'admin.assistant@college.example',name:'Rosa Delgado',role:'admin',label:'Administrative Assistant'},
  {email:'sysadmin@college.example',name:'Jun Bautista',role:'sysadmin',label:'System Administrator, project owner'}
 ];
-Object.assign(C,{PAR_DAYS,ADVISER_ROLES,PROGRAMS,AYS,TERMS,CAP,EXPENSE_TYPES,REQ_APP,REQ_POST,CHAIN,CH,ROLE_NAME,PRIVACY,ACCOUNTS});
+Object.assign(C,{PAR_DAYS,ADVISER_ROLES,PROGRAMS,AYS,TERMS,CAP,REGIONS,regionLabel,EXPENSE_TYPES,REQ_APP,REQ_POST,CHAIN,CH,ROLE_NAME,PRIVACY,ACCOUNTS});
 const acct=e=>ACCOUNTS.find(a=>a.email===e);
 const nameOf=e=>{const a=acct(e);return a?a.name:e};
 C.acct=acct;C.nameOf=nameOf;
@@ -86,7 +88,16 @@ C.FILES=FILES;C.makePdf=makePdf;C.registerFile=f=>registerFile(f);C.getBlob=getB
 const KEY='ccs-scgss-v3';
 let db=null;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}
-function load(){try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){db=null}if(!db||db.v!==3)seed();C.db=db}
+function load(){try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){db=null}if(!db||db.v!==3)seed();else migrate4();C.db=db}
+/* 3.1: the Dean sets one amount and one funding source; the event location replaces local/international */
+function migrate4(){
+  if(db.regions)return;
+  const m={local:'luzon',international:'intl'};
+  db.apps.forEach(a=>{if(m[a.conf.scope])a.conf.scope=m[a.conf.scope];
+    if(a.grant&&a.grant.fund===undefined)a.grant.fund=Array.from(new Set(a.expenses.filter(x=>x.fund).map(x=>x.fund))).join(', ')||'Not recorded';
+    if(a.grant)a.expenses.forEach(x=>{x.approved=null;x.fund=''})});
+  db.regions=1;save();
+}
 C.save=save;C.load=load;C.reset=()=>{try{localStorage.removeItem(KEY)}catch(e){}seed();save();C.db=db};
 const byId=id=>db.apps.find(a=>a.id===id);
 C.byId=byId;
@@ -123,7 +134,10 @@ const addDays=(s,n)=>{const d=new Date(s+'T00:00:00Z');d.setUTCDate(d.getUTCDate
 const dueDate=a=>addDays(a.conf.end,PAR_DAYS);
 const manilaToday=()=>new Date(now()+288e5).toISOString().slice(0,10);
 const daysBetween=(from,to)=>Math.round((Date.UTC(+to.slice(0,4),+to.slice(5,7)-1,+to.slice(8,10))-Date.UTC(+from.slice(0,4),+from.slice(5,7)-1,+from.slice(8,10)))/864e5);
-const fundsOf=a=>Array.from(new Set(a.expenses.filter(x=>x.fund).map(x=>x.fund))).join(', ');
+const fundsOf=a=>a.grant?a.grant.fund:'';
+/* receipts that fit inside the approved grant, for sample data and demos */
+const suggestItems=a=>{let left=a.grant.total;return a.expenses.filter(x=>x.amount>0).map(x=>{const amt=Math.min(x.amount,left);left=round2(left-amt);return {type:x.type,amount:amt}}).filter(x=>x.amount>0)};
+C.suggestItems=suggestItems;
 Object.assign(C,{info,stepState,STEP_LABELS,projected,grantTotal,dueDate,total,fundsOf,manilaToday,daysBetween});
 
 /* ---------- history, notifications, Google sync ---------- */
@@ -143,12 +157,12 @@ const adminsOf=()=>ACCOUNTS.filter(x=>x.role==='admin').map(x=>x.email);
 const SHEET_COLS=[
  ['Reference',a=>a.ref],['Student email',a=>a.studentEmail],['Academic year',a=>a.ay],['Term',a=>a.term],['Status',a=>info(a).label],['Student',a=>a.studentName],['Student ID',a=>a.sid],['Degree program',a=>a.program],['Year level',a=>a.year],
  ['Thesis Adviser',a=>nameOf(a.route.adviser)],['Department Chair',a=>nameOf(a.route.chair)],['Associate Dean',a=>nameOf(a.route.assoc)],['Dean',a=>nameOf(a.route.dean)],
- ['Conference',a=>a.conf.title],['Event type',a=>a.conf.etype],['Start date',a=>a.conf.start],['End date',a=>a.conf.end],['Venue',a=>a.conf.venue],['Organizer',a=>a.conf.org],['Travel',a=>a.conf.scope],
+ ['Conference',a=>a.conf.title],['Event type',a=>a.conf.etype],['Start date',a=>a.conf.start],['End date',a=>a.conf.end],['Venue',a=>a.conf.venue],['Organizer',a=>a.conf.org],['Event location',a=>regionLabel(a.conf.scope)],
  ['Paper title',a=>a.paper.title],['Paper type',a=>a.paper.ptype],['Classification',a=>a.paper.cls],['Indexed in',a=>a.paper.index],['Co-authors (faculty)',a=>a.paper.coF],['Co-authors (student)',a=>a.paper.coS],
  ['Projected total (PHP)',a=>projected(a)],
  ...EXPENSE_TYPES.map((t,i)=>['Projected: '+t,a=>a.expenses[i]?a.expenses[i].amount:'']),
  ['Adviser decision',a=>dec(a,'adviser')],['Chair decision',a=>dec(a,'chair')],['Associate Dean decision',a=>dec(a,'assoc')],['Dean decision',a=>dec(a,'dean')],
- ['Grant approved (PHP)',a=>a.grant?a.grant.total:''],['Funding sources (per item)',a=>fundsOf(a)],['Report due',a=>a.status==='approved'?dueDate(a):''],['Dean e-signature',a=>a.grant?'Signed '+fmtT(a.grant.at):''],
+ ['Grant approved (PHP)',a=>a.grant?a.grant.total:''],['Grant funding source',a=>fundsOf(a)],['Report due',a=>a.status==='approved'?dueDate(a):''],['Dean e-signature',a=>a.grant?'Signed '+fmtT(a.grant.at):''],
  ['Post-activity status',a=>a.post.status],['Actual claimed (PHP)',a=>a.post.claimedTotal||''],['Receipts (OR or invoice, merchant, amount)',a=>(a.post.items||[]).map(x=>x.or+' · '+x.merchant+' · '+x.amount).join(' | ')],['Reimbursement approved (PHP)',a=>a.post.verify&&a.post.verify.total!=null?a.post.verify.total:''],['Verified by',a=>a.post.verify&&a.post.verify.by||''],['Report no.',a=>a.report?a.report.no:''],['RFP no.',a=>a.report?a.report.rfp:''],['RFP recorded',a=>a.report?fmtT(a.report.at):''],
  ['Files',a=>Object.values(db.files).filter(f=>f.appId===a.id&&f.name).map(f=>f.name).join(' | ')],['Privacy consent',a=>a.privacy?fmtT(a.privacy.at):''],['Submitted',a=>fmtT(a.created)],['Last updated',a=>fmtT(a.updated)]
 ];
@@ -169,12 +183,12 @@ function validateForm(f){
   req(f.year,0,'f_year','Select your year level.');req(f.adv,0,'f_adv','Select your thesis adviser.');req(f.conf,0,'f_conf','Enter the conference title.');
   req(f.start,0,'f_start','Enter the start date.');req(f.end,0,'f_end','Enter the end date.');
   if(f.start&&f.end&&f.end<f.start)add(0,'f_end','The end date is before the start date.');
-  req(f.venue,0,'f_venue','Enter the venue.');req(f.org,0,'f_org','Enter the organizer.');req(f.etype,0,'f_etype','Select the type of event.');req(f.scope,0,'f_scope','Select international or local travel.');
+  req(f.venue,0,'f_venue','Enter the venue.');req(f.org,0,'f_org','Enter the organizer.');req(f.etype,0,'f_etype','Select the type of event.');req(f.scope,0,'f_scope','Select where the event takes place.');
   req(f.index,1,'f_index','Select where the paper is indexed.');req(f.title,1,'f_title','Enter the title of the paper.');
   const t=round2(f.exp.reduce((s,x)=>s+(Number(x.amount)||0),0)),cap=CAP[f.scope];
   if(f.exp.some(x=>Number(x.amount)<0))add(2,'ex_0','Amounts cannot be negative.');
   else if(!(t>0))add(2,'ex_0','Enter at least one projected expense amount.');
-  else if(cap&&t>cap)add(2,'ex_0','The proposed budget of ₱'+money(t)+' is above the ₱'+money(cap)+' limit for '+f.scope+' travel. Reduce the amounts to '+money(cap)+' or less.');
+  else if(cap&&t>cap)add(2,'ex_0','The proposed budget of ₱'+money(t)+' is above the ₱'+money(cap)+' limit for '+regionLabel(f.scope)+'. Reduce the amounts to ₱'+money(cap)+' or less.');
   if(!f.file)add(3,'f_filebtn','Attach the single PDF that holds all required documents.');
   if(!f.attConfirm)add(3,'f_attconfirm','Confirm that every required document is attached.');
   if(!f.privacy)add(4,'f_privacy','Accept the data privacy notice to submit.');
@@ -183,19 +197,15 @@ function validateForm(f){
 }
 C.validateForm=validateForm;
 /* Who signs when the Thesis Adviser also holds a signing role:
-   - a person never endorses the same application twice: a later step held by someone who already endorsed is skipped (see advance);
-   - if the Dean is the adviser, the Dean cannot approve the grant for their own advisee, so the alternate approver from Settings signs instead. */
+   - a person never endorses the same application twice: a later step held by someone who already endorsed is skipped (see advance).
+     So if the adviser is the Department Chair, the Associate Dean endorses next; if the adviser is the Associate Dean, the file goes straight to the Dean.
+   - if the Dean is the adviser, the Dean cannot approve the grant for their own advisee, so the Associate Dean approves it in the Dean's place. */
 function routeFor(prog,adv){
   const s=db.settings,a=acct(adv);
   if(!a||ADVISER_ROLES.indexOf(a.role)<0)return {err:'Choose a valid Thesis Adviser.'};
   if(!s.chairs[prog])return {err:'No Department Chair is set for '+prog+'. Ask the System Administrator.'};
   if(!s.assoc||!s.dean)return {err:'The Associate Dean or Dean is not set. Ask the System Administrator.'};
-  let dean=s.dean;
-  if(adv===s.dean){
-    if(!s.deanAlt||s.deanAlt===adv)return {err:'The Dean is your Thesis Adviser, so another person must approve the grant. Ask the System Administrator to set the alternate approver.'};
-    dean=s.deanAlt;
-  }
-  return {adviser:adv,chair:s.chairs[prog],assoc:s.assoc,dean};
+  return {adviser:adv,chair:s.chairs[prog],assoc:s.assoc,dean:adv===s.dean?s.assoc:s.dean};
 }
 C.nextRef=(ay,term)=>ay+'-'+term+'-'+pad3(((db.counters[ay+'-'+term])||0)+1);
 C.advisories=(email,ay,exceptId)=>db.apps.filter(a=>a.studentEmail===email&&a.ay===ay&&a.id!==exceptId&&a.status!=='rejected');
@@ -234,7 +244,7 @@ E.submit=function(actor,f){
   applyForm(a,f);
   fm.name=ref+'.pdf';fm.appId=a.id;fm.kind='Application requirements';fm.folder='Applications/'+key;fm.by=actor.name;fm.at=now();fm.version=1;
   db.apps.push(a);
-  hist(a,actor,'Submitted','Reference '+ref+' assigned. Requirements PDF saved as '+fm.name+'. Data privacy notice accepted. Routed to the Thesis Adviser, '+nameOf(route.adviser)+'.'+(route.dean!==db.settings.dean?' The Dean is the adviser, so '+nameOf(route.dean)+' will approve the grant.':''));
+  hist(a,actor,'Submitted','Reference '+ref+' assigned. Requirements PDF saved as '+fm.name+'. Data privacy notice accepted. Routed to the Thesis Adviser, '+nameOf(route.adviser)+'.'+(route.dean!==db.settings.dean?' The Dean is the Thesis Adviser, so the Associate Dean, '+nameOf(route.dean)+', will approve the grant in the Dean\'s place.':''));
   notify(actor.email,a,'Application submitted','Your application was received as '+ref+'. It is now with your Thesis Adviser, '+nameOf(route.adviser)+'. You can follow it on your dashboard.','sub:'+a.id);
   lineReq(a,'adviser');
   sync(a,'Application submitted');
@@ -265,30 +275,27 @@ E.endorse=function(actor,a,note){
   notify(a.studentEmail,a,'Endorsed by your '+CH[s].label,'Your '+CH[s].label+' endorsed the application. It is now with the '+CH[n].label+'.'+(skipped.length?' The '+skipped.join(' and ')+' step was skipped because the same person already endorsed it.':''),'prog:'+a.id+':'+a.stage+':'+a.cycle);
   sync(a,'Endorsed by '+CH[s].label);return OK;
 };
-/* o = {signature, confirm, dry, note, lines:[{approved, fund}]}. The funding source belongs to each line of the breakdown, not to the final decision.
+/* o = {signature, confirm, dry, note, amount, fund}. The Dean sets ONE approved amount and ONE funding source for the whole grant;
+   the Administrative Assistant breaks it down by receipt at reimbursement.
    dry runs every check and returns the total without recording anything, so the screen can show a confirmation first. */
 E.approveGrant=function(actor,a,o){
   const err=turnErr(a,actor);if(err)return deny(a,actor,err);
   if(CHAIN[a.stage]!=='dean')return ERR('Only the Dean approves the grant.');
   if(!o.signature||String(o.signature).indexOf('data:image')!==0)return ERR('Affix your digital signature before approving.');
-  if(o.lines.length!==a.expenses.length)return ERR('Approved amounts are missing.');
-  for(let i=0;i<o.lines.length;i++){
-    const v=Number(o.lines[i].approved);
-    if(!(v>=0)||String(o.lines[i].approved).trim()==='')return ERR('Enter an approved amount for '+a.expenses[i].type+' (0 if not funded).');
-    if(v>a.expenses[i].amount)return ERR('The approved amount for '+a.expenses[i].type+' is above what the student projected.');
-    if(v>0&&!String(o.lines[i].fund||'').trim())return ERR('Enter the funding source for '+a.expenses[i].type+'.');
-  }
-  const tot=round2(o.lines.reduce((s,l)=>s+Number(l.approved),0)),cap=CAP[a.conf.scope];
-  if(!(tot>0))return ERR('The approved grant must be more than zero. Use Reject to decline the application.');
-  if(tot>cap)return ERR('The approved grant of ₱'+money(tot)+' is above the ₱'+money(cap)+' limit for '+a.conf.scope+' travel.');
-  if(o.dry)return {ok:true,dry:true,total:tot};
+  const amt=Number(o.amount),fund=String(o.fund||'').trim(),cap=CAP[a.conf.scope],pt=projected(a);
+  if(o.amount===''||o.amount==null||!(amt>0))return ERR('Enter the approved grant amount. Use Reject to decline the application.');
+  if(!fund)return ERR('Enter the funding source for the grant.');
+  if(fund.length>80)return ERR('The funding source is too long.');
+  if(amt>cap)return ERR('The approved grant of ₱'+money(amt)+' is above the ₱'+money(cap)+' limit for '+regionLabel(a.conf.scope)+'.');
+  if(amt>pt)return ERR('The approved grant of ₱'+money(amt)+' is above the ₱'+money(pt)+' the student projected.');
+  const tot=round2(amt);
+  if(o.dry)return {ok:true,dry:true,total:tot,fund};
   if(!o.confirm)return ERR('Press Confirm approval to record the grant and your signature.');
-  a.expenses.forEach((x,i)=>{const v=Number(o.lines[i].approved);x.approved=v;x.fund=v>0?String(o.lines[i].fund).trim():''});
-  a.grant={total:tot,by:actor.name,byEmail:actor.email,at:now(),signature:o.signature};
+  a.grant={total:tot,fund,by:actor.name,byEmail:actor.email,at:now(),signature:o.signature};
   a.decisions.dean={d:'approved',at:now(),by:actor.name,email:actor.email};a.status='approved';
-  hist(a,actor,'Approved grant','Approved ₱'+money(tot)+' · funding: '+fundsOf(a)+' · e-signed.'+(o.note?' "'+o.note+'"':''));
-  notify(a.studentEmail,a,'Your grant is approved','Good news: the Dean approved your conference grant of ₱'+money(tot)+'. After the conference, submit the post-activity report and reimbursement requirements (one PDF) within '+PAR_DAYS+' days after '+fmtD(a.conf.end)+' (by '+fmtD(dueDate(a))+'). You will get reminders by email and in-app.','appr:'+a.id);
-  notify(adminsOf(),a,'Grant approved','Grant approved for '+a.studentName+': ₱'+money(tot)+' ('+fundsOf(a)+'). Expect a post-activity report by '+fmtD(dueDate(a))+'.','apprfyi:'+a.id);
+  hist(a,actor,'Approved grant','Approved ₱'+money(tot)+' · funding source: '+fund+' · e-signed.'+(o.note?' "'+o.note+'"':''));
+  notify(a.studentEmail,a,'Your grant is approved','Good news: the Dean approved your conference grant of ₱'+money(tot)+' (funding source: '+fund+'). After the conference, submit the post-activity report and reimbursement requirements (one PDF) within '+PAR_DAYS+' days after '+fmtD(a.conf.end)+' (by '+fmtD(dueDate(a))+'). You will get reminders by email and in-app.','appr:'+a.id);
+  notify(adminsOf(),a,'Grant approved','Grant approved for '+a.studentName+': ₱'+money(tot)+' ('+fund+'). You will break it down by receipt at reimbursement. Expect a post-activity report by '+fmtD(dueDate(a))+'.','apprfyi:'+a.id);
   sync(a,'Grant approved');return OK;
 };
 E.returnApp=function(actor,a,note){
@@ -316,17 +323,18 @@ function saveClar(a,actor,fileIds){
 const participants=a=>Array.from(new Set([a.studentEmail].concat(Object.keys(a.route).map(k=>a.route[k])).concat(adminsOf())));
 C.participants=participants;
 function counterparts(a,actor){
+  const last=a.comments.slice().reverse().filter(c=>c.email!==actor.email&&participants(a).indexOf(c.email)>-1)[0];
   if(actor.email===a.studentEmail){
     if(a.status==='pending')return [a.route[CHAIN[a.stage]]];
     if(a.status==='returned')return [a.route[a.returned.role]];
     if(a.post.status==='submitted'||a.post.status==='returned'||a.status==='verified')return adminsOf();
     return [a.route.adviser];
   }
-  return [a.studentEmail];
+  return [last?last.email:a.studentEmail];
 }
 C.counterparts=counterparts;
 /* to (optional): who should receive the message. The thread itself stays visible to everyone on the application. */
-E.comment=function(actor,a,text,fileIds,to){
+E.comment=function(actor,a,text,fileIds,to,topic){
   const isRoute=Object.keys(a.route).some(k=>a.route[k]===actor.email);
   const ok=actor.email===a.studentEmail||isRoute||actor.role==='admin';
   if(!ok)return deny(a,actor,'You are not part of this application, so you cannot comment on it.');
@@ -335,9 +343,9 @@ E.comment=function(actor,a,text,fileIds,to){
   let rcpt=to&&to.length?to.filter(e=>e!==actor.email&&participants(a).indexOf(e)>-1):counterparts(a,actor).filter(e=>e!==actor.email);
   if(!rcpt.length)return ERR('Choose who should receive this message.');
   const ids=saveClar(a,actor,fileIds);
-  a.comments.push({id:'c'+(++db.seq),at:now(),by:actor.name,role:actor.role,email:actor.email,text,files:ids,to:rcpt});
-  hist(a,actor,'Comment','To '+rcpt.map(nameOf).join(', ')+': '+(text.length>150?text.slice(0,150)+'...':text)+(ids.length?' · '+ids.length+' file(s): '+ids.map(i=>db.files[i].name).join(', '):''));
-  notify(rcpt,a,'New message from '+actor.name,actor.name+' ('+ROLE_NAME[actor.role]+') wrote: "'+(text||'(file attached)')+'"','cm:'+a.id+':'+db.seq);
+  a.comments.push({id:'c'+(++db.seq),at:now(),by:actor.name,role:actor.role,email:actor.email,text,files:ids,to:rcpt,topic:topic||null});
+  hist(a,actor,topic?'Reimbursement question':'Comment','To '+rcpt.map(nameOf).join(', ')+(topic?' ['+topic.kind+(topic.item?' · '+topic.item:'')+']':'')+': '+(text.length>150?text.slice(0,150)+'...':text)+(ids.length?' · '+ids.length+' file(s): '+ids.map(i=>db.files[i].name).join(', '):''));
+  notify(rcpt,a,topic?'Reimbursement question: '+topic.kind:'New message from '+actor.name,actor.name+' ('+ROLE_NAME[actor.role]+') wrote: "'+(text||'(file attached)')+'"','cm:'+a.id+':'+db.seq);
   sync(a,'Comment');return OK;
 };
 E.resubmit=function(actor,a,f,reply,fileIds){
@@ -489,51 +497,51 @@ function seed(){
   const FUND=["Dean's Office (sample)","College Fund (sample)","Department Fund (sample)","External sponsor (sample)"];
   const MERCH={'Registration fee':'Sample Conference Secretariat','Pre-departure fees':'Sample Visa Center','Roundtrip airfare':'Sample Airlines','Accommodation':'Sample Hotel','Per diem':'Sample Meals Co.'};
   db={v:3,seq:0,keys:{},counters:{},apps:[],notifs:[],outbox:[],files:{},sigs:{},syncLog:[],drafts:{},
-    settings:{assoc:'assoc.dean@college.example',dean:'dean@college.example',deanAlt:'oic.dean@college.example',chairs:{BSCS:'chair.cs@college.example',BSIT:'chair.it@college.example',BSIS:'chair.is@college.example'},gas:{url:'',token:''}}};
+    settings:{assoc:'assoc.dean@college.example',dean:'dean@college.example',chairs:{BSCS:'chair.cs@college.example',BSIT:'chair.it@college.example',BSIS:'chair.is@college.example'},gas:{url:'',token:''}}};
   const U=e=>acct(e),REY='adviser.reyes@college.example',VIL='adviser.villanueva@college.example';
   const stu=(n,p)=>({email:n.toLowerCase().replace(/ /g,'.')+'@college.example',name:n,role:'student',program:p});
   const hrs=h=>{T+=h*36e5};
   const mk=(s,o)=>{const fm=registerFile({orig:'requirements.pdf',size:210000,by:s.name});
-    return Object.assign({ay:'2627',term:'Term1',sid:'122'+(1000+db.seq*7),prog:s.program,year:'4',adv:REY,etype:'Conference',scope:'international',cls:'Paper presenter',ptype:'Full paper',index:'Scopus',cof:'',cos:'',attConfirm:true,privacy:true,brand:true,file:{id:fm.id,orig:fm.orig,size:fm.size},
+    return Object.assign({ay:'2627',term:'Term1',sid:'122'+(1000+db.seq*7),prog:s.program,year:'4',adv:REY,etype:'Conference',scope:'intl',cls:'Paper presenter',ptype:'Full paper',index:'Scopus',cof:'',cos:'',attConfirm:true,privacy:true,brand:true,file:{id:fm.id,orig:fm.orig,size:fm.size},
       exp:EXPENSE_TYPES.map((t,i)=>({type:t,amount:o.amts[i],remarks:''}))},o)};
   const dean=U('dean@college.example'),sig=sampleSig();
-  const approve=(a,fund)=>E.approveGrant(dean,a,{signature:sig,confirm:true,lines:a.expenses.map(x=>({approved:x.amount,fund:x.amount>0?fund:''})),note:'Approved.'});
-  const itemsOf=a=>a.expenses.filter(x=>x.approved>0).map((x,i)=>({type:x.type,or:'OR-'+(4100+db.seq+i),merchant:MERCH[x.type],amount:x.approved}));
+  const approve=(a,fund)=>E.approveGrant(dean,a,{signature:sig,confirm:true,amount:projected(a),fund,note:'Approved.'});
+  const itemsOf=a=>suggestItems(a).map((x,i)=>({type:x.type,or:'OR-'+(4100+db.seq+i),merchant:MERCH[x.type],amount:x.amount}));
   const par=(a,s,docsAll)=>{const fm=registerFile({orig:'post-activity.pdf',size:480000,by:s.name});
     return E.submitPost(s,a,{file:{id:fm.id},items:itemsOf(a),docs:docsAll,missingNote:''})};
   const allDocs={};REQ_POST.forEach(r=>allDocs[r[0]]=true);
   const adm=U('admin.assistant@college.example');
-  const verify=a=>{const items=a.post.items.map(it=>{const ex=a.expenses.find(e=>e.type===it.type);return {approved:Math.min(it.amount,ex.approved),fund:ex.fund,why:''}});return E.postReview(adm,a,{checks:allDocs,remarks:{},items,overall:'All documents complete.'},'verify')};
+  const verify=a=>{const items=a.post.items.map(it=>({approved:it.amount,fund:a.grant.fund,why:''}));return E.postReview(adm,a,{checks:allDocs,remarks:{},items,overall:'All documents complete.'},'verify')};
   const go=(r)=>r.app||r;
   let s,a;
   /* completed, AY 2526 */
-  T=Date.UTC(2026,3,6,1,0);s=stu('Ivan Garcia','BSCS');a=go(E.submit(s,mk(s,{ay:'2526',term:'Term3',conf:'Sample Meeting on Information Retrieval',start:'2026-05-12',end:'2026-05-14',venue:'Singapore',org:'Sample Retrieval Society',title:'Sample Title on Retrieval Models',amts:[9000,1000,8500,5000,2500]})));
+  T=Date.UTC(2026,3,6,1,0);s=stu('Ivan Garcia','BSCS');a=go(E.submit(s,mk(s,{ay:'2526',term:'Term3',conf:'Sample Meeting on Information Retrieval',start:'2026-05-12',end:'2026-05-14',venue:'Singapore',org:'Sample Retrieval Society',title:'Sample Title on Retrieval Models',amts:[5000,500,4500,3000,2000]})));
   hrs(20);E.endorse(U(REY),a,'Endorsed.');hrs(20);E.endorse(U('chair.cs@college.example'),a,'Endorsed.');hrs(20);E.endorse(U('assoc.dean@college.example'),a,'Endorsed.');hrs(20);approve(a,FUND[1]);
   T=Date.UTC(2026,4,24,1,0);par(a,s,allDocs);hrs(48);verify(a);hrs(24);E.complete(adm,a,{rfp:'RFP-2026-0412'});
   /* rejected, AY 2526 */
-  T=Date.UTC(2026,4,2,1,0);s=stu('Tina Lopez','BSIT');a=go(E.submit(s,mk(s,{ay:'2526',term:'Term3',adv:VIL,scope:'local',conf:'Sample Meeting on Robotics',start:'2026-06-10',end:'2026-06-11',venue:'Quezon City',org:'Sample Robotics Group',title:'Sample Title on Robot Planning',index:'ASEAN Citation',amts:[3000,500,0,6000,3000]})));
+  T=Date.UTC(2026,4,2,1,0);s=stu('Tina Lopez','BSIT');a=go(E.submit(s,mk(s,{ay:'2526',term:'Term3',adv:VIL,scope:'ncr',conf:'Sample Meeting on Robotics',start:'2026-06-10',end:'2026-06-11',venue:'Quezon City',org:'Sample Robotics Group',title:'Sample Title on Robot Planning',index:'ASEAN Citation',amts:[1000,300,0,3000,1500]})));
   hrs(20);E.endorse(U(VIL),a,'Endorsed.');hrs(20);E.endorse(U('chair.it@college.example'),a,'Endorsed.');hrs(20);E.reject(U('assoc.dean@college.example'),a,'The proceedings are not in a Scopus, ISI or ASEAN Citation listed index.');
   /* Maria: approved, report due */
-  T=Date.UTC(2026,8,2,1,0);s=U('maria.santos@college.example');a=go(E.submit(s,mk(s,{sid:'12145678',conf:'International Conference on Sample Computing (ICSC 2026)',start:'2026-10-05',end:'2026-10-09',venue:'Kyoto, Japan',org:'Sample Computing Society',title:'Sample Title on Edge Inference',amts:[11000,1200,9800,5500,2500],cos:'Noel Ramos'})));
+  T=Date.UTC(2026,8,2,1,0);s=U('maria.santos@college.example');a=go(E.submit(s,mk(s,{sid:'12145678',conf:'International Conference on Sample Computing (ICSC 2026)',start:'2026-10-05',end:'2026-10-09',venue:'Kyoto, Japan',org:'Sample Computing Society',title:'Sample Title on Edge Inference',amts:[5500,600,4400,3000,1500],cos:'Noel Ramos'})));
   hrs(22);E.endorse(U(REY),a,'Endorsed.');hrs(22);E.endorse(U('chair.cs@college.example'),a,'Strong paper. Endorsed.');hrs(22);E.endorse(U('assoc.dean@college.example'),a,'Endorsed.');hrs(22);
-  E.approveGrant(dean,a,{signature:sig,confirm:true,note:'Approved. Per diem is not funded.',lines:[{approved:11000,fund:FUND[0]},{approved:1200,fund:FUND[0]},{approved:9800,fund:FUND[0]},{approved:3500,fund:FUND[1]},{approved:0,fund:''}]});
+  E.approveGrant(dean,a,{signature:sig,confirm:true,amount:13500,fund:FUND[0],note:'Approved. Accommodation is partly funded.'});
   /* Ramon: post-activity report waiting for verification */
-  T=Date.UTC(2026,8,5,1,0);s=stu('Ramon Dizon','BSIS');a=go(E.submit(s,mk(s,{adv:VIL,scope:'local',conf:'Sample Forum on Networks',start:'2026-09-28',end:'2026-09-30',venue:'Manila',org:'Sample Networks Forum',title:'Sample Title on Network Telemetry',index:'ISI',amts:[4000,500,0,6000,3500]})));
+  T=Date.UTC(2026,8,5,1,0);s=stu('Ramon Dizon','BSIS');a=go(E.submit(s,mk(s,{adv:VIL,scope:'ncr',conf:'Sample Forum on Networks',start:'2026-09-28',end:'2026-09-30',venue:'Manila',org:'Sample Networks Forum',title:'Sample Title on Network Telemetry',index:'ISI',amts:[1500,300,0,3000,1000]})));
   hrs(20);E.endorse(U(VIL),a,'Endorsed.');hrs(20);E.endorse(U('chair.is@college.example'),a,'Endorsed.');hrs(20);E.endorse(U('assoc.dean@college.example'),a,'Endorsed.');hrs(20);approve(a,FUND[2]);
   T=Date.UTC(2026,9,9,2,0);par(a,s,allDocs);
   /* Jorge: waiting for the adviser for a long time */
-  T=Date.UTC(2026,8,20,1,0);s=stu('Jorge Villanueva','BSCS');a=go(E.submit(s,mk(s,{scope:'local',conf:'Sample Workshop on Embedded Systems',start:'2026-11-03',end:'2026-11-04',venue:'Cebu City',org:'Sample Embedded Group',title:'Sample Title on Firmware Updates',amts:[3500,500,0,5000,3000]})));
+  T=Date.UTC(2026,8,20,1,0);s=stu('Jorge Villanueva','BSCS');a=go(E.submit(s,mk(s,{scope:'vismin',conf:'Sample Workshop on Embedded Systems',start:'2026-11-03',end:'2026-11-04',venue:'Cebu City',org:'Sample Embedded Group',title:'Sample Title on Firmware Updates',amts:[3500,500,0,5000,3000]})));
   /* Lea: returned by the chair */
-  T=Date.UTC(2026,9,1,1,0);s=stu('Lea Mendoza','BSIT');a=go(E.submit(s,mk(s,{scope:'local',conf:'Sample Conference on Data Systems',start:'2026-11-17',end:'2026-11-18',venue:'Davao City',org:'Sample Data Society',title:'Sample Title on Query Planning',amts:[4500,500,0,6000,3000]})));
+  T=Date.UTC(2026,9,1,1,0);s=stu('Lea Mendoza','BSIT');a=go(E.submit(s,mk(s,{scope:'vismin',conf:'Sample Conference on Data Systems',start:'2026-11-17',end:'2026-11-18',venue:'Davao City',org:'Sample Data Society',title:'Sample Title on Query Planning',amts:[3500,500,0,5000,3000]})));
   hrs(20);E.endorse(U(REY),a,'Endorsed.');hrs(20);E.returnApp(U('chair.it@college.example'),a,'The acceptance letter does not show the conference dates. Please attach a letter that does.');
   /* Noel: with the chair */
-  T=Date.UTC(2026,9,5,1,0);s=U('noel.ramos@college.example');a=go(E.submit(s,mk(s,{sid:'12156789',scope:'local',conf:'Sample Symposium on Edge Computing',start:'2026-11-12',end:'2026-11-13',venue:'Manila',org:'Sample Edge Society',title:'Sample Title on Edge Caching',amts:[4000,500,0,6000,3500]})));
+  T=Date.UTC(2026,9,5,1,0);s=U('noel.ramos@college.example');a=go(E.submit(s,mk(s,{sid:'12156789',scope:'ncr',conf:'Sample Symposium on Edge Computing',start:'2026-11-12',end:'2026-11-13',venue:'Manila',org:'Sample Edge Society',title:'Sample Title on Edge Caching',amts:[1500,300,0,3000,1000]})));
   hrs(26);E.endorse(U(REY),a,'Endorsed.');
   /* Sofia: with the associate dean */
-  T=Date.UTC(2026,9,8,1,0);s=stu('Sofia Lim','BSIS');a=go(E.submit(s,mk(s,{adv:VIL,conf:'Sample Conference on Cloud Systems',start:'2026-12-01',end:'2026-12-03',venue:'Singapore',org:'Sample Cloud Forum',title:'Sample Title on Serverless Scheduling',amts:[10000,1500,10000,6000,2500]})));
+  T=Date.UTC(2026,9,8,1,0);s=stu('Sofia Lim','BSIS');a=go(E.submit(s,mk(s,{adv:VIL,conf:'Sample Conference on Cloud Systems',start:'2026-12-01',end:'2026-12-03',venue:'Singapore',org:'Sample Cloud Forum',title:'Sample Title on Serverless Scheduling',amts:[5000,600,4900,3000,1500]})));
   hrs(20);E.endorse(U(VIL),a,'Endorsed.');hrs(20);E.endorse(U('chair.is@college.example'),a,'Endorsed.');
   /* Paolo: the Thesis Adviser is the Department Chair, so the Chair step is skipped and the file goes to the Associate Dean */
-  T=Date.UTC(2026,9,12,1,0);s=stu('Paolo Cruz','BSCS');a=go(E.submit(s,mk(s,{adv:'chair.cs@college.example',scope:'local',conf:'Sample Workshop on Program Analysis',start:'2026-11-24',end:'2026-11-25',venue:'Iloilo City',org:'Sample Analysis Group',title:'Sample Title on Static Checking',amts:[4000,500,0,5500,3000]})));
+  T=Date.UTC(2026,9,12,1,0);s=stu('Paolo Cruz','BSCS');a=go(E.submit(s,mk(s,{adv:'chair.cs@college.example',scope:'vismin',conf:'Sample Workshop on Program Analysis',start:'2026-11-24',end:'2026-11-25',venue:'Iloilo City',org:'Sample Analysis Group',title:'Sample Title on Static Checking',amts:[3500,500,0,5000,3000]})));
   hrs(20);E.endorse(U('chair.cs@college.example'),a,'Endorsed as Thesis Adviser.');
   T=null;db.syncLog=[];save();
 }

@@ -201,6 +201,15 @@ function dashStudent(){
 }
 ACT.gopar=t=>{C.parSel=t.dataset.id;show('par',true)};
 
+/* anything waiting for a reply from the signed-in person */
+const _dash=R.dash;
+R.dash=function(){
+  _dash();
+  const last=a=>a.comments[a.comments.length-1];
+  const w=D().apps.filter(a=>{const c=last(a);return c&&c.to&&c.to.indexOf(u().email)>-1&&c.email!==u().email&&canView(a)});
+  if(w.length)$('#dashBody').insertAdjacentHTML('afterbegin','<div class="callout" style="margin-bottom:12px"><b>'+w.length+' message'+(w.length>1?'s':'')+' waiting for your reply:</b> '+w.map(a=>'<button class="lnk mono" data-open="'+a.id+'">'+esc(a.ref)+'</button> <span class="muted">('+esc(last(a).by)+(last(a).topic?' · '+esc(last(a).topic.kind):'')+')</span>').join(' · ')+'</div>');
+};
+
 /* ---------- viewer, downloads, signature pad ---------- */
 let viewUrl=null;
 function viewerHTML(){return '<div class="viewer" data-viewer><div class="empty">Choose <b>Preview</b> beside a document to read it here, before you decide.</div></div>'}
@@ -253,27 +262,32 @@ ACT.sigsample=()=>{const img=new Image();const cv=$('#sigpad');img.onload=()=>{A
 /* ---------- application page ---------- */
 function factsHTML(a){
   const p=(l,v)=>'<dt>'+l+'</dt><dd>'+(v==null||v===''?'<span class="muted">–</span>':esc(v))+'</dd>';
-  return '<dl class="who">'+p('Student',a.studentName+' · ID '+a.sid+' · '+a.program+' · year '+a.year)+p('Thesis Adviser',C.nameOf(a.route.adviser))+p('Department Chair',C.nameOf(a.route.chair)+' ('+a.program+')')+p('Associate Dean',C.nameOf(a.route.assoc))+p('Dean',C.nameOf(a.route.dean))+
-   p('Conference',a.conf.title)+p('Dates · venue',fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+' · '+a.conf.venue)+p('Organizer · type',a.conf.org+' · '+a.conf.etype)+p('Travel',a.conf.scope==='international'?'International (limit ₱30,000)':'Local (limit ₱15,000)')+
+  return '<dl class="who">'+p('Student',a.studentName+' · ID '+a.sid+' · '+a.program+' · year '+a.year)+p('Thesis Adviser',C.nameOf(a.route.adviser))+p('Department Chair',C.nameOf(a.route.chair)+' ('+a.program+')')+p('Associate Dean',C.nameOf(a.route.assoc))+p(a.route.dean!==D().settings.dean?'Approver (for the Dean)':'Dean',C.nameOf(a.route.dean))+
+   p('Conference',a.conf.title)+p('Dates · venue',fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+' · '+a.conf.venue)+p('Organizer · type',a.conf.org+' · '+a.conf.etype)+p('Event location',C.regionLabel(a.conf.scope)+' (grant limit ₱'+money(C.CAP[a.conf.scope])+')')+
    p('Paper',a.paper.title+' · '+a.paper.ptype+' · '+a.paper.cls)+p('Indexed in',a.paper.index)+p('Co-authors',[a.paper.coF&&'Faculty: '+a.paper.coF,a.paper.coS&&'Student: '+a.paper.coS].filter(Boolean).join(' · '))+
-   p('Privacy consent',a.privacy?'Accepted '+fmtT(a.privacy.at):'')+p('Grant',a.grant?'₱'+money(a.grant.total)+' · e-signed by '+a.grant.by:'Not yet approved')+'</dl>';
+   p('Privacy consent',a.privacy?'Accepted '+fmtT(a.privacy.at):'')+p('Grant',a.grant?'₱'+money(a.grant.total)+' · funding source: '+a.grant.fund+' · e-signed by '+a.grant.by:'Not yet approved')+'</dl>';
 }
-function expensesHTML(a,editDean){
-  const rows=a.expenses.map((x,i)=>'<tr><td>'+esc(x.type)+'</td><td class="r num" data-label="Projected (₱)">'+money(x.amount)+'</td>'+
-    (editDean?'<td class="r" data-label="Approved (₱)"><input class="dl-appr" type="number" min="0" step="0.01" max="'+x.amount+'" value="'+x.amount+'" aria-label="Approved amount for '+esc(x.type)+'" style="width:110px;text-align:right"></td><td data-label="Funding source"><input class="dl-fund" type="text" maxlength="80" placeholder="e.g. Dean\'s Office fund" aria-label="Funding source for '+esc(x.type)+'" style="width:100%"></td>'
-    :'<td class="r num" data-label="Approved (₱)">'+(x.approved==null?'<span class="muted">pending</span>':money(x.approved))+'</td><td data-label="Funding source">'+(x.fund?esc(x.fund):(x.approved===0?'<span class="muted">Not funded</span>':'<span class="muted">Assigned by the Dean</span>'))+'</td>')+'<td class="muted" data-label="Remarks">'+esc(x.remarks)+'</td></tr>').join('');
-  const pt=C.projected(a);
-  return '<div class="tbl"><table class="stk"><thead><tr><th>Expense</th><th class="r">Projected (₱)</th><th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Total</th><th class="r num" data-label="Projected (₱)">'+money(pt)+'</th><th class="r num" id="dl_total" data-label="Approved (₱)">'+(a.grant?money(a.grant.total):editDean?money(pt):'–')+'</th><th colspan="2" class="muted" id="dl_note" style="text-transform:none;letter-spacing:0;font-weight:400"></th></tr></tfoot></table></div>'+(editDean?'<p class="muted" style="margin-top:6px">Set the approved amount and the funding source for each line. A line can be 0 when it is not funded; it then needs no funding source.</p>':'');
+function expensesHTML(a){
+  const rows=a.expenses.map(x=>'<tr><td>'+esc(x.type)+'</td><td class="r num" data-label="Projected (₱)">'+money(x.amount)+'</td><td class="muted" data-label="Remarks">'+esc(x.remarks)+'</td></tr>').join('');
+  return '<div class="tbl"><table class="stk"><thead><tr><th>Expense</th><th class="r">Projected (₱)</th><th>Remarks</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><th>Total</th><th class="r num" data-label="Projected (₱)">'+money(C.projected(a))+'</th><th></th></tr></tfoot></table></div>'+
+   (a.grant?'<div class="callout ok" style="margin-top:10px"><b>Grant approved: ₱'+money(a.grant.total)+'</b> · funding source: '+esc(a.grant.fund)+'. The Administrative Assistant breaks it down by receipt at reimbursement.</div>':'');
+}
+function grantFields(a){
+  const cap=C.CAP[a.conf.scope],def=Math.min(cap,C.projected(a));
+  return '<div class="row" style="margin-top:10px"><div class="field"><label for="d_amt">Approved grant (₱)</label><input id="d_amt" type="number" min="0" step="0.01" value="'+def+'"><small id="d_amtnote"></small></div>'+
+   '<div class="field"><label for="d_fund">Funding source</label><input id="d_fund" type="text" maxlength="80" placeholder="e.g. Dean\'s Office fund"><small>One amount and one funding source for the whole grant. The Administrative Assistant breaks it down by receipt at reimbursement.</small></div></div>';
 }
 function historyHTML(a){
   return '<div class="tbl"><table><thead><tr><th>When</th><th>By</th><th>Action</th><th>Details</th></tr></thead><tbody>'+a.history.slice().reverse().map(h=>'<tr'+(h.cls?' class="denied"':'')+'><td class="mono muted">'+fmtT(h.at)+'</td><td>'+esc(h.by)+(h.role!=='system'?'<div class="muted">'+esc(ROLE_NAME[h.role]||h.role)+'</div>':'')+'</td><td><b>'+esc(h.action)+'</b></td><td>'+esc(h.note)+'</td></tr>').join('')+'</tbody></table></div>';
 }
 C.historyHTML=historyHTML;
 function whoLabel(a,e){return e===a.studentEmail?a.studentName+' (Student)':C.acct(e)?C.acct(e).name+' ('+C.acct(e).label+')':e}
+function commentItem(c,me){return '<div class="cm'+(c.email===me?' mine':'')+'"><div class="cm-h"><b>'+esc(c.by)+'</b> <span class="muted">· '+esc(ROLE_NAME[c.role])+(c.to&&c.to.length?' → '+esc(c.to.map(e=>C.nameOf(e)).join(', ')):'')+(c.topic?' · </span><span class="pill p-warn">'+esc(c.topic.kind+(c.topic.item?' · '+c.topic.item:''))+'</span><span class="muted"> ':'')+' · '+fmtT(c.at)+'</span></div>'+(c.text?'<p>'+esc(c.text).replace(/\n/g,'<br>')+'</p>':'')+(c.files.length?'<p>'+c.files.map(id=>'<button class="btn sm sec" data-act="preview" data-id="'+id+'">'+esc(D().files[id].name)+'</button>').join(' ')+'</p>':'')+'</div>'}
+C.commentItem=commentItem;
 function commentsHTML(a){
   const me=u().email,canSay=a.studentEmail===me||CHAIN.some(k=>a.route[k]===me)||u().role==='admin';
   const rc=C.participants(a).filter(e=>e!==me),def=C.counterparts(a,u());
-  return '<div class="thread">'+(a.comments.map(c=>'<div class="cm'+(c.email===me?' mine':'')+'"><div class="cm-h"><b>'+esc(c.by)+'</b> <span class="muted">· '+esc(ROLE_NAME[c.role])+(c.to&&c.to.length?' → '+esc(c.to.map(e=>C.nameOf(e)).join(', ')):'')+' · '+fmtT(c.at)+'</span></div>'+(c.text?'<p>'+esc(c.text).replace(/\n/g,'<br>')+'</p>':'')+(c.files.length?'<p>'+c.files.map(id=>'<button class="btn sm sec" data-act="preview" data-id="'+id+'">'+esc(D().files[id].name)+'</button>').join(' ')+'</p>':'')+'</div>').join('')||'<p class="muted">No messages yet. Use this to ask for or give a clarification: the student, each signatory and the Administrative Assistant can write to one another here.</p>')+'</div>'+
+  return '<div class="thread">'+(a.comments.map(c=>commentItem(c,me)).join('')||'<p class="muted">No messages yet. Use this to ask for or give a clarification: the student, each signatory and the Administrative Assistant can write to one another here.</p>')+'</div>'+
    (canSay?'<fieldset class="tolist"><legend>Send to</legend><div class="to-row">'+rc.map(e=>'<label><input type="checkbox" class="c-to" value="'+esc(e)+'"'+(def.indexOf(e)>-1?' checked':'')+'><span>'+esc(whoLabel(a,e))+'</span></label>').join('')+'</div><small>Everyone on the application can read the thread. Only the people you tick are notified by email and in-app.</small></fieldset>'+
     '<div class="field" style="margin-top:10px"><label for="c_text">Message</label><textarea id="c_text" rows="3" placeholder="Ask for or give a clarification"></textarea></div><div class="field" style="margin-top:8px"><label for="c_files">Attach documents (optional)</label><input id="c_files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"><small>PDF, JPG or PNG, 10 MB each. Saved as '+esc(a.ref)+'-C1, -C2 and so on.</small></div><div class="msg" id="c_msg" style="color:var(--bad);font-size:12px"></div><button class="btn" data-act="comment" style="margin-top:8px">Send message</button>':'');
 }
@@ -291,8 +305,8 @@ function actionHTML(a){
     const done=CHAIN.filter(k=>a.decisions[k]&&a.decisions[k].email===me&&a.decisions[k].d!=='returned').map(k=>CH[k].label+': '+a.decisions[k].d+' '+fmtT(a.decisions[k].at)).join(' · ');
     if(mine){
       const dean=s==='dean',total=C.filesOf(a).filter(f=>!f.superseded).length;
-      h+='<div class="card"><h3>Your decision as '+CH[s].label+'</h3><p class="muted">Preview the documents first. <b id="viewcount">'+viewedCount(a)+'</b> of '+total+' previewed by you.</p>'+
-       (dean?'<div class="field" style="margin-top:10px"><label>Your digital signature</label><canvas id="sigpad" class="sigpad" aria-label="Signature pad. Draw your signature."></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><button type="button" class="btn sm sec" data-act="sigclear">Clear</button><button type="button" class="btn sm sec" data-act="sigsaved">Use my saved signature</button><button type="button" class="btn sm sec" data-act="sigupload">Upload a signature image</button><button type="button" class="btn sm sec" data-act="sigsample">Insert sample signature</button><input type="file" id="sigfile" accept="image/png,image/jpeg" hidden></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="d_remember"> Remember my signature on this browser</label><small>Only the Dean signs. The endorsers appear on the reimbursement report with the date they endorsed.</small></div>':'')+
+      h+='<div class="card"><h3>Your decision as '+(s==='dean'&&a.route.dean!==D().settings.dean?'approver in place of the Dean':CH[s].label)+'</h3><p class="muted">Preview the documents first. <b id="viewcount">'+viewedCount(a)+'</b> of '+total+' previewed by you.</p>'+
+       (dean?grantFields(a)+'<div class="field" style="margin-top:10px"><label>Your digital signature</label><canvas id="sigpad" class="sigpad" aria-label="Signature pad. Draw your signature."></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><button type="button" class="btn sm sec" data-act="sigclear">Clear</button><button type="button" class="btn sm sec" data-act="sigsaved">Use my saved signature</button><button type="button" class="btn sm sec" data-act="sigupload">Upload a signature image</button><button type="button" class="btn sm sec" data-act="sigsample">Insert sample signature</button><input type="file" id="sigfile" accept="image/png,image/jpeg" hidden></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="d_remember"> Remember my signature on this browser</label><small>Only the Dean signs. The endorsers appear on the reimbursement report with the date they endorsed.</small></div>':'')+
        '<div class="field" style="margin-top:10px"><label for="d_note">Remarks <span class="muted">(required to Return or Reject)</span></label><textarea id="d_note" rows="3"></textarea></div><div class="msg" id="d_msg" style="color:var(--bad);font-size:12px"></div><div id="d_confirm"></div>'+
        '<div id="d_btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="decide" data-k="'+(dean?'approve':'endorse')+'">'+(dean?'Review and approve':'Endorse')+'</button><button class="btn warn" data-act="decide" data-k="return">Return with remarks</button><button class="btn bad" data-act="decide" data-k="reject">Reject…</button></div></div>';
     }else h+='<div class="card"><h3>Your part</h3><p>'+(done?esc(done)+'.':a.status==='pending'?'It is not your turn yet. It is with the '+i.by+'.':esc(i.label)+'.')+'</p></div>';
@@ -330,15 +344,16 @@ R.app=function(){
    '<div style="display:grid;gap:14px;min-width:0">'+actionHTML(a)+'<div class="card"><h3>Messages and clarifications</h3>'+commentsHTML(a)+'</div></div></div>'+
    '<div class="card" style="margin-top:14px"><h3>Approval history</h3><p class="muted">Every update is recorded: submissions, decisions, messages, uploads, document views and denied attempts.</p>'+historyHTML(a)+'</div>';
   const cv=$('#sigpad');if(cv)initSig(cv);
-  if(canDean){dlTotals()}
+  if(canDean)amtNote();
 };
 C.ayLabel=ayLabel;
-function dlTotals(){
-  const a=D().apps.find(x=>x.id===state.curApp),vals=$$('.dl-appr').map(i=>Number(i.value)||0),t=round2(vals.reduce((s,x)=>s+x,0)),cap=C.CAP[a.conf.scope];
-  $('#dl_total').textContent=money(t);$('#dl_note').textContent=t>cap?'Above the ₱'+money(cap)+' limit for '+a.conf.scope+' travel. Reduce a line.':'Limit: ₱'+money(cap)+' ('+a.conf.scope+').';
-  $('#dl_note').style.color=t>cap?'var(--bad)':'';
+function amtNote(){
+  const a=D().apps.find(x=>x.id===state.curApp),el=$('#d_amt'),n=$('#d_amtnote');if(!el||!n)return;
+  const v=Number(el.value),cap=C.CAP[a.conf.scope],pt=C.projected(a),bad=!(v>0)||v>cap||v>pt;
+  n.textContent='Limit ₱'+money(cap)+' for '+C.regionLabel(a.conf.scope)+'. The student projected ₱'+money(pt)+'.'+(v>cap?' Above the limit.':v>pt?' Above the projected budget.':'');
+  n.style.color=bad&&el.value!==''?'var(--bad)':'';
 }
-document.addEventListener('input',e=>{if(e.target.classList.contains('dl-appr'))dlTotals()});
+document.addEventListener('input',e=>{if(e.target.id==='d_amt')amtNote()});
 document.addEventListener('change',e=>{
   if(e.target.id==='sigfile'){
     const f=e.target.files[0];if(!f)return;
@@ -359,13 +374,12 @@ ACT.decide=function(t){
   else if(k==='reject'){if(!note){msg.textContent='A reason is required to reject.';$('#d_note').focus();return}if(!confirm('Reject this application? It will be closed and the student notified.'))return;res=E.reject(u(),a,note)}
   else{
     const cv=$('#sigpad'),signed=cv&&cv.dataset.signed==='1';
-    const o={signature:signed?cv.toDataURL('image/png'):'',note,lines:$$('.dl-appr').map((i,n)=>({approved:i.value,fund:$$('.dl-fund')[n].value}))};
+    const o={signature:signed?cv.toDataURL('image/png'):'',note,amount:$('#d_amt').value,fund:$('#d_fund').value};
     const chk=E.approveGrant(u(),a,Object.assign({dry:true},o));
     if(chk.err){msg.textContent=chk.err;toast(chk.err);return}
     pendingApproval=o;
-    const rows=a.expenses.map((x,n)=>({type:x.type,amt:Number(o.lines[n].approved),fund:String(o.lines[n].fund).trim()})).filter(x=>x.amt>0);
     $('#d_confirm').innerHTML='<div class="callout info" style="margin-top:10px" role="group" aria-label="Confirm the grant approval"><b>Confirm the grant approval</b>'+
-      '<div class="tbl" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Approved (₱)</th><th>Funding source</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.type)+'</td><td class="r num">'+money(x.amt)+'</td><td>'+esc(x.fund)+'</td></tr>').join('')+'</tbody><tfoot><tr><th>Total</th><th class="r num">'+money(chk.total)+'</th><th class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">Limit ₱'+money(C.CAP[a.conf.scope])+' ('+a.conf.scope+')</th></tr></tfoot></table></div>'+
+      '<dl class="who" style="margin-top:8px"><dt>Approved grant</dt><dd><b>₱'+money(chk.total)+'</b> <span class="muted">(limit ₱'+money(C.CAP[a.conf.scope])+' for '+esc(C.regionLabel(a.conf.scope))+')</span></dd><dt>Funding source</dt><dd>'+esc(chk.fund)+'</dd></dl>'+
       '<p style="margin-top:8px">Your signature:</p><img class="sigimg" src="'+o.signature+'" alt="Your signature">'+
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="confirmapprove">Confirm approval</button><button class="btn sec" data-act="cancelconfirm">Go back and edit</button></div></div>';
     $('#d_btns').style.display='none';$('#d_confirm').scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -420,14 +434,14 @@ function formHTML(){
    '<div class="field"><label for="f_venue">Venue</label><input id="f_venue"><div class="msg"></div></div>'+
    '<div class="field"><label for="f_org">Organizer</label><input id="f_org"><div class="msg"></div></div>'+
    '<div class="field"><label for="f_etype">Type of event</label><select id="f_etype"><option value="">Select</option>'+['Conference','Competition','Exhibit','Public forum','Other'].map(v=>opt(v,v)).join('')+'</select><div class="msg"></div></div>'+
-   '<div class="field"><label for="f_scope">Travel</label><select id="f_scope"><option value="">Select</option><option value="international">International (up to ₱30,000)</option><option value="local">Local (up to ₱15,000)</option></select><div class="msg"></div></div></div></div>'+
+   '<div class="field"><label for="f_scope">Event location</label><select id="f_scope"><option value="">Select</option>'+C.REGIONS.map(r=>opt(r[0],r[1]+' · up to ₱'+money(r[2]))).join('')+'</select><small>The grant limit depends on where the event takes place.</small><div class="msg"></div></div></div></div>'+
   '<div class="card" data-fs="1" hidden><h3>Participation details</h3><div class="row" style="margin-top:10px">'+
    '<div class="field"><label for="f_class">Classification</label><select id="f_class"><option>Paper presenter</option><option>Poster presentation</option></select></div>'+
    '<div class="field"><label for="f_ptype">Paper type</label><select id="f_ptype"><option>Full paper</option><option>Short paper</option></select></div>'+
    '<div class="field"><label for="f_index">Indexed in</label><select id="f_index"><option value="">Select</option><option>Scopus</option><option>ISI</option><option>ASEAN Citation</option></select><small>Attach proof in step 4.</small><div class="msg"></div></div></div>'+
    '<div class="field" style="margin-top:12px"><label for="f_title">Title of paper</label><input id="f_title"><div class="msg"></div></div>'+
    '<div class="row" style="margin-top:12px"><div class="field"><label for="f_cof">Co-authors (faculty)</label><input id="f_cof"></div><div class="field"><label for="f_cos">Co-authors (student)</label><input id="f_cos"><small>Only one student co-author is funded per paper.</small></div></div></div>'+
-  '<div class="card" data-fs="2" hidden><h3>Breakdown of projected expenses</h3><p class="muted">Include the day before the conference until the day after. The total cannot be more than ₱30,000 for international or ₱15,000 for local travel. The Dean assigns the approved amount and the funding source of each line when approving the grant.</p>'+
+  '<div class="card" data-fs="2" hidden><h3>Breakdown of projected expenses</h3><p class="muted">Include the day before the conference until the day after. The total cannot be more than the University limit for the event location (NCR ₱6,000, Luzon ₱8,000, Ilocos, Cagayan or Bicol ₱10,000, Visayas or Mindanao ₱12,000, international ₱15,000). The Dean approves one grant amount with one funding source; the Administrative Assistant breaks it down by receipt at reimbursement.</p>'+
    '<div class="tbl" style="margin-top:10px"><table><thead><tr><th>Expense type</th><th class="r">Amount (₱)</th><th>Funding source</th><th>Remarks</th></tr></thead><tbody>'+
    C.EXPENSE_TYPES.map((t,i)=>'<tr><td>'+t+'</td><td><input class="ex" aria-label="'+t+' amount" type="number" min="0" style="width:110px;text-align:right"></td><td class="muted">Assigned by the Dean</td><td><input class="exr" aria-label="'+t+' remarks" style="width:100%"></td></tr>').join('')+
    '</tbody><tfoot><tr><th>Total projected</th><th class="r num" id="exTotal">0</th><th colspan="2" id="exNote" class="muted" style="text-transform:none;letter-spacing:0;font-weight:400"></th></tr></tfoot></table></div><div class="msg" id="m_ex_0" style="color:var(--bad);font-size:12px;margin-top:6px"></div></div>'+
@@ -480,7 +494,7 @@ function refUpdate(){
 function expUpdate(){
   const t=C.total(readForm().exp.map(x=>({v:x.amount})),'v');$('#exTotal').textContent=money(t);
   const cap=C.CAP[$('#f_scope').value];
-  $('#exNote').textContent=cap?(t>cap?'Above the ₱'+money(cap)+' limit by ₱'+money(round2(t-cap))+'. Reduce the amounts: the application cannot be submitted.':'Within the ₱'+money(cap)+' limit for '+$('#f_scope').value+' travel.'):'Choose international or local travel in step 1 to see the limit.';
+  $('#exNote').textContent=cap?(t>cap?'Above the ₱'+money(cap)+' limit by ₱'+money(round2(t-cap))+'. Reduce the amounts: the application cannot be submitted.':'Within the ₱'+money(cap)+' limit for '+C.regionLabel($('#f_scope').value)+'.'):'Choose where the event takes place in step 1 to see the limit.';
   $('#exNote').style.color=cap&&t>cap?'var(--bad)':'';
 }
 function showErrs(errs){
@@ -498,7 +512,7 @@ function fShow(){
 function buildReview(){
   const f=readForm(),pr=C.PROGRAMS.filter(p=>p[0]===f.prog)[0];
   const rows=[['Period',ayLabel(f.ay||'2627')+' · '+f.term.replace('Term','Term ')],['Student',u().name+' · ID '+f.sid+' · '+(pr?pr[0]:'')+' · year '+f.year],['Thesis Adviser',C.nameOf(f.adv)||'–'],['Department Chair (from your program)',C.nameOf(D().settings.chairs[f.prog])||'–'],['Associate Dean (set once)',C.nameOf(D().settings.assoc)],['Dean',C.nameOf(D().settings.dean)],
-    ['Conference',f.conf+' · '+fmtD(f.start)+' to '+fmtD(f.end)+' · '+f.venue],['Organizer · type',f.org+' · '+f.etype],['Travel',f.scope==='international'?'International':'Local'],['Paper',f.title+' ('+f.ptype+', '+f.cls+', '+f.index+')'],['Projected total','₱'+money(C.total(f.exp.map(x=>({v:x.amount})),'v'))],['Attachment',f.file?f.file.orig:'none']];
+    ['Conference',f.conf+' · '+fmtD(f.start)+' to '+fmtD(f.end)+' · '+f.venue],['Organizer · type',f.org+' · '+f.etype],['Event location',C.regionLabel(f.scope)],['Paper',f.title+' ('+f.ptype+', '+f.cls+', '+f.index+')'],['Projected total','₱'+money(C.total(f.exp.map(x=>({v:x.amount})),'v'))],['Attachment',f.file?f.file.orig:'none']];
   $('#review').innerHTML=rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>').join('');
   const adv=C.advisories(u().email,f.ay,FS.appId);
   $('#advis').innerHTML=adv.length?'<div class="callout" style="margin-top:10px">Note for reviewers: you already have '+adv.map(a=>'<b>'+a.ref+'</b> ('+esc(C.info(a).label)+')').join(', ')+' in '+ayLabel(f.ay)+'. The grant is available once every academic year, so the adviser and staff will confirm eligibility. This does not block your submission.</div>':'';
@@ -530,8 +544,8 @@ ACT.ffill=function(){
   const pdf=C.makePdf('Consolidated requirements (sample)',['SAMPLE FILE for the demo.','1. Copy of the paper (full text)','2. Letter of acceptance or notification','3. Proof of indexing (Scopus)']);
   const m=C.registerFile({orig:'consolidated-requirements.pdf',size:pdf.size,type:'application/pdf',by:u().name});
   C.FILES.put(m.id,pdf).then(()=>{
-    writeForm({ay:'2627',term:'Term1',sid:'12145678',prog:u().program||'BSCS',year:'4',adv:'adviser.reyes@college.example',conf:'Sample International Conference on Applied Computing (SICAC 2027)',start:'2027-01-18',end:'2027-01-20',venue:'Tokyo, Japan',org:'Sample Applied Computing Society',etype:'Conference',scope:'international',cls:'Paper presenter',ptype:'Full paper',index:'Scopus',title:'Sample Title on Federated Learning',cof:'Dr. Paolo Reyes',cos:'',
-      exp:[10000,1500,10500,5500,0].map((n,i)=>({amount:n||'',remarks:''})),file:{id:m.id,orig:m.orig,size:m.size},attConfirm:true,privacy:true,brand:true});
+    writeForm({ay:'2627',term:'Term1',sid:'12145678',prog:u().program||'BSCS',year:'4',adv:'adviser.reyes@college.example',conf:'Sample International Conference on Applied Computing (SICAC 2027)',start:'2027-01-18',end:'2027-01-20',venue:'Tokyo, Japan',org:'Sample Applied Computing Society',etype:'Conference',scope:'intl',cls:'Paper presenter',ptype:'Full paper',index:'Scopus',title:'Sample Title on Federated Learning',cof:'Dr. Paolo Reyes',cos:'',
+      exp:[5000,600,4400,3000,2000].map((n,i)=>({amount:n||'',remarks:''})),file:{id:m.id,orig:m.orig,size:m.size},attConfirm:true,privacy:true,brand:true});
     toast('Example data filled in, with a sample PDF attached.');if(FS.step===4)buildReview();
   });
 };
@@ -576,7 +590,7 @@ R.par=function(){
   const other=all.filter(a=>a.status==='approved'&&a.post.status==='submitted'||a.status==='verified'||a.status==='completed');
   if(!open.length){body.innerHTML='<div class="callout">You have no approved grant waiting for a post-activity report.</div>'+(other.length?'<div class="card" style="margin-top:12px"><h3>Already submitted</h3>'+listTable(other,{noStudent:true})+'</div>':'')+'<p style="margin-top:12px"><button class="btn sec" data-go="dash">Back to dashboard</button></p>';return}
   const a=D().apps.find(x=>x.id===PS.appId),p=a.post,v=p.verify;
-  if(a.id!==prevApp||!PS.rows.length)PS.rows=p.items&&p.items.length?p.items.map(x=>({type:x.type,or:x.or,merchant:x.merchant,amount:x.amount})):a.expenses.filter(x=>x.approved>0).map(x=>blankRow(x.type));
+  if(a.id!==prevApp||!PS.rows.length)PS.rows=p.items&&p.items.length?p.items.map(x=>({type:x.type,or:x.or,merchant:x.merchant,amount:x.amount})):a.expenses.filter(x=>x.amount>0).map(x=>blankRow(x.type));
   const flagged=v&&v.returns?C.REQ_POST.filter(r=>v.returns[r[0]]):[];
   const left=C.daysBetween(C.manilaToday(),C.dueDate(a));
   body.innerHTML='<div class="screen"><div class="screen-bar"><b>Post-activity report</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body">'+
@@ -612,7 +626,7 @@ function parFile(){const f=PS.file;$('#p_attname').textContent=f?f.orig+' ('+fmt
 ACT.parpick=()=>$('#p_file').click();
 ACT.parfill=function(){
   const a=D().apps.find(x=>x.id===PS.appId),shops={'Registration fee':'Sample Conference Secretariat','Pre-departure fees':'Sample Visa Center','Roundtrip airfare':'Sample Airlines','Accommodation':'Sample Hotel','Per diem':'Sample Meals Co.'};
-  PS.rows=a.expenses.filter(x=>x.approved>0).map((x,n)=>({type:x.type,or:'OR-'+(5100+n),merchant:shops[x.type],amount:x.approved}));renderRows();
+  PS.rows=C.suggestItems(a).map((x,n)=>({type:x.type,or:'OR-'+(5100+n),merchant:shops[x.type],amount:x.amount}));renderRows();
   $$('.pl-doc').forEach(c=>c.checked=true);
   const pdf=C.makePdf('Post-activity documents (sample)',['SAMPLE FILE for the demo.'].concat(C.REQ_POST.map((r,i)=>(i+1)+'. '+r[1])));
   const m=C.registerFile({orig:'post-activity-documents.pdf',size:pdf.size,type:'application/pdf',by:u().name});

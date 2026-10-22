@@ -18,10 +18,34 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 3.0.0 | 20 Oct 2026 | GitHub. Feedback round: reimbursement, Dean approval, RFP and reminders. |
 | 3.0.1 | 20 Oct 2026 | GitHub. Messages and Documents layout fixes. |
 | 3.0.2 | 20 Oct 2026 | GitHub. Expense table on phones. |
+| 3.1.0 | 22 Oct 2026 | GitHub. Event location limits, one grant amount, signer rules, signed report download. |
 
 # Versions
 
-## 3.0.2 (20 Oct 2026 · Prototype · current)
+## 3.1.0 (22 Oct 2026 · Prototype · current)
+
+University grant limits by event location, one grant amount from the Dean, new rules when the Thesis Adviser is also a signatory, and one signed report download.
+
+### Added
+
+- **Event location** replaces local or international, with the University limits: NCR ₱6,000, Luzon (outside NCR) ₱8,000, Ilocos, Cagayan or Bicol ₱10,000, Visayas or Mindanao ₱12,000, international ₱15,000.
+- **Clarify with the Dean**: the Administrative Assistant can ask about a funding source or a final approved amount from the Verification screen; the Dean replies in Messages and the answer shows in the same card.
+- Dashboards list messages waiting for your reply, and a reply goes to the last person who wrote.
+- The reimbursement report PDF has real text, complete table borders and the Dean's signature.
+
+### Changed
+
+- **The Dean sets one approved amount and one funding source** for the whole grant. The Administrative Assistant breaks it down by receipt at reimbursement and sets the funding source per item.
+- Signer overlaps: adviser is the Department Chair, the Associate Dean endorses next; adviser is the Associate Dean, the file goes to the Dean; adviser is the Dean, the Associate Dean approves the grant in the Dean's place.
+- One button, **Download Reimbursement Report**. Print or save as PDF and Download CSV were removed from the report page.
+- The alternate approver for the Dean was removed from Settings.
+
+### Known limits
+
+- Applications already saved in a browser keep their data. Earlier local events are treated as Luzon (₱8,000).
+- Luzon is assumed to mean Luzon outside NCR, Ilocos, Cagayan and Bicol. Please confirm.
+
+## 3.0.2 (20 Oct 2026 · Prototype · commit 320b0c5)
 
 Phone layout fix.
 
