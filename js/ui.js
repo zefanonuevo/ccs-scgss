@@ -122,7 +122,7 @@ function matches(a,q){return !q||[a.ref,a.studentName,a.conf.title,a.program,a.c
 C.listTable=listTable;C.pill=pill;C.stepsHTML=stepsHTML;C.matches=matches;
 
 /* ---------- dashboards ---------- */
-let dashF='pending',dashQ='';
+let dashF='pending',dashQ='',dashPicked=false;
 const dashP={ay:'',term:''}; /* period filter for the approver and staff dashboards */
 const periodApps=()=>D().apps.filter(a=>(!dashP.ay||a.ay===dashP.ay)&&(!dashP.term||a.term===dashP.term));
 const periodLabel=()=>(dashP.ay?ayLabel(dashP.ay):'All academic years')+' · '+(dashP.term?dashP.term.replace('Term','Term '):'All terms');
@@ -151,7 +151,7 @@ function dashList(b,o){
   return '<div class="field"><label for="dsearch">Search these applications</label><input id="dsearch" type="search" value="'+esc(dashQ)+'" placeholder="Reference, student, conference, program"></div>'+
    '<p class="muted">'+list.length+' '+CHIPS.filter(c=>c[0]===dashF)[0][1].toLowerCase()+' application'+(list.length===1?'':'s')+'</p>'+listTable(list,o);
 }
-ACT.dfilter=t=>{dashF=t.dataset.f;R.dash()};
+ACT.dfilter=t=>{dashF=t.dataset.f;dashPicked=true;R.dash()};
 document.addEventListener('input',e=>{if(e.target.id==='dsearch'){dashQ=e.target.value;const p=e.target.selectionStart;R.dash();const el=$('#dsearch');if(el){el.focus();el.setSelectionRange(p,p)}}});
 document.addEventListener('change',e=>{if(e.target.id==='dp_ay'||e.target.id==='dp_term'){dashP[e.target.id==='dp_ay'?'ay':'term']=e.target.value;R.dash()}});
 R.dash=function(){
@@ -159,6 +159,7 @@ R.dash=function(){
   if(r==='student')body.innerHTML=dashStudent();
   else if(CHAIN.indexOf(r)>-1){
     const apps=periodApps(),b=approverBuckets(u().email,apps);
+    if(!dashPicked)dashF=b.pending.length?'pending':'assigned'; /* nothing waiting: show the records instead of an empty list */
     const granted=b.approved.filter(a=>a.grant&&a.grant.byEmail===u().email);
     body.innerHTML='<header><h2>'+esc(u().label)+' dashboard</h2><p class="muted">Your applications by status. Pick a box to filter the list. You can act only when it is your turn.</p></header>'+
       (b.pending.length?'<div class="callout info"><b>'+b.pending.length+'</b> application'+(b.pending.length>1?'s':'')+' waiting for your decision.</div>':'<div class="callout ok">Nothing is waiting for you.</div>')+

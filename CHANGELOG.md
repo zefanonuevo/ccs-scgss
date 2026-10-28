@@ -20,10 +20,19 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 | 3.0.2 | 20 Oct 2026 | GitHub. Expense table on phones. |
 | 3.1.0 | 22 Oct 2026 | GitHub. Event location limits, one grant amount, signer rules, signed report download. |
 | 3.1.1 | 22 Oct 2026 | GitHub. Associate Dean endorsement skipped when the Dean is the adviser. |
+| 3.1.2 | 28 Oct 2026 | GitHub. Dean dashboard opens on the records. |
 
 # Versions
 
-## 3.1.1 (22 Oct 2026 · Prototype · current)
+## 3.1.2 (28 Oct 2026 · Prototype · current)
+
+Dean dashboard shows the records.
+
+### Changed
+
+- When nothing is waiting for the Dean (or another approver), the dashboard opens on Assigned, so the records show instead of an empty list. The Academic year and Term filters, already on the dashboard, narrow the list and the counts.
+
+## 3.1.1 (22 Oct 2026 · Prototype · commit 4992a8f)
 
 One rule change.
 
