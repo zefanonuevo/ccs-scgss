@@ -72,10 +72,13 @@ const dueDate=a=>addDays(a.conf.end,PAR_DAYS);
 const manilaToday=()=>new Date(now()+288e5).toISOString().slice(0,10);
 const daysBetween=(from,to)=>Math.round((Date.UTC(+to.slice(0,4),+to.slice(5,7)-1,+to.slice(8,10))-Date.UTC(+from.slice(0,4),+from.slice(5,7)-1,+from.slice(8,10)))/864e5);
 const fundsOf=a=>a.grant?a.grant.fund:'';
-Object.assign(C,{info,stepState,STEP_LABELS,projected,grantTotal,dueDate,addDays,total,fundsOf,manilaToday,daysBetween});
+Object.assign(C,{tidyName,info,stepState,STEP_LABELS,projected,grantTotal,dueDate,addDays,total,fundsOf,manilaToday,daysBetween});
 /* ---------- validation ---------- */
+/** "Last Name, First Name MI", for example Dela Cruz, Juan P. (the middle initial is optional). Returns the tidied name, or '' when it is not in that form. */
+function tidyName(n){n=String(n==null?'':n).trim().replace(/\s+/g,' ');const m=/^([^,\d]{2,}),\s*([^,\d]{2,})$/u.exec(n);return m&&/\p{L}/u.test(m[1])&&/\p{L}/u.test(m[2])&&n.length<=80?m[1].trim()+', '+m[2].trim():''}
 function validateForm(f){
   const e=[],add=(step,id,msg)=>e.push({step,id,msg}),req=(v,step,id,msg)=>{if(!String(v==null?'':v).trim())add(step,id,msg)};
+  if(!tidyName(f.name))add(0,'f_name','Enter your name as Last Name, First Name MI, for example Dela Cruz, Juan P.');
   req(f.ay,0,'f_ay','Select the academic year.');req(f.term,0,'f_term','Select the term.');req(f.sid,0,'f_sid','Enter your student ID number.');req(f.prog,0,'f_prog','Select your degree program.');
   req(f.year,0,'f_year','Select your year level.');req(f.adv,0,'f_adv','Select your thesis adviser.');req(f.conf,0,'f_conf','Enter the conference title.');
   req(f.start,0,'f_start','Enter the start date.');req(f.end,0,'f_end','Enter the end date.');

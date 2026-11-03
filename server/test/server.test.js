@@ -44,7 +44,7 @@ async function boot() {
   for (const [email, role, name, program] of people) await store.upsertUser({ email, role, name, program });
   return { store, engine, server, base, as, close: async () => { server.closeAllConnections(); server.close(); await store.close(); } };
 }
-const form = (file, adv) => ({ ay: '2627', term: 'Term1', sid: '12145678', prog: 'BSCS-ST', year: '4', adv, conf: 'ICSC 2026', start: '2026-10-05', end: '2026-10-09', venue: 'Kyoto', org: 'Society', etype: 'Conference', scope: 'intl', cls: 'Paper presenter', ptype: 'Full paper', index: 'Scopus', title: 'A Paper', cof: '', cos: '', exp: R.EXPENSE_TYPES.map((t, i) => ({ type: t, amount: [5500, 600, 4400, 3000, 1500][i], remarks: '' })), file, attConfirm: true, privacy: true, brand: true });
+const form = (file, adv) => ({ name: 'Santos, Maria L.', ay: '2627', term: 'Term1', sid: '12145678', prog: 'BSCS-ST', year: '4', adv, conf: 'ICSC 2026', start: '2026-10-05', end: '2026-10-09', venue: 'Kyoto', org: 'Society', etype: 'Conference', scope: 'intl', cls: 'Paper presenter', ptype: 'Full paper', index: 'Scopus', title: 'A Paper', cof: '', cos: '', exp: R.EXPENSE_TYPES.map((t, i) => ({ type: t, amount: [5500, 600, 4400, 3000, 1500][i], remarks: '' })), file, attConfirm: true, privacy: true, brand: true });
 const MARIA = 'maria_santos@dlsu.edu.ph', REYES = 'paolo.reyes@dlsu.edu.ph';
 
 test('sign-in comes from the portal, access from the SCGSS roles table', async (t) => {
@@ -211,4 +211,18 @@ test('script addresses carry a version so a cached old file is never used', asyn
   assert.ok(tags.length >= 7);
   tags.forEach((x) => assert.match(x, /\.js\?v=[a-z0-9]+"$/, x));
   const js = await s.as(null).get('/js/core.js?v=abc'); assert.equal(js.status, 200);
+});
+
+test('the student types their own name as Last Name, First Name MI', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const maria = s.as(MARIA), file = await maria.upload('n.pdf');
+  for (const bad of ['', 'Maria', 'Maria Santos', 'Santos,', ', Maria', 'Santos, M4ria', 'S, M']) {
+    const r = await maria.act('submit', '', Object.assign(form(file, REYES), { name: bad }));
+    assert.equal(r.ok, false, JSON.stringify(bad)); assert.match(r.result.err, /Last Name, First Name MI/);
+  }
+  const ok = await maria.act('submit', '', Object.assign(form(file, REYES), { name: '  dela   Cruz,   Maria  L. ' }));
+  assert.equal(ok.ok, true, JSON.stringify(ok.result));
+  const a = (await (await maria.get('/api/state')).json()).state.apps[0];
+  assert.equal(a.studentName, 'dela Cruz, Maria L.', 'spaces tidied, otherwise as typed');
+  assert.equal(a.history[0].by, 'dela Cruz, Maria L.');
 });

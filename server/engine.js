@@ -43,7 +43,9 @@ async function createEngine({ store, gas }) {
   const fundsOf = R.fundsOf;
 
   /* ---------- history, notifications, Google sync ---------- */
-  function hist(a, actor, action, note, cls) { a.history.push({ at: now(), by: actor ? actor.name : 'System', role: actor ? actor.role : 'system', action, note: note || '', cls: cls || '' }); a.updated = now(); }
+  /* a student is shown by the name they typed on the form, not their sign-in name (which may be a nickname) */
+  const nm = (a, actor) => (actor.email === a.studentEmail && a.studentName ? a.studentName : actor.name);
+  function hist(a, actor, action, note, cls) { a.history.push({ at: now(), by: actor ? (actor.email === a.studentEmail && a.studentName ? a.studentName : actor.name) : 'System', role: actor ? actor.role : 'system', action, note: note || '', cls: cls || '' }); a.updated = now(); }
   function notify(to, a, subject, body, key) {
     (Array.isArray(to) ? to : [to]).forEach((email) => {
       if (!email) return; const k = key + ':' + email; if (db.keys[k]) return; db.keys[k] = 1;
@@ -89,7 +91,7 @@ function deny(a,actor,msg){hist(a,actor,'Denied (403)',msg,'bad');sync(a,'Denied
 function fileExt(n){const m=/\.[A-Za-z0-9]+$/.exec(n||'');return m?m[0].toLowerCase():'.pdf'}
 function lineReq(a,s){notify(a.route[s],a,'Action required: '+CH[s].verb.toLowerCase()+' grant application',a.studentName+' ('+a.program+') applied for a conference grant: '+a.conf.title+'. It now needs your decision as '+CH[s].label+': '+CH[s].verb+', Return with remarks, or Reject.','req:'+a.id+':'+a.stage+':'+a.cycle)}
 function applyForm(a,f){
-  a.sid=f.sid;a.program=f.prog;a.year=f.year;
+  a.studentName=R.tidyName(f.name)||a.studentName;a.sid=f.sid;a.program=f.prog;a.year=f.year;
   a.conf={title:f.conf,start:f.start,end:f.end,venue:f.venue,org:f.org,etype:f.etype,scope:f.scope};
   a.paper={cls:f.cls,ptype:f.ptype,index:f.index,title:f.title,coF:f.cof,coS:f.cos};
   a.expenses=f.exp.map((x,i)=>({type:x.type,amount:Number(x.amount)||0,remarks:x.remarks||'',fund:'',approved:null}));
@@ -101,10 +103,10 @@ E.submit=function(actor,f){
   const fm=db.files[f.file.id];if(!fm)return ERR('The attached file could not be found. Attach it again.');
   const key=f.ay+'-'+f.term;db.counters[key]=(db.counters[key]||0)+1;
   const ref=key+'-'+pad3(db.counters[key]);
-  const a={id:'a'+(++db.seq),ref,key,ay:f.ay,term:f.term,status:'pending',stage:0,cycle:1,studentEmail:actor.email,studentName:actor.name,route,
+  const a={id:'a'+(++db.seq),ref,key,ay:f.ay,term:f.term,status:'pending',stage:0,cycle:1,studentEmail:actor.email,studentName:R.tidyName(f.name),route,
     attach:{fileId:f.file.id,version:1},privacy:{at:now()},decisions:{},returned:null,rejected:null,grant:null,comments:[],history:[],post:{status:'none',cycle:0},report:null,viewed:{},created:now(),updated:now(),clar:0};
   applyForm(a,f);
-  fm.name=ref+'.pdf';fm.appId=a.id;fm.kind='Application requirements';fm.folder='Applications/'+key;fm.by=actor.name;fm.at=now();fm.version=1;
+  fm.name=ref+'.pdf';fm.appId=a.id;fm.kind='Application requirements';fm.folder='Applications/'+key;fm.by=nm(a,actor);fm.at=now();fm.version=1;
   db.apps.push(a);
   hist(a,actor,'Submitted','Reference '+ref+' assigned. Requirements PDF saved as '+fm.name+'. Data privacy notice accepted. Routed to the Thesis Adviser, '+nameOf(route.adviser)+'.'+(route.dean!==signers().dean?' The Dean is the Thesis Adviser, so the Associate Dean, '+nameOf(route.dean)+', will approve the grant in the Dean\'s place.':''));
   notify(actor.email,a,'Application submitted','Your application was received as '+ref+'. It is now with your Thesis Adviser, '+nameOf(route.adviser)+'. You can follow it on your dashboard.','sub:'+a.id);
@@ -204,9 +206,9 @@ E.comment=function(actor,a,text,fileIds,to,topic){
   let rcpt=to&&to.length?to.filter(e=>e!==actor.email&&participants(a).indexOf(e)>-1):counterparts(a,actor).filter(e=>e!==actor.email);
   if(!rcpt.length)return ERR('Choose who should receive this message.');
   const ids=saveClar(a,actor,fileIds);
-  a.comments.push({id:'c'+(++db.seq),at:now(),by:actor.name,role:actor.role,email:actor.email,text,files:ids,to:rcpt,topic:topic||null});
+  a.comments.push({id:'c'+(++db.seq),at:now(),by:nm(a,actor),role:actor.role,email:actor.email,text,files:ids,to:rcpt,topic:topic||null});
   hist(a,actor,topic?'Reimbursement question':'Comment','To '+rcpt.map(nameOf).join(', ')+(topic?' ['+topic.kind+(topic.item?' · '+topic.item:'')+']':'')+': '+(text.length>150?text.slice(0,150)+'...':text)+(ids.length?' · '+ids.length+' file(s): '+ids.map(i=>db.files[i].name).join(', '):''));
-  notify(rcpt,a,topic?'Reimbursement question: '+topic.kind:'New message from '+actor.name,actor.name+' ('+ROLE_NAME[actor.role]+') wrote: "'+(text||'(file attached)')+'"','cm:'+a.id+':'+db.seq);
+  notify(rcpt,a,topic?'Reimbursement question: '+topic.kind:'New message from '+nm(a,actor),nm(a,actor)+' ('+ROLE_NAME[actor.role]+') wrote: "'+(text||'(file attached)')+'"','cm:'+a.id+':'+db.seq);
   sync(a,'Comment');return OK;
 };
 E.resubmit=function(actor,a,f,reply,fileIds){
@@ -218,16 +220,16 @@ E.resubmit=function(actor,a,f,reply,fileIds){
   if(f){
     f=Object.assign({},f,{ay:a.ay,term:a.term});
     const errs=validateForm(f);if(errs.length)return {err:errs[0].msg,errs};
-    const was=JSON.stringify([a.conf,a.paper,a.expenses.map(x=>x.amount+x.remarks),a.program,a.year,a.sid]);
+    const was=JSON.stringify([a.conf,a.paper,a.expenses.map(x=>x.amount+x.remarks),a.program,a.year,a.sid,a.studentName]);
     const adv=a.route.adviser,oldProg=a.program;
     applyForm(a,f);
-    if(JSON.stringify([a.conf,a.paper,a.expenses.map(x=>x.amount+x.remarks),a.program,a.year,a.sid])!==was)changed.push('form details');
+    if(JSON.stringify([a.conf,a.paper,a.expenses.map(x=>x.amount+x.remarks),a.program,a.year,a.sid,a.studentName])!==was)changed.push('form details');
     if(f.adv!==adv||oldProg!==f.prog){const r=routeFor(f.prog,f.adv);if(r.err)return r;a.route=r;if(f.adv!==adv)changed.push('thesis adviser');if(oldProg!==f.prog)changed.push('degree program (Department Chair re-set)')}
     if(f.file&&f.file.id!==a.attach.fileId){const old=db.files[a.attach.fileId],fm=db.files[f.file.id];a.attach.version++;a.attach.fileId=f.file.id;
       fm.name=a.ref+'-v'+a.attach.version+'.pdf';fm.appId=a.id;fm.kind='Application requirements (v'+a.attach.version+')';fm.folder='Applications/'+a.key;fm.by=actor.name;fm.at=now();fm.version=a.attach.version;if(old)old.superseded=true;changed.push('requirements PDF (v'+a.attach.version+')')}
   }
   const ids=saveClar(a,actor,fileIds);
-  if(reply||ids.length)a.comments.push({id:'c'+(++db.seq),at:now(),by:actor.name,role:'student',email:actor.email,text:reply,files:ids,to:[a.route[a.returned.role]]});
+  if(reply||ids.length)a.comments.push({id:'c'+(++db.seq),at:now(),by:nm(a,actor),role:'student',email:actor.email,text:reply,files:ids,to:[a.route[a.returned.role]]});
   const s=a.returned.role;a.status='pending';a.stage=a.returned.stage;a.returned=null;a.cycle++;
   hist(a,actor,'Resubmitted',(changed.length?'Edited: '+changed.join(', ')+'. ':'')+(reply?'Reply: "'+reply+'"':'')+(ids.length?' '+ids.length+' file(s) attached.':'')+' Back to the '+CH[s].label+'; earlier decisions kept.');
   lineReq(a,s);

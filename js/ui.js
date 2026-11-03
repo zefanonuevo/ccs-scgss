@@ -413,7 +413,7 @@ function formHTML(){
    '<div class="row" style="margin-top:10px"><div class="field"><label for="f_ay">Academic year</label><select id="f_ay">'+C.AYS.map(v=>opt(v,ayLabel(v)+' ('+v+')',v==='2627')).join('')+'</select><div class="msg"></div></div>'+
    '<div class="field"><label for="f_term">Term</label><select id="f_term">'+C.TERMS.map(v=>opt(v,v.replace('Term','Term '),v==='Term1')).join('')+'</select><div class="msg"></div></div></div>'+
    '<h3 style="margin-top:18px">Student information</h3><div class="row" style="margin-top:10px">'+
-   '<div class="field"><label for="f_name">Name of student</label><input id="f_name" readonly value="'+esc(u().name)+'"><small>From your sign-in.</small></div>'+
+   '<div class="field"><label for="f_name">Name of student</label><input id="f_name" autocomplete="name" placeholder="Dela Cruz, Juan P."><small>Your full name, as Last Name, First Name MI. Use your real name, not a nickname.</small><div class="msg"></div></div>'+
    '<div class="field"><label for="f_sid">Student ID number</label><input id="f_sid" inputmode="numeric"><div class="msg"></div></div>'+
    '<div class="field"><label for="f_prog">Degree program</label><select id="f_prog"><option value="">Select</option>'+C.PROGRAMS.map(p=>opt(p[0],p[0]+' · '+p[1],p[0]===u().program)).join('')+'</select><small>Decides your Department Chair.</small><div class="msg"></div></div>'+
    '<div class="field"><label for="f_year">Year level</label><select id="f_year"><option value="">Select</option>'+[1,2,3,4,5].map(n=>opt(n,n)).join('')+'</select><div class="msg"></div></div>'+
@@ -453,21 +453,21 @@ function formHTML(){
 }
 function readForm(){
   const v=id=>{const el=$('#'+id);return el?String(el.value).trim():''};
-  return {ay:v('f_ay'),term:v('f_term'),sid:v('f_sid'),prog:v('f_prog'),year:v('f_year'),adv:v('f_adv'),conf:v('f_conf'),start:v('f_start'),end:v('f_end'),venue:v('f_venue'),org:v('f_org'),etype:v('f_etype'),scope:v('f_scope'),
+  return {ay:v('f_ay'),term:v('f_term'),name:v('f_name'),sid:v('f_sid'),prog:v('f_prog'),year:v('f_year'),adv:v('f_adv'),conf:v('f_conf'),start:v('f_start'),end:v('f_end'),venue:v('f_venue'),org:v('f_org'),etype:v('f_etype'),scope:v('f_scope'),
     cls:v('f_class'),ptype:v('f_ptype'),index:v('f_index'),title:v('f_title'),cof:v('f_cof'),cos:v('f_cos'),
     exp:C.EXPENSE_TYPES.map((t,i)=>({type:t,amount:$$('.ex')[i].value,remarks:$$('.exr')[i].value.trim()})),
     file:FS.file,attConfirm:$('#f_attconfirm').checked,privacy:$('#f_privacy').checked,brand:$('#f_brand').checked};
 }
 function writeForm(f){
   const set=(id,val)=>{const el=$('#'+id);if(el&&val!=null)el.value=val};
-  set('f_ay',f.ay);set('f_term',f.term);set('f_sid',f.sid);set('f_prog',f.prog);set('f_year',f.year);set('f_adv',f.adv);set('f_conf',f.conf);set('f_start',f.start);set('f_end',f.end);set('f_venue',f.venue);set('f_org',f.org);set('f_etype',f.etype);set('f_scope',f.scope);
+  set('f_ay',f.ay);set('f_term',f.term);set('f_name',f.name);set('f_sid',f.sid);set('f_prog',f.prog);set('f_year',f.year);set('f_adv',f.adv);set('f_conf',f.conf);set('f_start',f.start);set('f_end',f.end);set('f_venue',f.venue);set('f_org',f.org);set('f_etype',f.etype);set('f_scope',f.scope);
   set('f_class',f.cls);set('f_ptype',f.ptype);set('f_index',f.index);set('f_title',f.title);set('f_cof',f.cof);set('f_cos',f.cos);
   (f.exp||[]).forEach((x,i)=>{$$('.ex')[i].value=x.amount;$$('.exr')[i].value=x.remarks||''});
   FS.file=f.file||null;$('#f_attconfirm').checked=!!f.attConfirm;$('#f_privacy').checked=!!f.privacy;$('#f_brand').checked=!!f.brand;
   fileUI();expUpdate();refUpdate();
 }
 function appToForm(a){const fm=D().files[a.attach.fileId];
-  return {ay:a.ay,term:a.term,sid:a.sid,prog:a.program,year:a.year,adv:a.route.adviser,conf:a.conf.title,start:a.conf.start,end:a.conf.end,venue:a.conf.venue,org:a.conf.org,etype:a.conf.etype,scope:a.conf.scope,cls:a.paper.cls,ptype:a.paper.ptype,index:a.paper.index,title:a.paper.title,cof:a.paper.coF,cos:a.paper.coS,
+  return {name:a.studentName,ay:a.ay,term:a.term,sid:a.sid,prog:a.program,year:a.year,adv:a.route.adviser,conf:a.conf.title,start:a.conf.start,end:a.conf.end,venue:a.conf.venue,org:a.conf.org,etype:a.conf.etype,scope:a.conf.scope,cls:a.paper.cls,ptype:a.paper.ptype,index:a.paper.index,title:a.paper.title,cof:a.paper.coF,cos:a.paper.coS,
     exp:a.expenses.map(x=>({amount:x.amount,remarks:x.remarks})),file:{id:fm.id,orig:fm.orig,size:fm.size},attConfirm:true,privacy:true,brand:true}}
 function fileUI(){
   const f=FS.file,pv=$('#f_prev');
@@ -502,7 +502,7 @@ function fShow(){
 }
 function buildReview(){
   const f=readForm(),pr=C.PROGRAMS.filter(p=>p[0]===f.prog)[0];
-  const rows=[['Period',ayLabel(f.ay||'2627')+' · '+f.term.replace('Term','Term ')],['Student',u().name+' · ID '+f.sid+' · '+(pr?pr[0]:'')+' · year '+f.year],['Thesis Adviser',C.nameOf(f.adv)||'–'],['Department Chair (from your program)',C.nameOf(D().settings.chairs[f.prog])||'–'],['Associate Dean (set once)',C.nameOf(D().settings.assoc)],['Dean',C.nameOf(D().settings.dean)],
+  const rows=[['Period',ayLabel(f.ay||'2627')+' · '+f.term.replace('Term','Term ')],['Student',(C.tidyName(f.name)||f.name||u().name)+' · ID '+f.sid+' · '+(pr?pr[0]:'')+' · year '+f.year],['Thesis Adviser',C.nameOf(f.adv)||'–'],['Department Chair (from your program)',C.nameOf(D().settings.chairs[f.prog])||'–'],['Associate Dean (set once)',C.nameOf(D().settings.assoc)],['Dean',C.nameOf(D().settings.dean)],
     ['Conference',f.conf+' · '+fmtD(f.start)+' to '+fmtD(f.end)+' · '+f.venue],['Organizer · type',f.org+' · '+f.etype],['Event location',C.regionLabel(f.scope)],['Paper',f.title+' ('+f.ptype+', '+f.cls+', '+f.index+')'],['Projected total','₱'+money(C.total(f.exp.map(x=>({v:x.amount})),'v'))],['Attachment',f.file?f.file.orig:'none']];
   $('#review').innerHTML=rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>').join('');
   const adv=C.advisories(u().email,f.ay,FS.appId);
@@ -516,7 +516,7 @@ R.form=function(){
   if(FS.mode==='edit'&&FS.appId){const a=D().apps.find(x=>x.id===FS.appId);writeForm(appToForm(a));$('#f_ay').disabled=true;$('#f_term').disabled=true;
     body.insertAdjacentHTML('afterbegin','<div class="callout" style="margin-bottom:12px">Returned by '+esc(a.returned.by)+' ('+CH[a.returned.role].label+'): '+esc(a.returned.why)+'</div>')}
   else if(draft){writeForm(draft);body.insertAdjacentHTML('afterbegin','<div class="callout info" style="margin-bottom:12px">Your saved draft was restored. <button class="lnk" data-act="fdiscard">Discard draft</button></div>')}
-  else{writeForm({ay:'2627',term:'Term1',prog:u().program,exp:C.EXPENSE_TYPES.map(()=>({amount:'',remarks:''}))})}
+  else{writeForm({name:((D().apps.filter(x=>x.studentEmail===u().email)[0]||{}).studentName||''),ay:'2627',term:'Term1',prog:u().program,exp:C.EXPENSE_TYPES.map(()=>({amount:'',remarks:''}))})}
   FS.step=0;fShow();expUpdate();refUpdate();
 };
 document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#appForm')){if(e.target.classList.contains('ex'))expUpdate();if(e.target.id==='f_ay'||e.target.id==='f_term')refUpdate()}});
