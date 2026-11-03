@@ -7,6 +7,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const MAX_FILE = 20 * 1024 * 1024;
+/** juan_dela_cruz@dlsu.edu.ph: letters/digits/hyphens, at least one underscore, no dot before the @, and the allowed domain. */
+const isStudentEmail = (email, domain) => { const m = /^([a-z0-9_-]+)@(.+)$/.exec(String(email || '').toLowerCase()); return !!m && m[1].indexOf('_') > 0 && (!domain || m[2] === domain); };
 const FILE_TYPES = { '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.txt': 'text/plain' };
 
 /** Production: ask the portal who this cookie belongs to. Returns {signedIn, email, name} or {signedIn:false}. */
@@ -28,7 +30,7 @@ function portalChecker(portalUrl, ttlMs = 10000) {
 }
 
 function createApp({ store, engine, gas, me, config }) {
-  const cfg = Object.assign({ siteRoot: path.resolve(__dirname, '..'), filesDir: path.resolve(__dirname, 'data/files'), baseUrl: '' }, config);
+  const cfg = Object.assign({ siteRoot: path.resolve(__dirname, '..'), filesDir: path.resolve(__dirname, 'data/files'), baseUrl: '', autoStudents: true }, config);
   fs.mkdirSync(cfg.filesDir, { recursive: true });
   const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
   const app = express();
@@ -45,7 +47,13 @@ function createApp({ store, engine, gas, me, config }) {
   async function who(req, res, next) {  // eslint-disable-line
     const p = await me(req.headers.cookie || '');
     if (!p.signedIn) return res.status(401).json({ ok: false, error: p.unreachable ? 'The portal sign-in service is not reachable. Try again shortly.' : 'Sign in to the portal first.', signedIn: false });
-    const u = store.activeUser(p.email);
+    let u = store.activeUser(p.email);
+    /* A student's email looks like juan_dela_cruz@dlsu.edu.ph (underscores, no dots). A student who is not listed yet is added as a Student on first visit.
+       Staff emails look like maria.delacruz@dlsu.edu.ph (a dot): they must be listed by the System Administrator. A person who was switched off stays off. */
+    if (!u && cfg.autoStudents && !store.getUser(p.email) && isStudentEmail(p.email, cfg.allowedDomain)) {
+      u = await store.upsertUser({ email: p.email, role: 'student', name: p.name || '', program: '', active: true });
+      await store.audit(p.email, 'student_auto', 'added as a student on first sign-in', req.ip);
+    }
     if (!u) { await store.audit(p.email, 'no_access', 'not listed or switched off', req.ip); return res.status(403).json({ ok: false, error: 'Your account is not set up for the Grant Support System. Ask the System Administrator to add you.', signedIn: true, email: p.email, enrolled: false }); }
     req.user = engine.decorate(u);
     if (!req.user.name || req.user.name === req.user.email) req.user.name = p.name || req.user.email;
@@ -108,7 +116,7 @@ function createApp({ store, engine, gas, me, config }) {
   }));
 
   /* ---------- roles: System Administrator only ---------- */
-  app.get('/api/users', who, sysadminOnly, ah(async (req, res) => res.json({ ok: true, users: store.listUsers(), roles: store.ROLES, programs: store.PROGRAMS, audit: await store.lastAudit(30) })));
+  app.get('/api/users', who, sysadminOnly, ah(async (req, res) => res.json({ ok: true, users: store.listUsers(), roles: store.ROLES, programs: store.PROGRAMS, departments: store.DEPARTMENTS, audit: await store.lastAudit(30) })));
   app.post('/api/users', sameOrigin, who, sysadminOnly, express.json({ limit: '32kb' }), ah(async (req, res) => {
     const b = req.body || {};
     try {
@@ -117,7 +125,7 @@ function createApp({ store, engine, gas, me, config }) {
       if (dom && !email.endsWith('@' + dom)) throw new Error('Use an @' + dom + ' address.');
       const was = store.getUser(email), active = b.active !== false;
       const program = String(b.program || '').toUpperCase();
-      /* one Dean, one Associate Dean, one Department Chair per program */
+      /* one Dean, one Associate Dean, one Department Chair per department */
       if (active && (role === 'dean' || role === 'assoc' || role === 'chair')) {
         const other = store.usersByRole(role).find((u) => u.email !== email && (role !== 'chair' || u.program === program));
         if (other) throw new Error((other.name || other.email) + ' is already the ' + ({ dean: 'Dean', assoc: 'Associate Dean', chair: 'Department Chair for ' + program }[role]) + '. Switch them off or change their role first.');
@@ -139,4 +147,4 @@ function createApp({ store, engine, gas, me, config }) {
   return app;
 }
 
-module.exports = { createApp, portalChecker, FILE_TYPES };
+module.exports = { createApp, portalChecker, FILE_TYPES, isStudentEmail };

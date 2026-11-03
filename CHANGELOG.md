@@ -29,6 +29,7 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 A real back end. Approval rules, records and files move from the browser to a server on the CCS apps VM.
 
 ### Added
+- Ten degrees in three departments; each Department Chair covers a department. Unlisted student-format emails (`name_surname@`) are added as Students on first sign-in; other emails must be listed. `users.js import` loads the access list CSV.
 - Node.js, Express and PostgreSQL server (`server/`) with the approval rules from 3.1.2 running on the server, written to the database after every action.
 - A roles table (`scgss_users`) and a **Roles** tab for the System Administrator, with safeguards: one Dean, one Associate Dean, one chair per program, and at least one System Administrator.
 - Sign-in through the CCS portal: the server asks the portal who is signed in, then checks its own roles table.

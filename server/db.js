@@ -5,7 +5,9 @@
 const { Pool } = require('pg');
 
 const ROLES = ['student', 'adviser', 'chair', 'assoc', 'dean', 'admin', 'sysadmin'];
-const PROGRAMS = ['BSCS', 'BSIT', 'BSIS'];
+const R = require('../shared/rules');
+const PROGRAMS = R.PROGRAMS.map((p) => p[0]);          /* degrees */
+const DEPARTMENTS = R.DEPARTMENTS.map((d) => d[0]);    /* a Department Chair's "program" is the department code */
 const normEmail = (e) => String(e || '').trim().toLowerCase();
 
 /** url: postgres://app_scgss:PASSWORD@127.0.0.1:5432/app_scgss.  schema: optional, used by tests to keep each test in its own schema. */
@@ -50,7 +52,7 @@ function makeStore(pool) {
   const q = (text, params) => pool.query(text, params);
 
   const store = {
-    ROLES, PROGRAMS, pool,
+    ROLES, PROGRAMS, DEPARTMENTS, pool,
 
     /** Create the tables if they are missing and load the people list. Safe to run on every start. */
     async init() {
@@ -71,8 +73,8 @@ function makeStore(pool) {
       program = String(program || '').trim().toUpperCase();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('Enter a valid email address.');
       if (!ROLES.includes(role)) throw new Error('Role must be one of: ' + ROLES.join(', '));
-      if (role === 'chair' && !PROGRAMS.includes(program)) throw new Error('A Department Chair needs a program: ' + PROGRAMS.join(', ') + '.');
-      if (role === 'student' && program && !PROGRAMS.includes(program)) throw new Error('Program must be one of: ' + PROGRAMS.join(', ') + '.');
+      if (role === 'chair' && !DEPARTMENTS.includes(program)) throw new Error('A Department Chair needs a department: ' + DEPARTMENTS.join(', ') + '.');
+      if (role === 'student' && program && !PROGRAMS.includes(program)) throw new Error('Degree must be one of: ' + PROGRAMS.join(', ') + '.');
       if (role !== 'chair' && role !== 'student') program = '';
       const r = (await q(`INSERT INTO scgss_users (email, role, name, program, active) VALUES ($1,$2,$3,$4,$5)
         ON CONFLICT (email) DO UPDATE SET role = $2, name = $3, program = $4, active = $5, updated_at = now()
@@ -136,4 +138,4 @@ function makeStore(pool) {
   return store;
 }
 
-module.exports = { open, makeStore, normEmail, ROLES, PROGRAMS };
+module.exports = { open, makeStore, normEmail, ROLES, PROGRAMS, DEPARTMENTS };

@@ -1,6 +1,6 @@
 'use strict';
-/* Manage who may use SCGSS and in which role.  node users.js list | add <email> <role> [name] [program] | disable <email> | enable <email> | audit [n]
-   Roles: student, adviser, chair (needs a program: BSCS, BSIT or BSIS), assoc (Associate Dean), dean, admin (Administrative Assistant), sysadmin. */
+/* Manage who may use SCGSS and in which role.  node users.js list | add <email> <role> [name] [program] | import <file.csv> | disable <email> | enable <email> | audit [n]
+   Roles: student, adviser, chair (needs a department: DCT, DST or DIT), assoc (Associate Dean), dean, admin (Administrative Assistant), sysadmin. */
 const path = require('node:path');
 const fs = require('node:fs');
 try {
@@ -25,8 +25,15 @@ try {
   } else if (cmd === 'disable' || cmd === 'enable') {
     if (!a[0]) throw new Error('Usage: ' + cmd + ' <email>');
     console.log(await store.setActive(a[0], cmd === 'enable') ? 'Done.' : 'No such user.'); await store.audit('cli', cmd, a[0]);
+  } else if (cmd === 'import') {
+    if (!a[0]) throw new Error('Usage: import <file.csv>   (lines: Role,email[,department])');
+    const { rows, problems } = require('./access-csv').parseAccessCsv(fs.readFileSync(a[0], 'utf8'));
+    if (problems.length) throw new Error(problems.join('\n'));
+    for (const r of rows) { const was = store.getUser(r.email); await store.upsertUser({ email: r.email, role: r.role, name: (was && was.name) || r.name, program: r.program, active: true }); }
+    await store.audit('cli', 'import', a[0] + ': ' + rows.length + ' people');
+    const n = {}; rows.forEach((r) => { n[r.role] = (n[r.role] || 0) + 1; }); console.log('Imported', rows.length, 'people:', JSON.stringify(n));
   } else if (cmd === 'audit') {
     (await store.lastAudit(Number(a[0]) || 30)).forEach((r) => console.log(new Date(r.ts).toISOString(), r.email || '-', r.event, r.detail));
-  } else { console.log('Commands: list | add <email> <role> [name] [program] | disable <email> | enable <email> | audit [n]'); }
+  } else { console.log('Commands: list | add <email> <role> [name] [program] | import <file.csv> | disable <email> | enable <email> | audit [n]'); }
 } finally { await store.close(); }
 })().catch((e) => { console.error('Error:', e.message); process.exitCode = 1; });

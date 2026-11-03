@@ -19,7 +19,10 @@ C.setDirectory=f=>{DIR=f};
 const acct=e=>DIR(e);
 const nameOf=e=>{const a=acct(e);return a?a.name:e};
 /* ---------- constants ---------- */
-const PROGRAMS=[['BSCS','BS Computer Science'],['BSIT','BS Information Technology'],['BSIS','BS Information Systems']];
+const PROGRAMS=[['BSCS-CSE','BS Computer Science major in Computer Systems Engineering'],['BSCS-NIS','BS Computer Science major in Network and Information Security'],['BSCS-ST','BS Computer Science major in Software Technology'],['BSDS','BS Data Science'],['BSINFSC','BS Information Security'],['BSIS','BS Information Systems'],['BSIET-AD','BS Interactive Entertainment major in Game Art and Design'],['BSIET-GD','BS Interactive Entertainment major in Game Development'],['BSIT','BS Information Technology'],['BSMSCS','BS Computer Science and MS Computer Science']];
+/* each degree belongs to a department, and each department has one Department Chair */
+const DEPARTMENTS=[['DCT','Department of Computer Technology'],['DST','Department of Software Technology'],['DIT','Department of Information Technology']];
+const DEGREE_DEPT={'BSCS-CSE':'DCT','BSCS-NIS':'DCT','BSCS-ST':'DST','BSDS':'DST','BSINFSC':'DIT','BSIS':'DIT','BSIET-AD':'DST','BSIET-GD':'DST','BSIT':'DIT','BSMSCS':'DST'};
 const AYS=['2526','2627','2728'], TERMS=['Term1','Term2','Term3'];
 /* Grant limit set by the University, by where the event takes place */
 const REGIONS=[['ncr','NCR (Metro Manila)',6000],['luzon','Luzon, outside NCR',8000],['icb','Ilocos, Cagayan or Bicol',10000],['vismin','Visayas or Mindanao',12000],['intl','International',15000]];
@@ -34,7 +37,7 @@ const CHAIN=['adviser','chair','assoc','dean'];
 const CH={adviser:{label:'Thesis Adviser',verb:'Endorse'},chair:{label:'Department Chair',verb:'Endorse'},assoc:{label:'Associate Dean',verb:'Endorse'},dean:{label:'Dean',verb:'Approve'}};
 const ROLE_NAME={student:'Student',adviser:'Thesis Adviser',chair:'Department Chair',assoc:'Associate Dean',dean:'Dean',admin:'Administrative Assistant',sysadmin:'System Administrator'};
 const PRIVACY='Data Privacy Notice (draft for the University Data Protection Officer to review). By submitting this form I consent to De La Salle University, College of Computer Studies collecting and processing the personal information I provide (name, student ID, degree program, conference and expense details, and the documents I upload) to evaluate and administer my conference grant. This includes routing my application to my thesis adviser, department chair, associate dean and dean, and sharing it with the administrative and accounting offices, and keeping records and reports. My information is stored in the College\'s Google Workspace (Sheets and Drive), is open only to these offices, and is kept for the period the University sets. I understand my rights under the Data Privacy Act of 2012 (RA 10173), including to access and correct my data and to withdraw consent, by contacting the University Data Protection Officer.';
-Object.assign(C,{PAR_DAYS,ADVISER_ROLES,PROGRAMS,AYS,TERMS,CAP,REGIONS,regionLabel,EXPENSE_TYPES,REQ_APP,REQ_POST,CHAIN,CH,ROLE_NAME,PRIVACY,acct,nameOf,now});
+Object.assign(C,{PAR_DAYS,ADVISER_ROLES,PROGRAMS,DEPARTMENTS,DEGREE_DEPT,AYS,TERMS,CAP,REGIONS,regionLabel,EXPENSE_TYPES,REQ_APP,REQ_POST,CHAIN,CH,ROLE_NAME,PRIVACY,acct,nameOf,now});
 C.u={money,esc,pad3,fmtT,fmtD,fmtSize,addWorkdays,round2,now};
 /* ---------- status, steps, helpers ---------- */
 const STEP_LABELS=['Submitted','Thesis Adviser','Department Chair','Associate Dean','Dean','Post-activity report','Verified','Filed at FAO'];

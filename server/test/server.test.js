@@ -37,14 +37,14 @@ async function boot() {
     upload: async (name) => (await (await fetch(base + '/api/files', { method: 'POST', headers: { cookie: 'as=' + email, origin: ORIGIN, 'x-file-name': name, 'content-type': 'application/pdf' }, body: PDF })).json()).file
   });
   const people = [
-    ['sys@dlsu.edu.ph', 'sysadmin', 'Sys Admin', ''], ['maria_santos@dlsu.edu.ph', 'student', 'Maria Santos', 'BSCS'],
-    ['paolo.reyes@dlsu.edu.ph', 'adviser', 'Dr. Reyes', ''], ['luis.mercado@dlsu.edu.ph', 'chair', 'Dr. Mercado', 'BSCS'],
+    ['sys@dlsu.edu.ph', 'sysadmin', 'Sys Admin', ''], ['maria_santos@dlsu.edu.ph', 'student', 'Maria Santos', 'BSCS-ST'],
+    ['paolo.reyes@dlsu.edu.ph', 'adviser', 'Dr. Reyes', ''], ['luis.mercado@dlsu.edu.ph', 'chair', 'Dr. Mercado', 'DST'],
     ['carla.mendoza@dlsu.edu.ph', 'assoc', 'Dr. Mendoza', ''], ['elena.navarro@dlsu.edu.ph', 'dean', 'Dr. Navarro', ''], ['rosa.delgado@dlsu.edu.ph', 'admin', 'Rosa Delgado', '']
   ];
   for (const [email, role, name, program] of people) await store.upsertUser({ email, role, name, program });
   return { store, engine, server, base, as, close: async () => { server.closeAllConnections(); server.close(); await store.close(); } };
 }
-const form = (file, adv) => ({ ay: '2627', term: 'Term1', sid: '12145678', prog: 'BSCS', year: '4', adv, conf: 'ICSC 2026', start: '2026-10-05', end: '2026-10-09', venue: 'Kyoto', org: 'Society', etype: 'Conference', scope: 'intl', cls: 'Paper presenter', ptype: 'Full paper', index: 'Scopus', title: 'A Paper', cof: '', cos: '', exp: R.EXPENSE_TYPES.map((t, i) => ({ type: t, amount: [5500, 600, 4400, 3000, 1500][i], remarks: '' })), file, attConfirm: true, privacy: true, brand: true });
+const form = (file, adv) => ({ ay: '2627', term: 'Term1', sid: '12145678', prog: 'BSCS-ST', year: '4', adv, conf: 'ICSC 2026', start: '2026-10-05', end: '2026-10-09', venue: 'Kyoto', org: 'Society', etype: 'Conference', scope: 'intl', cls: 'Paper presenter', ptype: 'Full paper', index: 'Scopus', title: 'A Paper', cof: '', cos: '', exp: R.EXPENSE_TYPES.map((t, i) => ({ type: t, amount: [5500, 600, 4400, 3000, 1500][i], remarks: '' })), file, attConfirm: true, privacy: true, brand: true });
 const MARIA = 'maria_santos@dlsu.edu.ph', REYES = 'paolo.reyes@dlsu.edu.ph';
 
 test('sign-in comes from the portal, access from the SCGSS roles table', async (t) => {
@@ -127,12 +127,12 @@ test('roles screen: System Administrator only, with safeguards', async (t) => {
   const sys = s.as('sys@dlsu.edu.ph');
   assert.equal((await sys.post('/api/users', { email: 'new@gmail.com', role: 'student' })).status, 400, 'outside the DLSU domain');
   assert.equal((await sys.post('/api/users', { email: 'two@dlsu.edu.ph', role: 'dean' })).status, 400, 'only one Dean');
-  assert.equal((await sys.post('/api/users', { email: 'c@dlsu.edu.ph', role: 'chair' })).status, 400, 'chair needs a program');
-  assert.equal((await sys.post('/api/users', { email: 'c2@dlsu.edu.ph', role: 'chair', program: 'BSCS' })).status, 400, 'one chair per program');
-  assert.equal((await sys.post('/api/users', { email: 'c3@dlsu.edu.ph', role: 'chair', program: 'BSIT', name: 'Dr. Tan' })).status, 200);
+  assert.equal((await sys.post('/api/users', { email: 'c@dlsu.edu.ph', role: 'chair' })).status, 400, 'chair needs a department');
+  assert.equal((await sys.post('/api/users', { email: 'c2@dlsu.edu.ph', role: 'chair', program: 'DST' })).status, 400, 'one chair per department');
+  assert.equal((await sys.post('/api/users', { email: 'c3@dlsu.edu.ph', role: 'chair', program: 'DIT', name: 'Dr. Tan' })).status, 200);
   assert.equal((await sys.post('/api/users', { email: 'sys@dlsu.edu.ph', role: 'student' })).status, 400, 'last System Administrator');
   assert.equal((await sys.post('/api/users', { email: 'sys@dlsu.edu.ph', role: 'sysadmin', active: false })).status, 400);
-  assert.equal((await sys.post('/api/users', { email: MARIA, role: 'student', program: 'BSCS', active: false })).status, 200);
+  assert.equal((await sys.post('/api/users', { email: MARIA, role: 'student', program: 'BSCS-ST', active: false })).status, 200);
   assert.equal((await s.as(MARIA).get('/api/state')).status, 403, 'switching someone off takes effect at once');
 });
 
@@ -158,4 +158,41 @@ test('only the listed files are served', async (t) => {
   const s = await boot(); t.after(s.close);
   for (const p of ['/server/app.js', '/google/Code.gs', '/.git/config', '/js/../server/db.js', '/CHANGELOG.md']) assert.equal((await s.as(null).get(p)).status, 404, p);
   assert.equal((await s.as(null).get('/shared/rules.js')).status, 200);
+});
+
+test('students in the student email format are let in; other emails must be listed', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const st = await s.as('juan_dela_cruz@dlsu.edu.ph').get('/api/state');
+  assert.equal(st.status, 200, 'an unlisted student-format email is added as a student');
+  assert.equal((await st.json()).state.me.role, 'student');
+  assert.equal(s.store.getUser('juan_dela_cruz@dlsu.edu.ph').role, 'student');
+  assert.equal((await s.as('maria.delacruz@dlsu.edu.ph').get('/api/state')).status, 403, 'a staff-format email that is not listed is refused');
+  assert.equal((await s.as('juan_delacruz@gmail.com').get('/api/state')).status, 403, 'wrong domain is refused');
+  await s.store.upsertUser({ email: 'pedro_penduko@dlsu.edu.ph', role: 'student', active: false });
+  assert.equal((await s.as('pedro_penduko@dlsu.edu.ph').get('/api/state')).status, 403, 'a student who was switched off stays off');
+});
+
+test('each degree goes to the chair of its department', async (t) => {
+  const s = await boot(); t.after(s.close);
+  await s.store.upsertUser({ email: 'dct.chair@dlsu.edu.ph', role: 'chair', name: 'Chair DCT', program: 'DCT' });
+  const maria = s.as(MARIA), file = await maria.upload('r.pdf');
+  const dst = await maria.act('submit', '', form(file, REYES)); assert.equal(dst.ok, true);
+  const view = (await (await maria.get('/api/state')).json()).state.apps[0];
+  assert.equal(view.route.chair, 'luis.mercado@dlsu.edu.ph', 'BSCS-ST is DST');
+  const f2 = await maria.upload('r2.pdf'), form2 = Object.assign(form(f2, REYES), { prog: 'BSCS-CSE', ay: '2627', term: 'Term2' });
+  const dct = await maria.act('submit', '', form2); assert.equal(dct.ok, true, JSON.stringify(dct.result));
+  const a2 = (await (await maria.get('/api/state')).json()).state.apps.find((x) => x.program === 'BSCS-CSE');
+  assert.equal(a2.route.chair, 'dct.chair@dlsu.edu.ph', 'BSCS-CSE is DCT');
+  const f3 = await maria.upload('r3.pdf'), none = await maria.act('submit', '', Object.assign(form(f3, REYES), { prog: 'BSIT' }));
+  assert.equal(none.ok, false); assert.match(none.result.err, /No Department Chair is set for BSIT/);
+});
+
+test('the access list CSV: highest role wins, chairs carry a department', () => {
+  const { parseAccessCsv } = require('../access-csv');
+  const r = parseAccessCsv('Dean,a.b@dlsu.edu.ph\nThesis Adviser,c.d@dlsu.edu.ph\nDepartment Chair,c.d@dlsu.edu.ph,DST\nThesis Adviser,e.f@dlsu.edu.ph\nAssociate Dean,e.f@dlsu.edu.ph\n');
+  const by = Object.fromEntries(r.rows.map((x) => [x.email, x]));
+  assert.equal(r.problems.length, 0);
+  assert.deepEqual([by['a.b@dlsu.edu.ph'].role, by['c.d@dlsu.edu.ph'].role, by['c.d@dlsu.edu.ph'].program, by['e.f@dlsu.edu.ph'].role], ['dean', 'chair', 'DST', 'assoc']);
+  assert.equal(by['a.b@dlsu.edu.ph'].name, 'A B');
+  assert.equal(parseAccessCsv('Janitor,x@dlsu.edu.ph').problems.length, 1);
 });

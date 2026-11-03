@@ -27,7 +27,7 @@ if (!env.DATABASE_URL) { console.error('DATABASE_URL is not set (postgres://app_
   const engine = await createEngine({ store, gas });
   const app = createApp({
     store, engine, gas, me: portalChecker(env.PORTAL_URL || 'http://127.0.0.1:3000'),
-    config: { baseUrl: env.BASE_URL || '', filesDir, allowedDomain: env.ALLOWED_DOMAIN || 'dlsu.edu.ph' }
+    config: { baseUrl: env.BASE_URL || '', filesDir, allowedDomain: env.ALLOWED_DOMAIN || 'dlsu.edu.ph', autoStudents: env.AUTO_STUDENTS !== 'off' }
   });
 
   /* automatic reminders: checked every hour; each reminder carries a key, so it is never sent twice */

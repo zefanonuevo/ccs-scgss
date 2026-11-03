@@ -211,16 +211,16 @@ R.settings=async function(){
   const box=$('#setBody');box.innerHTML='<div class="empty-note">Loading…</div>';
   const r=await C.api.users();
   if(!r.body||!r.body.ok){box.innerHTML='<div class="callout bad">'+esc((r.body&&r.body.error)||'The roles could not be loaded.')+'</div>';return}
-  const {users,roles,programs,audit}=r.body,s=D().settings,nm=e=>{const x=users.find(y=>y.email===e);return x?x.name||x.email:''};
-  const need=[['Associate Dean',s.assoc],['Dean',s.dean]].concat(programs.map(p=>['Department Chair '+p,s.chairs[p]]));
+  const {users,roles,programs,departments,audit}=r.body,s=D().settings,nm=e=>{const x=users.find(y=>y.email===e);return x?x.name||x.email:''};
+  const need=[['Associate Dean',s.assoc],['Dean',s.dean]].concat(C.DEPARTMENTS.map(d=>['Chair, '+d[0],(s.deptChairs||{})[d[0]]]));
   box.innerHTML='<div class="callout '+(need.every(n=>n[1])?'ok':'bad')+'"><b>Who signs now.</b> '+need.map(n=>esc(n[0])+': '+(n[1]?esc(nm(n[1])||n[1]):'<b>not set</b>')).join(' · ')+'. Applications cannot be submitted while a signer is missing. Each application keeps its own copy of the signers, so changes apply to new applications only.</div>'+
    '<div class="grid g2" style="align-items:start;margin-top:12px"><div class="card"><h3>Add or change a person</h3>'+
    '<div class="field"><label for="u_email">DLSU email</label><input id="u_email" autocomplete="off" placeholder="maria.delacruz@dlsu.edu.ph"></div>'+
    '<div class="field" style="margin-top:8px"><label for="u_name">Name</label><input id="u_name" autocomplete="off"></div>'+
    '<div class="row" style="margin-top:8px"><div class="field"><label for="u_role">Role</label><select id="u_role">'+roles.map(x=>opt(x,C.ROLE_NAME[x])).join('')+'</select></div>'+
-   '<div class="field"><label for="u_prog">Program (students and chairs)</label><select id="u_prog"><option value="">None</option>'+programs.map(p=>opt(p,p)).join('')+'</select></div></div>'+
+   '<div class="field"><label for="u_prog">Department (chairs) or degree (students)</label><select id="u_prog"><option value="">None</option><optgroup label="Department (for a Department Chair)">'+C.DEPARTMENTS.map(d=>opt(d[0],d[0]+' · '+d[1])).join('')+'</optgroup><optgroup label="Degree (for a student)">'+C.PROGRAMS.map(p=>opt(p[0],p[0]+' · '+p[1])).join('')+'</optgroup></select></div></div>'+
    '<label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="u_active" checked> Active</label>'+
-   '<p class="muted" style="margin-top:6px">Only one Dean, one Associate Dean and one Department Chair per program can be active. Switch the old holder off first.</p>'+
+   '<p class="muted" style="margin-top:6px">Only one Dean, one Associate Dean and one Department Chair per department (DCT, DST, DIT) can be active. Switch the old holder off first.</p>'+
    '<div class="msg" id="u_msg" role="alert" style="color:var(--bad);font-size:12px;margin-top:6px"></div><button class="btn" style="margin-top:8px" data-act="userset">Save</button></div>'+
    '<div class="card"><h3>Recent changes</h3><div class="log" style="max-height:260px">'+(audit.map(a=>'<div><span><b>'+esc(a.event)+'</b> · '+esc(a.email||'')+' '+esc(a.detail)+'</span><span class="mono muted">'+esc(a.ts.slice(0,16).replace("T"," "))+'</span></div>').join('')||'<div class="muted">Nothing yet.</div>')+'</div></div></div>'+
    '<h3 style="margin:18px 0 8px">People with a role ('+users.length+')</h3><div class="tbl"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Program</th><th>Status</th><th></th></tr></thead><tbody>'+

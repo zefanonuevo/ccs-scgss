@@ -38,7 +38,15 @@ curl http://<apps-vm-private-ip>:3001/healthz        # prints ok
 
 **6. Apache on the portal VM:** copy `deploy/apache-app-scgss.conf` to `/etc/apache2/conf-available/app-scgss.conf`, put in the apps VM's private address, add `IncludeOptional conf-available/app-scgss.conf` **inside the portal's HTTPS virtual host, after the `ProxyPass /.well-known/ !` line and above** `ProxyPass / ...` (in `/etc/apache2/sites-available/ccs-portal.conf`; the include also sets a Content-Security-Policy for `/scgss/` that allows `blob:` previews), then `sudo apache2ctl configtest && sudo systemctl reload apache2`. Take a Proxmox snapshot first; the portal is production.
 
-**7. Roles:** sign in to the portal, open `/scgss/`, then **Roles** and add the Dean, Associate Dean, a chair for each of BSCS, BSIT and BSIS, the Administrative Assistant, advisers and students. Students' emails look like `juan_dela_cruz@dlsu.edu.ph`, staff like `maria.delacruz@dlsu.edu.ph`. Applications cannot be submitted until every signer exists.
+**7. Roles:** staff are loaded from the access list CSV (lines `Role,email`, and for each Department Chair a third column with the department: DCT, DST or DIT). Copy the file to the apps VM (do not commit it: the repository is public) and run:
+```
+sudo -u app_scgss bash -c 'set -a; . /etc/apps/scgss.env; node /srv/apps/scgss/current/server/users.js import /tmp/scgss-access.csv'
+```
+One role per person: if someone is on the list more than once, the highest role wins (Dean, Associate Dean, Department Chair, Administrative Assistant, Thesis Adviser). A Chair can still be chosen as a Thesis Adviser. Names are made from the email; fix them on the **Roles** tab. Re-running the import is safe.
+- **Students** with an email like `juan_dela_cruz@dlsu.edu.ph` (underscores, no dot) are added as Students on their first sign-in (`AUTO_STUDENTS=on`). Switch one off on the Roles tab and they stay off.
+- **Staff** with an email like `maria.delacruz@dlsu.edu.ph` (a dot) must be on the list, or they get 403.
+- **Degrees and chairs:** 10 degrees (BSCS-CSE, BSCS-NIS, BSCS-ST, BSDS, BSINFSC, BSIS, BSIET-AD, BSIET-GD, BSIT, BSMSCS) belong to three departments: DCT (BSCS-CSE, BSCS-NIS), DST (BSCS-ST, BSDS, BSIET-AD, BSIET-GD, BSMSCS), DIT (BSINFSC, BSIS, BSIT). An application goes to the chair of its degree's department. The table is in `shared/rules.js`.
+Applications cannot be submitted until the Dean, Associate Dean and the chair of that department exist.
 
 **8. Backups:** schedule `deploy/apps-backup.sh` nightly (`pg_dump` of the database *and* the files folder, encrypted, copied to Drive). Keep the `age` private key off the server. Do one restore test before go-live.
 

@@ -17,12 +17,13 @@ async function createEngine({ store, gas }) {
   function decorate(u) { return { email: u.email, name: u.name || u.email, role: u.role, program: u.program || '', active: u.active === 1, label: LABELS[u.role] + (u.program ? ', ' + u.program : '') }; }
   const acct = (e) => { const u = store.getUser(e); return u ? decorate(u) : null; };
   const adminsOf = () => store.usersByRole('admin').map((x) => x.email);
-  /* who signs, from the roles table: one Associate Dean, one Dean, one Department Chair per program */
+  /* who signs, from the roles table: one Associate Dean, one Dean, one Department Chair per department (each degree belongs to a department) */
   function signers() {
     const one = (r) => { const l = store.usersByRole(r); return l.length ? l[0].email : ''; };
-    const chairs = {};
-    store.usersByRole('chair').forEach((c) => { if (!chairs[c.program]) chairs[c.program] = c.email; });
-    return { assoc: one('assoc'), dean: one('dean'), chairs };
+    const deptChairs = {}, chairs = {};
+    store.usersByRole('chair').forEach((c) => { if (!deptChairs[c.program]) deptChairs[c.program] = c.email; });
+    R.PROGRAMS.forEach((p) => { const c = deptChairs[R.DEGREE_DEPT[p[0]]]; if (c) chairs[p[0]] = c; });   /* by degree, for routing */
+    return { assoc: one('assoc'), dean: one('dean'), chairs, deptChairs };
   }
   const advisers = () => store.listUsers().filter((u) => u.active === 1 && ADVISER_ROLES.indexOf(u.role) > -1).map(decorate);
 
