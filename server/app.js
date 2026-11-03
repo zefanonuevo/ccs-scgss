@@ -139,7 +139,16 @@ function createApp({ store, engine, gas, me, config }) {
   }));
 
   /* ---------- the page itself: an explicit list, nothing else in the repo is served ---------- */
-  app.get('/', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(cfg.siteRoot, 'index.html')));
+  /* Cloudflare puts a 30-minute browser cache on .js files, so every script address carries a version that changes whenever a file changes. */
+  const SCRIPTS = ['js/core.js', 'js/pdf.js', 'js/ui.js', 'js/ui2.js', 'js/theme.js', 'js/theme-early.js', 'js/start.js', 'shared/rules.js'];
+  const buildTag = () => SCRIPTS.reduce((m, f) => { try { return Math.max(m, fs.statSync(path.join(cfg.siteRoot, f)).mtimeMs); } catch (e) { return m; } }, 0).toString(36);
+  app.get('/', (req, res) => {
+    let html;
+    try { html = fs.readFileSync(path.join(cfg.siteRoot, 'index.html'), 'utf8'); } catch (e) { return res.status(404).type('text').send('Not found'); }
+    const v = buildTag();
+    html = html.replace(/(src="(?:js\/[\w-]+|shared\/rules)\.js)"/g, '$1?v=' + v + '"');
+    res.set({ 'Cache-Control': 'no-cache', 'Content-Type': 'text/html; charset=utf-8' }).send(html);
+  });
   app.use('/js', express.static(path.join(cfg.siteRoot, 'js'), { dotfiles: 'deny', index: false, redirect: false, setHeaders: (r) => r.set('Cache-Control', 'no-cache') }));
   app.get('/shared/rules.js', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(cfg.siteRoot, 'shared/rules.js')));
   app.use((req, res) => res.status(404).type('text').send('Not found'));

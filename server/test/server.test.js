@@ -203,3 +203,12 @@ test('the access list reads commas, tabs, spaces and stray quotes', () => {
   assert.equal(r.problems.length, 0, r.problems.join());
   assert.deepEqual(r.rows.map((x) => x.role + ':' + x.email + ':' + x.program), ['dean:a.b@dlsu.edu.ph:', 'adviser:c.d@dlsu.edu.ph:', 'adviser:e.f@dlsu.edu.ph:', 'chair:g.h@dlsu.edu.ph:DIT']);
 });
+
+test('script addresses carry a version so a cached old file is never used', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const html = await (await s.as(null).get('/')).text();
+  const tags = html.match(/<script src="[^"]+"/g) || [];
+  assert.ok(tags.length >= 7);
+  tags.forEach((x) => assert.match(x, /\.js\?v=[a-z0-9]+"$/, x));
+  const js = await s.as(null).get('/js/core.js?v=abc'); assert.equal(js.status, 200);
+});
