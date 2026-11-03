@@ -75,11 +75,11 @@ function clarifyHTML(a){
    '<div class="field"><label for="q_kind">Topic</label><select id="q_kind"><option>Funding source</option><option>Final approved amount</option><option>Other</option></select></div></div>'+
    '<div class="field" style="margin-top:8px"><label for="q_text">Your question</label><textarea id="q_text" rows="2" placeholder="For example: May the airfare be charged to the College Fund instead of the Dean\'s Office fund?"></textarea></div><div class="msg" id="q_msg" style="color:var(--bad);font-size:12px"></div><button type="button" class="btn sec" data-act="askdean" style="margin-top:6px">Send to '+esc(dean)+'</button>':'')+'</div>';
 }
-ACT.askdean=function(){
+ACT.askdean=async function(){
   const a=D().apps.find(x=>x.id===VS.sel),t=$('#q_text').value,item=$('#q_item').value;
-  const r=E.comment(u(),a,t,[],[a.route.dean],{kind:$('#q_kind').value,item});
+  const r=await E.comment(u(),a,t,[],[a.route.dean],{kind:$('#q_kind').value,item});
   if(r.err){$('#q_msg').textContent=r.err;return}
-  $('#q_text').value='';$('#q_msg').textContent='';$('#q_thread').innerHTML=clarifyThread(a);toast('Sent. '+C.nameOf(a.route.dean)+' was notified by email and in-app. Your entries above are kept.');
+  $('#q_text').value='';$('#q_msg').textContent='';$('#q_thread').innerHTML=clarifyThread(D().apps.find(x=>x.id===a.id));toast('Sent. '+C.nameOf(a.route.dean)+' was notified by email and in-app. Your entries above are kept.');
 };
 function vTotals(){const el=$('#va_total');if(!el)return;const t=round2($$('.va').reduce((s,i)=>s+(Number(i.value)||0),0)),a=D().apps.find(x=>x.id===VS.sel),g=a.grant.total,over=t>g;el.textContent=money(t);
   $('#vs_appr').textContent='₱'+money(t);$('#vs_left').textContent='₱'+money(round2(g-t));$('#vs_left').style.color=over?'var(--bad)':'';
@@ -90,7 +90,7 @@ document.addEventListener('change',e=>{const c=e.target;if(!c.classList)return;
   if(c.classList.contains('vk')&&c.checked){const q=$('.vq[data-k="'+c.dataset.k+'"]');if(q)q.checked=false}});
 function vCollect(){return {checks:Object.fromEntries($$('.vk').map(c=>[c.dataset.k,c.checked])),returns:Object.fromEntries($$('.vq').map(c=>[c.dataset.k,c.checked])),remarks:Object.fromEntries($$('.vr').map(i=>[i.dataset.k,i.value])),
   items:$$('.va').map((i,n)=>({approved:i.value,fund:$$('.vf')[n].value,or:$$('.vo')[n].value,merchant:$$('.vm')[n].value,why:$$('.vw')[n].value})),overall:$('#v_overall').value}}
-function vDo(mode,okMsg){const a=D().apps.find(x=>x.id===VS.sel),r=E.postReview(u(),a,vCollect(),mode);if(r.err){$('#v_msg').textContent=r.err;toast(r.err);return}toast(okMsg);R.verify()}
+async function vDo(mode,okMsg){const a=D().apps.find(x=>x.id===VS.sel),r=await E.postReview(u(),a,vCollect(),mode);if(r.err){$('#v_msg').textContent=r.err;toast(r.err);return}toast(okMsg);R.verify()}
 ACT.vverify=()=>vDo('verify','Verified. The student was notified. You can now download the reimbursement report.');
 ACT.vreturn=()=>vDo('return','Returned to the student with the requirements to clarify.');
 ACT.vsave=()=>vDo('save','Progress saved.');
@@ -180,14 +180,14 @@ R.rpt=function(){
       '<div class="row" style="max-width:420px;margin-top:8px"><div class="field"><label for="r_rfp">RFP number</label><input id="r_rfp" maxlength="40" autocomplete="off"></div></div><div class="msg" id="r_msg" style="color:var(--bad);font-size:12px"></div><button class="btn" style="margin-top:8px" data-act="rfile">Mark filed at '+FAO+' and notify the student</button></div>':'<div class="callout">Waiting for the Administrative Assistant to record the RFP.</div>')+reportHTML(a);
 };
 document.addEventListener('change',e=>{if(e.target.id==='r_sel'){state.rpt=e.target.value;R.rpt()}});
-ACT.rfile=()=>{const a=D().apps.find(x=>x.id===state.rpt),r=E.complete(u(),a,{rfp:$('#r_rfp').value});if(r.err){$('#r_msg').textContent=r.err;toast(r.err);return}toast('Filed at the '+FAO+'. The student was notified.');R.rpt()};
+ACT.rfile=async()=>{const a=D().apps.find(x=>x.id===state.rpt),r=await E.complete(u(),a,{rfp:$('#r_rfp').value});if(r.err){$('#r_msg').textContent=r.err;toast(r.err);return}toast('Filed at the '+FAO+'. The student was notified.');R.rpt()};
 
-/* ---------- Google Sheet and Drive (simulated unless a script URL is set) ---------- */
+/* ---------- Google Sheet and Drive ---------- */
 let drvSel=null;
 R.records=function(){
   const live=C.live(),apps=D().apps,files=Object.values(D().files).filter(f=>f.appId&&f.name);
   const folders={};files.forEach(f=>{(folders['CCS-SCGSS/'+f.folder]=folders['CCS-SCGSS/'+f.folder]||[]).push(f)});
-  $('#recBody').innerHTML='<div class="callout '+(live?'ok':'info')+'">'+(live?'<b>Live.</b> Every save is also sent to your Google Apps Script web app, which writes the sheet row and the Drive files.':'<b>Simulated.</b> This view shows exactly what the Google Sheet and Drive folder would hold. To make it real, deploy <span class="mono">google/Code.gs</span> and paste its web app URL in Settings.')+'</div>'+
+  $('#recBody').innerHTML='<div class="callout '+(live?'ok':'info')+'">'+(live?'<b>Live.</b> Every save is also sent to your Google Apps Script web app, which writes the sheet row and the Drive files.':'<b>Google sync is off.</b> This view shows what the Google Sheet and Drive folder will hold. To turn it on, deploy <span class="mono">google/Code.gs</span> and set GAS_URL and GAS_TOKEN in the server settings on the VM.')+'</div>'+
    '<h3 style="margin:16px 0 8px">Google Sheet · one row per application</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><button class="btn sec sm" data-act="sheetcsv">Download as CSV</button><span class="muted">'+apps.length+' rows · '+C.SHEET_COLS.length+' columns · rows update on every change</span></div>'+
    '<div class="tbl sheet"><table><thead><tr>'+C.SHEET_COLS.map(c=>'<th>'+esc(c[0])+'</th>').join('')+'</tr></thead><tbody>'+apps.slice().sort((a,b)=>a.ref<b.ref?-1:1).map(a=>'<tr>'+C.SHEET_COLS.map(c=>'<td>'+esc(c[1](a))+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'+
    '<h3 style="margin:22px 0 8px">Google Drive · designated folder</h3><div class="grid g2" style="align-items:start"><div class="card">'+Object.keys(folders).sort().map(k=>'<h4 style="margin-top:8px">📁 '+esc(k)+'</h4><ul class="flist">'+folders[k].sort((x,y)=>x.at-y.at).map(f=>'<li><button class="lnk mono" data-act="preview" data-id="'+f.id+'">'+esc(f.name)+'</button> <span class="muted">'+fmtSize(f.size)+' · '+esc(f.by)+(f.superseded?' · replaced':'')+'</span></li>').join('')+'</ul>').join('')+'</div><div>'+C.viewerHTML()+'</div></div>'+
@@ -200,100 +200,36 @@ R.notif=function(){
   const mine=D().notifs.filter(n=>n.to===u().email),mail=D().outbox.filter(m=>u().role==='sysadmin'||m.to===u().email);
   $('#notifBody').innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center"><span class="muted">'+mine.filter(n=>!n.read).length+' unread of '+mine.length+'</span><button class="btn sec sm" data-act="readall">Mark all as read</button></div>'+
    '<div class="log" style="max-height:none;margin-top:10px">'+(mine.map(n=>'<div'+(n.read?'':' class="unread"')+'><b>'+esc(n.title)+'</b><span>'+esc(n.body)+'</span><span class="mono muted">'+fmtT(n.at)+' · <button class="lnk" data-act="nopen" data-id="'+n.id+'" data-app="'+n.appId+'">Open application</button></span></div>').join('')||'<div class="muted">No notifications yet.</div>')+'</div>'+
-   '<h3 style="margin:22px 0 8px">Email copies '+(u().role==='sysadmin'?'(all recipients)':'sent to you')+'</h3><p class="muted">Each event sends one email and one in-app notice. These are the emails the system would send'+(C.live()?' (also sent through Google).':' (simulated).')+'</p>'+
+   '<h3 style="margin:22px 0 8px">Email copies '+(u().role==='sysadmin'?'(all recipients)':'sent to you')+'</h3><p class="muted">Each event sends one email and one in-app notice. These are the emails the system would send'+(C.live()?' (also sent through Google).':' (not sent: Google sync is off).')+'</p>'+
    '<div style="display:grid;gap:8px;margin-top:8px">'+(mail.slice(0,25).map(m=>'<div class="mail"><div class="mail-h"><span><b>To:</b> '+esc(m.to)+' · '+fmtT(m.at)+'</span><span><b>Subject:</b> '+esc(m.subject)+'</span></div><div class="mail-b"><p>'+esc(m.body)+'</p></div></div>').join('')||'<div class="muted">No emails yet.</div>')+'</div>';
 };
-ACT.readall=()=>{E.markRead(u().email);C.refresh()};
-ACT.nopen=t=>{E.markRead(u().email,t.dataset.id);C.go('app',true,t.dataset.app)};
+ACT.readall=async()=>{await E.markRead(u().email);C.refresh()};
+ACT.nopen=async t=>{await E.markRead(u().email,t.dataset.id);C.go('app',true,t.dataset.app)};
 
-/* ---------- settings (System Administrator) ---------- */
-R.settings=function(){
-  const s=D().settings,by=r=>C.ACCOUNTS.filter(a=>a.role===r),g=s.gas||{};
-  $('#setBody').innerHTML='<div class="grid g2" style="align-items:start"><div class="card"><h3>Routing</h3><p class="muted">Each application keeps a copy of its signatories at submission. Changes here apply to new applications only.</p>'+
-   '<div class="field" style="margin-top:10px"><label for="s_assoc">Associate Dean (set once, for every application)</label><select id="s_assoc">'+by('assoc').map(a=>opt(a.email,a.name,a.email===s.assoc)).join('')+'</select></div>'+
-   '<div class="field" style="margin-top:10px"><label for="s_dean">Dean</label><select id="s_dean">'+by('dean').map(a=>opt(a.email,a.name,a.email===s.dean)).join('')+'</select></div>'+
-   '<h4 style="margin-top:14px">Department Chair by degree program</h4>'+C.PROGRAMS.map(p=>'<div class="field" style="margin-top:8px"><label for="s_ch_'+p[0]+'">'+p[0]+' · '+p[1]+'</label><select id="s_ch_'+p[0]+'">'+by('chair').map(a=>opt(a.email,a.name+' ('+(a.program||'')+')',a.email===s.chairs[p[0]])).join('')+'</select></div>').join('')+
-   '<button class="btn" style="margin-top:12px" data-act="setroute">Save routing</button></div>'+
-   '<div style="display:grid;gap:14px"><div class="card"><h3>Funding sources</h3><p class="muted">Funding sources are not predefined. The Dean types one for each line of the breakdown, and the Administrative Assistant can correct it when verifying.</p></div>'+
-   '<div class="card"><h3>Google Sheet, Drive and email</h3><p class="muted">Deploy <span class="mono">google/Code.gs</span> as a web app, then paste its URL and the shared token. Saves then also write the sheet row, the Drive files and the emails. Leave blank to stay simulated.</p>'+
-   '<div class="field" style="margin-top:8px"><label for="s_gurl">Web app URL</label><input id="s_gurl" value="'+esc(g.url||'')+'" placeholder="https://script.google.com/macros/s/…/exec"></div><div class="field" style="margin-top:8px"><label for="s_gtok">Shared token</label><input id="s_gtok" type="password" value="'+esc(g.token||'')+'" autocomplete="off"></div>'+
-   '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn" data-act="setgas">Save</button></div></div>'+
-   '<div class="card"><h3>Demo data</h3><p class="muted">Restore the sample applications and clear everything entered in this browser.</p><button class="btn bad" style="margin-top:8px" data-act="resetdb">Reset demo data</button></div></div></div>';
+/* ---------- roles (System Administrator) ---------- */
+R.settings=async function(){
+  const box=$('#setBody');box.innerHTML='<div class="empty-note">Loading…</div>';
+  const r=await C.api.users();
+  if(!r.body||!r.body.ok){box.innerHTML='<div class="callout bad">'+esc((r.body&&r.body.error)||'The roles could not be loaded.')+'</div>';return}
+  const {users,roles,programs,audit}=r.body,s=D().settings,nm=e=>{const x=users.find(y=>y.email===e);return x?x.name||x.email:''};
+  const need=[['Associate Dean',s.assoc],['Dean',s.dean]].concat(programs.map(p=>['Department Chair '+p,s.chairs[p]]));
+  box.innerHTML='<div class="callout '+(need.every(n=>n[1])?'ok':'bad')+'"><b>Who signs now.</b> '+need.map(n=>esc(n[0])+': '+(n[1]?esc(nm(n[1])||n[1]):'<b>not set</b>')).join(' · ')+'. Applications cannot be submitted while a signer is missing. Each application keeps its own copy of the signers, so changes apply to new applications only.</div>'+
+   '<div class="grid g2" style="align-items:start;margin-top:12px"><div class="card"><h3>Add or change a person</h3>'+
+   '<div class="field"><label for="u_email">DLSU email</label><input id="u_email" autocomplete="off" placeholder="maria.delacruz@dlsu.edu.ph"></div>'+
+   '<div class="field" style="margin-top:8px"><label for="u_name">Name</label><input id="u_name" autocomplete="off"></div>'+
+   '<div class="row" style="margin-top:8px"><div class="field"><label for="u_role">Role</label><select id="u_role">'+roles.map(x=>opt(x,C.ROLE_NAME[x])).join('')+'</select></div>'+
+   '<div class="field"><label for="u_prog">Program (students and chairs)</label><select id="u_prog"><option value="">None</option>'+programs.map(p=>opt(p,p)).join('')+'</select></div></div>'+
+   '<label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="u_active" checked> Active</label>'+
+   '<p class="muted" style="margin-top:6px">Only one Dean, one Associate Dean and one Department Chair per program can be active. Switch the old holder off first.</p>'+
+   '<div class="msg" id="u_msg" role="alert" style="color:var(--bad);font-size:12px;margin-top:6px"></div><button class="btn" style="margin-top:8px" data-act="userset">Save</button></div>'+
+   '<div class="card"><h3>Recent changes</h3><div class="log" style="max-height:260px">'+(audit.map(a=>'<div><span><b>'+esc(a.event)+'</b> · '+esc(a.email||'')+' '+esc(a.detail)+'</span><span class="mono muted">'+esc(a.ts.slice(0,16).replace("T"," "))+'</span></div>').join('')||'<div class="muted">Nothing yet.</div>')+'</div></div></div>'+
+   '<h3 style="margin:18px 0 8px">People with a role ('+users.length+')</h3><div class="tbl"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Program</th><th>Status</th><th></th></tr></thead><tbody>'+
+   users.map(x=>'<tr><td>'+esc(x.name||'')+'</td><td class="mono">'+esc(x.email)+'</td><td>'+esc(C.ROLE_NAME[x.role])+'</td><td>'+esc(x.program||'')+'</td><td>'+(x.active?'<span class="pill p-ok">Active</span>':'<span class="pill p-idle">Switched off</span>')+'</td>'+
+    '<td><button class="btn sm sec" data-act="useredit" data-email="'+esc(x.email)+'" data-name="'+esc(x.name||'')+'" data-role="'+x.role+'" data-prog="'+esc(x.program||'')+'">Edit</button> <button class="btn sm sec" data-act="usertoggle" data-email="'+esc(x.email)+'" data-name="'+esc(x.name||'')+'" data-role="'+x.role+'" data-prog="'+esc(x.program||'')+'" data-on="'+(x.active?1:0)+'">'+(x.active?'Switch off':'Switch on')+'</button></td></tr>').join('')+'</tbody></table></div>'+
+   '<p class="muted" style="margin-top:8px">Signing in is done on the CCS portal. A person who is not in this list can sign in to the portal but is refused here.</p>';
 };
-ACT.setroute=()=>{const s=D().settings;s.assoc=$('#s_assoc').value;s.dean=$('#s_dean').value;C.PROGRAMS.forEach(p=>s.chairs[p[0]]=$('#s_ch_'+p[0]).value);C.save();toast('Routing saved. New applications will use it.')};
-ACT.setgas=()=>{D().settings.gas={url:$('#s_gurl').value.trim(),token:$('#s_gtok').value};C.save();toast(D().settings.gas.url?'Saved. New changes will be sent to Google.':'Saved. Staying simulated.')};
-ACT.resetdb=()=>{if(!confirm('Reset all demo data in this browser?'))return;C.reset();toast('Demo data restored.');R.settings()};
-
-/* ---------- simulation ---------- */
-const DEMO_EXP=[5000,600,4400,3000,2000];
-function demoForm(S,adv,conf){
-  const fm=C.registerFile({orig:'consolidated-requirements.pdf',size:240000,by:S.name});
-  return {ay:'2627',term:'Term1',sid:'12145678',prog:S.program||'BSCS',year:'4',adv:adv.email,conf:conf,start:'2026-12-08',end:'2026-12-10',venue:'Osaka, Japan',org:'Sample Systems Society',etype:'Conference',scope:'intl',cls:'Paper presenter',ptype:'Full paper',index:'Scopus',title:'Demo Title on Resilient Pipelines',cof:'',cos:'',
-    exp:C.EXPENSE_TYPES.map((t,i)=>({type:t,amount:DEMO_EXP[i],remarks:''})),file:{id:fm.id,orig:fm.orig,size:fm.size},attConfirm:true,privacy:true,brand:true};
-}
-function runDemo(){
-  const log=[],step=(who,what,r)=>{if(r&&r.err)throw new Error(who+': '+r.err);log.push([who,what])};
-  const S=C.acct('maria.santos@college.example'),adv=C.acct('adviser.reyes@college.example'),ch=C.acct('chair.cs@college.example'),as=C.acct('assoc.dean@college.example'),de=C.acct('dean@college.example'),ad=C.acct('admin.assistant@college.example');
-  const r=E.submit(S,demoForm(S,adv,'Demo International Conference on Sample Systems'));step(S.name,'Submitted the application',r);const a=r.app;
-  step(adv.name,'Endorsed (Thesis Adviser)',E.endorse(adv,a,'Endorsed.'));
-  step(ch.name,'Returned with remarks (Department Chair)',E.returnApp(ch,a,'Please attach the conference page that shows the dates.'));
-  step(S.name,'Replied and resubmitted; the file went back to the Chair',E.resubmit(S,a,null,'Attached the conference page with the dates.',[]));
-  step(ch.name,'Endorsed (Department Chair)',E.endorse(ch,a,'Endorsed.'));
-  step(as.name,'Endorsed (Associate Dean)',E.endorse(as,a,'Endorsed.'));
-  step(de.name,'Approved ₱12,000 with one funding source and confirmed',E.approveGrant(de,a,{signature:C.sampleSig(),confirm:true,amount:12000,fund:"Dean's Office",note:'Approved.'}));
-  const pf=C.registerFile({orig:'post-activity.pdf',size:520000,by:S.name}),docs={};C.REQ_POST.forEach(x=>docs[x[0]]=true);
-  const items=C.suggestItems(a).map((x,n)=>({type:x.type,or:'OR-9'+n+'01',merchant:'Sample Merchant '+(n+1),amount:x.amount}));
-  step(S.name,'Listed '+items.length+' receipts with OR or invoice number and merchant, and submitted the post-activity report (one PDF)',E.submitPost(S,a,{file:{id:pf.id},items,docs,missingNote:''}));
-  const rows=a.post.items.map(l=>({approved:l.amount,fund:l.type==='Roundtrip airfare'?'College Fund':a.grant.fund,why:''}));
-  step(ad.name,'Asked the Dean a question about a line',E.comment(ad,a,'Is the airfare funded from the College Fund for all trips?',[],[de.email],{kind:'Funding source',item:'Roundtrip airfare'}));
-  step(ad.name,'Verified all documents and items',E.postReview(ad,a,{checks:docs,remarks:{},items:rows,overall:'Complete.'},'verify'));
-  step(ad.name,'Downloaded the report and recorded the RFP at the FAO',E.complete(ad,a,{rfp:'RFP-DEMO-'+a.ref.slice(-3)}));
-  return {log,app:a};
-}
-/* the Thesis Adviser also holds a signing role */
-function runAdviserDemo(){
-  const log=[],step=(who,what,r)=>{if(r&&r.err)throw new Error(who+': '+r.err);log.push([who,what])};
-  const S=C.acct('noel.ramos@college.example'),ch=C.acct('chair.it@college.example'),as=C.acct('assoc.dean@college.example'),de=C.acct('dean@college.example');
-  S.program='BSIT';
-  let r=E.submit(S,demoForm(S,ch,'Demo Conference: the adviser is the Department Chair'));step(S.name,'Submitted; the Department Chair '+ch.name+' is the Thesis Adviser',r);let a=r.app;
-  step(ch.name,'Endorsed as Thesis Adviser. The Department Chair step was skipped',E.endorse(ch,a,'Endorsed.'));
-  log.push(['System','Now pending: '+C.info(a).label]);
-  r=E.submit(S,demoForm(S,as,'Demo Conference: the adviser is the Associate Dean'));step(S.name,'Submitted; the Associate Dean is the Thesis Adviser',r);a=r.app;
-  step(as.name,'Endorsed as Thesis Adviser',E.endorse(as,a,'Endorsed.'));
-  step(ch.name,'Endorsed (Department Chair)',E.endorse(ch,a,'Endorsed.'));
-  log.push(['System','Now pending: '+C.info(a).label+' (the Associate Dean step was skipped)']);
-  r=E.submit(S,demoForm(S,de,'Demo Conference: the adviser is the Dean'));step(S.name,'Submitted; the Dean is the Thesis Adviser',r);a=r.app;
-  log.push(['System','The Dean cannot approve the grant for their own advisee, so the Associate Dean, '+C.nameOf(a.route.dean)+', approves it in the Dean\'s place']);
-  step(de.name,'Endorsed as Thesis Adviser',E.endorse(de,a,'Endorsed.'));step(ch.name,'Endorsed (Department Chair). The Associate Dean endorsement was skipped',E.endorse(ch,a,'Endorsed.'));
-  log.push(['System','Now pending: '+C.info(a).label]);
-  const denied=E.approveGrant(de,a,{signature:C.sampleSig(),confirm:true,amount:5000,fund:'x'});
-  log.push([de.name,'Tried to approve the grant for their own advisee: '+(denied.err||'allowed')]);
-  step(as.name,"Approved the grant in the Dean's place",E.approveGrant(as,a,{signature:C.sampleSig(),confirm:true,amount:5000,fund:"Dean's Office",note:'Approved.'}));
-  return {log,app:a};
-}
-R.sim=function(){
-  const res=state.simOut||'';
-  $('#simBody').innerHTML='<div class="grid g2" style="align-items:start"><div style="display:grid;gap:14px"><div class="card"><h3>Run a full demo</h3><p class="muted">Creates one new application and moves it through every role: submit, adviser, a return and reply, chair, associate dean, dean with funding per line and a confirmation, post-activity report with receipts, a question from the Administrative Assistant to the Dean, verification, and filing at the FAO with an RFP. Everything it does appears in the dashboards, the history, the Sheet and Drive view and the notifications.</p><button class="btn" style="margin-top:10px" data-act="rundemo">Run full demo</button></div>'+
-   '<div class="card"><h3>When the Thesis Adviser is also a signatory</h3><p class="muted">Submits three applications whose adviser is the Department Chair, the Associate Dean and the Dean, and shows who endorses and who approves each time.</p><button class="btn sec" style="margin-top:10px" data-act="runadv">Run the adviser demo</button></div>'+
-   '<div class="card"><h3>Security checks</h3><p class="muted">Try actions the rules refuse. Each refusal is written to that application\'s approval history.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">'+
-   '<button class="btn sec sm" data-act="sec" data-k="self">Student endorses own application</button><button class="btn sec sm" data-act="sec" data-k="skip">Dean approves out of sequence</button><button class="btn sec sm" data-act="sec" data-k="role">Admin Assistant endorses a grant</button><button class="btn sec sm" data-act="sec" data-k="wrong">Another adviser endorses</button><button class="btn sec sm" data-act="sec" data-k="verify">Adviser verifies a reimbursement</button></div></div>'+
-   '<div class="card"><h3>Reminders</h3><p class="muted">Staff reminders go to anyone an application has waited on for more than 2 days. Student reminders for the post-activity report are automatic: at 15, 7, 3 and 1 days before the due date, on the due date, and every 3 days when overdue. The real build runs both every morning.</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn sec" data-act="sweep2">Run staff reminder check now</button><button class="btn sec" data-act="autorem">Run the student report reminders now</button></div></div></div>'+
-   '<div class="card"><h3>Result</h3><div id="simOut" class="log" style="max-height:none">'+(res||'<div class="muted">Nothing run yet.</div>')+'</div></div></div>';
-};
-const logHTML=r=>r.log.map((l,i)=>'<div><span><b>'+(i+1)+'. '+esc(l[0])+'</b> · '+esc(l[1])+'</span></div>').join('')+'<div><span><b>Done.</b> Last reference <button class="lnk mono" data-open="'+r.app.id+'">'+esc(r.app.ref)+'</button></span></div>';
-ACT.rundemo=()=>{try{const r=runDemo();state.simOut=logHTML(r);toast('Demo finished: '+r.app.ref)}catch(e){state.simOut='<div class="bad-row"><b>Stopped.</b> '+esc(e.message)+'</div>';toast(e.message)}R.sim()};
-ACT.runadv=()=>{try{const r=runAdviserDemo();state.simOut=logHTML(r);toast('Adviser demo finished')}catch(e){state.simOut='<div class="bad-row"><b>Stopped.</b> '+esc(e.message)+'</div>';toast(e.message)}R.sim()};
-ACT.sweep2=()=>{const n=E.sweep(C.acct('admin.assistant@college.example'),2);state.simOut='<div><span><b>'+n+'</b> reminder'+(n===1?'':'s')+' sent by email and in-app.</span></div>';R.sim()};
-ACT.autorem=()=>{const n=E.autoRemind();state.simOut='<div><span><b>'+n+'</b> student reminder'+(n===1?'':'s')+' sent by email and in-app for post-activity reports. Reminders already sent today are not repeated.</span></div>';R.sim()};
-ACT.sec=t=>{
-  const apps=D().apps,k=t.dataset.k;let a,actor,r;
-  if(k==='self'){a=apps.find(x=>x.status==='pending');actor=C.acct(a.studentEmail)||{email:a.studentEmail,name:a.studentName,role:'student'};r=E.endorse(actor,a,'x')}
-  else if(k==='skip'){a=apps.find(x=>x.status==='pending'&&x.stage<3);actor=C.acct('dean@college.example');r=E.approveGrant(actor,a,{signature:C.sampleSig(),lines:[]})}
-  else if(k==='role'){a=apps.find(x=>x.status==='pending');actor=C.acct('admin.assistant@college.example');r=E.endorse(actor,a,'x')}
-  else if(k==='wrong'){a=apps.find(x=>x.status==='pending'&&x.stage===0);actor=C.ACCOUNTS.find(x=>x.role==='adviser'&&x.email!==a.route.adviser);r=E.endorse(actor,a,'x')}
-  else{a=apps.find(x=>x.post.status==='submitted');actor=C.acct('adviser.reyes@college.example');r=a?E.postReview(actor,a,{items:[]},'verify'):{err:'No report is waiting for verification. Run the full demo or reset first.'}}
-  if(!a){state.simOut='<div class="muted">No suitable application. Reset the demo data.</div>';R.sim();return}
-  state.simOut='<div class="bad-row"><span><b>Refused (403)</b> · '+esc(actor.name)+' on '+esc(a.ref)+'</span><span>'+esc(r.err||'It was allowed.')+'</span></div>'+(state.simOut&&state.simOut.indexOf('Nothing')<0?'':'');
-  R.sim();toast('Refused and written to the approval history.');
-};
+const saveUser=async u=>{const r=await C.api.setUser(u);if(!r.body||!r.body.ok){const m=(r.body&&r.body.error)||'Not saved.';$('#u_msg').textContent=m;toast(m);return false}await C.api.load();toast('Saved.');R.settings();return true};
+ACT.userset=()=>saveUser({email:$('#u_email').value,name:$('#u_name').value,role:$('#u_role').value,program:$('#u_prog').value,active:$('#u_active').checked});
+ACT.useredit=t=>{$('#u_email').value=t.dataset.email;$('#u_name').value=t.dataset.name;$('#u_role').value=t.dataset.role;$('#u_prog').value=t.dataset.prog;$('#u_active').checked=true;$('#u_email').focus()};
+ACT.usertoggle=t=>saveUser({email:t.dataset.email,name:t.dataset.name,role:t.dataset.role,program:t.dataset.prog,active:t.dataset.on!=='1'});
 })(window.CCS);

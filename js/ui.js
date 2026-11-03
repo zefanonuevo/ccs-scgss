@@ -15,11 +15,11 @@ const isStaff=()=>['admin','sysadmin'].indexOf(u().role)>-1;
 const msgs=C.toast=m=>toast(m);
 
 /* ---------- tabs and roles ---------- */
-const TABS=[['dash','Dashboard'],['form','Application form'],['par','Post-activity report'],['track','Tracking'],['verify','Verification'],['rpt','Reimbursement report'],['records','Sheet & Drive'],['notif','Notifications'],['guide','Guidelines'],['flow','Workflow'],['sim','Simulation'],['scen','Scenarios'],['settings','Settings'],['overview','Review & suggestions'],['ver','Versions']];
+const TABS=[['dash','Dashboard'],['form','Application form'],['par','Post-activity report'],['track','Tracking'],['verify','Verification'],['rpt','Reimbursement report'],['records','Sheet & Drive'],['notif','Notifications'],['guide','Guidelines'],['flow','Workflow'],['settings','Roles'],['ver','Versions']];
 const ALL=TABS.map(t=>t[0]);
-const APPR=['dash','notif','guide','flow','overview','ver'];
-const ROLE_TABS={student:['dash','form','par','notif','guide','flow','overview','ver'],adviser:APPR,chair:APPR,assoc:APPR,dean:APPR,
-  admin:['dash','track','verify','rpt','records','notif','guide','flow','sim','scen','overview','ver'],
+const APPR=['dash','notif','guide','flow','ver'];
+const ROLE_TABS={student:['dash','form','par','notif','guide','flow','ver'],adviser:APPR,chair:APPR,assoc:APPR,dean:APPR,
+  admin:['dash','track','verify','rpt','records','notif','guide','flow','ver'],
   sysadmin:ALL};
 const views=$$('.view'),tabsEl=$('#tabs');
 const myTabs=()=>u()?TABS.filter(t=>ROLE_TABS[u().role].indexOf(t[0])>-1):[];
@@ -32,7 +32,7 @@ tabsEl.addEventListener('scroll',tabFade,{passive:true});window.addEventListener
 function show(id,push,appId){
   if(!u())return;
   if(id==='app'){if(D().apps.some(a=>a.id===appId))state.curApp=appId;else id='dash'}
-  else if(!allowed(id)){if(push)toast('That page is not part of your role. Sign in as another sample account to see it.');id='dash'}
+  else if(!allowed(id)){if(push)toast('That page is not part of your role. ');id='dash'}
   if(id==='app'&&state.cur!=='app')state.back=state.cur;
   state.cur=id;
   $('#login').hidden=true;
@@ -55,50 +55,40 @@ function toast(m){
   toastT=setTimeout(()=>{toastEl.classList.add('out');toastO=setTimeout(()=>{toastEl.hidden=true;toastEl.classList.remove('out')},180)},3400);
 }
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-act],[data-go],[data-open],[data-toast],#tabs button,[data-fill],[data-logout],[data-showver],#ver-back');if(!t)return;
+  const t=e.target.closest('[data-act],[data-go],[data-open],[data-toast],#tabs button,[data-logout],[data-showver],#ver-back');if(!t)return;
   if(t.dataset.act&&ACT[t.dataset.act]){e.preventDefault();ACT[t.dataset.act](t,e)}
   else if(t.dataset.open){e.preventDefault();show('app',true,t.dataset.open)}
   else if(t.dataset.go){e.preventDefault();show(t.dataset.go,true)}
   else if(t.dataset.toast){e.preventDefault();toast(t.dataset.toast)}
   else if(t.dataset.v){show(t.dataset.v,true)}
-  else if(t.dataset.fill){$('#l-email').value=t.dataset.fill;$('#l-pass').value=PASSWORD;$('#l-err').textContent='';$('#l-email').removeAttribute('aria-invalid');$('#loginform button[type=submit]').focus()}
   else if(t.dataset.logout!==undefined)logout();
   else if(t.dataset.showver!==undefined){$('#login').hidden=true;views.forEach(v=>v.hidden=v.id!=='v-ver');$('#ver-back').hidden=false;window.scrollTo(0,0)}
   else if(t.id==='ver-back'){$('#ver-back').hidden=true;$('#v-ver').hidden=true;$('#login').hidden=false;window.scrollTo(0,0)}
 });
 ACT.back=()=>show(state.back||'dash');
 
-/* ---------- sign in ---------- */
-const PASSWORD='demo';
-function buildLogin(){
-  const grp=(title,list)=>'<h3>'+title+'</h3>'+list.map(a=>'<button type="button" class="acc" data-fill="'+esc(a.email)+'"><span class="av">'+ini(a.name)+'</span><b>'+esc(a.name)+'</b><small>'+esc(a.label)+'</small></button>').join('');
-  const by=(...r)=>C.ACCOUNTS.filter(a=>r.indexOf(a.role)>-1);
-  $('#login').innerHTML='<div class="loginwrap"><section class="logincard" aria-labelledby="lg-h"><h2 id="lg-h">Sign in</h2>'+
-   '<p class="muted">Sign in with your college account to apply for a grant, endorse one, or manage reimbursements.</p>'+
-   '<form id="loginform" novalidate><div class="field"><label for="l-email">Email</label><input id="l-email" type="email" value="'+esc(C.ACCOUNTS[0].email)+'" autocomplete="username"></div>'+
-   '<div class="field" style="margin-top:10px"><label for="l-pass">Password</label><input id="l-pass" type="password" value="'+PASSWORD+'" autocomplete="current-password"></div>'+
-   '<p class="err" id="l-err" role="alert" style="margin-top:8px"></p><button class="btn" type="submit" style="margin-top:12px;width:100%">Sign in</button></form>'+
-   '<p class="note">Prototype. It accepts the sample accounts on the right with the password <b class="mono">'+PASSWORD+'</b>. The real build signs in with Google, limited to the DLSU domain, and takes roles from its own table.</p>'+
-   '<p class="note">Data entered here is saved in this browser only, so you can sign in as each role in turn and watch one application move.</p>'+
-   '<p class="note"><button type="button" class="lnk" data-showver>See the full version history</button> (no sign-in needed)</p></section>'+
-   '<section class="accs" aria-label="Sample accounts"><h2>Sample accounts</h2><p class="note">Pick one, then press Sign in. Each role sees its own dashboard and tabs.</p>'+
-   grp('Student',by('student'))+grp('Thesis advisers',by('adviser'))+grp('Department chairs (one per degree program)',by('chair'))+grp('Associate Dean and Dean',by('assoc','dean'))+grp('Office staff',by('admin'))+grp('Project owner (every tab)',by('sysadmin'))+'</section></div>';
-  if(!$('#ver-back')){const vb=document.createElement('button');vb.type='button';vb.id='ver-back';vb.className='btn sec sm';vb.textContent='Back to sign in';vb.hidden=true;$('#v-ver').insertBefore(vb,$('#v-ver').firstChild)}
+/* ---------- sign in: the CCS portal signs people in; the server checks the SCGSS roles table ---------- */
+function buildGate(kind,r){
+  const box=$('#login');box.hidden=false;
+  const m={
+   loading:['Opening the Grant Support System…','',''],
+   signin:['Sign in to the CCS portal first','This system uses the same Google sign-in as the CCS portal. Sign in there with your DLSU Google account, then come back to this page.','<a class="btn" href="/">Go to the CCS portal</a>'],
+   noaccess:['Your account is not set up yet','You are signed in'+(r&&r.email?' as <b>'+esc(r.email)+'</b>':'')+', but this account has no role in the Grant Support System. Ask the College System Administrator to add you.','<a class="btn sec" href="/">Back to the CCS portal</a>'],
+   error:['The system is not reachable',esc((r&&r.error)||'Something went wrong while opening the system.')+' Try again in a moment.','<button class="btn" type="button" data-act="retry">Try again</button>']
+  }[kind];
+  box.innerHTML='<div class="loginwrap"><section class="logincard" aria-labelledby="lg-h"><h2 id="lg-h">'+m[0]+'</h2><p class="muted">'+m[1]+'</p>'+(m[2]?'<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+m[2]+'</div>':'')+
+   '<p class="note"><button type="button" class="lnk" data-showver>See the full version history</button></p></section></div>';
+  if(!$('#ver-back')){const vb=document.createElement('button');vb.type='button';vb.id='ver-back';vb.className='btn sec sm';vb.textContent='Back';vb.hidden=true;$('#v-ver').insertBefore(vb,$('#v-ver').firstChild)}
 }
+ACT.retry=()=>C.start();
 function doLogin(acc,hash){
-  state.user=acc;try{sessionStorage.setItem('ccs-scgss-user',acc.email)}catch(e){}
-  E.autoRemind();
+  state.user=acc;
   buildTabs();$('#tabbar').hidden=false;$('#me').hidden=false;
   $('#me').innerHTML='<span class="av">'+ini(acc.name)+'</span><span><b>'+esc(acc.name)+'</b><small>'+esc(acc.label)+'</small></span><button type="button" class="btn sm ghost" data-logout>Sign out</button>';
   show(hash&&allowed(hash)?hash:'dash',true);
 }
-function logout(){state.user=null;try{sessionStorage.removeItem('ccs-scgss-user')}catch(e){}$('#tabbar').hidden=true;$('#me').hidden=true;$('#me').innerHTML='';views.forEach(v=>v.hidden=true);$('#login').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){}window.scrollTo(0,0)}
-document.addEventListener('submit',e=>{
-  if(e.target.id!=='loginform')return;e.preventDefault();
-  const em=$('#l-email').value.trim().toLowerCase(),pw=$('#l-pass').value,acc=C.ACCOUNTS.filter(a=>a.email===em)[0];
-  if(!acc||pw!==PASSWORD){$('#l-err').textContent='The email or password is not right. Pick a sample account on the right and try again.';$('#l-email').setAttribute('aria-invalid','true');return}
-  doLogin(acc);
-});
+/* signing out happens on the CCS portal, which owns the session */
+function logout(){fetch('/auth/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{}).then(()=>{location.href='/'})}
 
 /* ---------- shared pieces ---------- */
 const kpi=(n,l)=>'<div class="kpi"><b>'+n+'</b><span>'+l+'</span></div>';
@@ -223,7 +213,7 @@ ACT.preview=function(t){
     box.innerHTML='<div class="vbar"><b>'+esc(m.name||m.orig)+'</b><span class="muted">'+esc(m.kind||'')+' · '+fmtSize(m.size)+'</span><span><a class="btn sm sec" href="'+viewUrl+'" target="_blank" rel="noopener">Open in new tab</a> <button class="btn sm sec" data-act="download" data-id="'+id+'">Download</button></span></div>'+
       (pdf?'<iframe src="'+viewUrl+'" title="Preview of '+esc(m.name||m.orig)+'"></iframe>':img?'<img src="'+viewUrl+'" alt="'+esc(m.name||m.orig)+'">':'<div class="empty">This file type cannot be previewed here. Use Download.</div>');
     const a=m.appId&&D().apps.find(x=>x.id===m.appId);
-    if(a&&u().role!=='student'){E.markViewed(u(),a,id);const c=$('#viewcount');if(c)c.textContent=viewedCount(a)}
+    if(a&&u().role!=='student'){E.markViewed(u(),a,id).then(()=>{const a2=D().apps.find(x=>x.id===a.id),c=$('#viewcount');if(a2&&c)c.textContent=viewedCount(a2)})}
     box.scrollIntoView({behavior:'smooth',block:'nearest'});
   });
 };
@@ -237,11 +227,12 @@ function docsHTML(a,viewerToo){
 C.docsHTML=docsHTML;C.filesOf=filesOf;
 function viewedCount(a){return Object.keys(a.viewed[u().email]||{}).filter(id=>D().files[id]&&!D().files[id].superseded).length}
 function stageFiles(list){
-  const out=[];for(const f of Array.from(list)){
+  const files=Array.from(list);
+  for(const f of files){
     if(f.size>10*1048576)return Promise.reject(new Error(f.name+' is larger than 10 MB.'));
     if(!/\.(pdf|jpe?g|png)$/i.test(f.name))return Promise.reject(new Error(f.name+' must be a PDF, JPG or PNG.'));
-    const m=C.registerFile({orig:f.name,size:f.size,type:f.type||'application/octet-stream',by:u().name});out.push(C.FILES.put(m.id,f).then(()=>m.id));}
-  return Promise.all(out);
+  }
+  return files.reduce((p,f)=>p.then(ids=>C.uploadFile(f).then(m=>ids.concat(m.id))),Promise.resolve([]));
 }
 C.stageFiles=stageFiles;
 /* signature pad */
@@ -258,7 +249,6 @@ function initSig(cv){
 ACT.sigclear=()=>{const cv=$('#sigpad');if(!cv)return;cv._x.clearRect(0,0,cv._w,cv._h);cv.dataset.signed=''};
 ACT.sigsaved=()=>{const s=D().sigs[u().email],cv=$('#sigpad');if(!s)return toast('No saved signature yet. Sign once and tick "Remember my signature".');
   const img=new Image();img.onload=()=>{ACT.sigclear();cv._x.drawImage(img,0,0,cv._w,cv._h);cv.dataset.signed='1'};img.src=s};
-ACT.sigsample=()=>{const img=new Image();const cv=$('#sigpad');img.onload=()=>{ACT.sigclear();cv._x.drawImage(img,10,10,cv._w-20,cv._h-20);cv.dataset.signed='1'};img.src=C.sampleSig()};
 
 /* ---------- application page ---------- */
 function factsHTML(a){
@@ -367,16 +357,16 @@ document.addEventListener('change',e=>{
 ACT.sigupload=()=>{const el=$('#sigfile');if(el)el.click()};
 /* The Dean first sees a summary and confirms. Nothing is recorded until Confirm approval. */
 let pendingApproval=null;
-ACT.decide=function(t){
+ACT.decide=async function(t){
   const a=D().apps.find(x=>x.id===state.curApp),k=t.dataset.k,note=$('#d_note').value.trim(),msg=$('#d_msg');msg.textContent='';
   let res;
-  if(k==='endorse')res=E.endorse(u(),a,note);
-  else if(k==='return')res=E.returnApp(u(),a,note);
-  else if(k==='reject'){if(!note){msg.textContent='A reason is required to reject.';$('#d_note').focus();return}if(!confirm('Reject this application? It will be closed and the student notified.'))return;res=E.reject(u(),a,note)}
+  if(k==='endorse')res=await E.endorse(u(),a,note);
+  else if(k==='return')res=await E.returnApp(u(),a,note);
+  else if(k==='reject'){if(!note){msg.textContent='A reason is required to reject.';$('#d_note').focus();return}if(!confirm('Reject this application? It will be closed and the student notified.'))return;res=await E.reject(u(),a,note)}
   else{
     const cv=$('#sigpad'),signed=cv&&cv.dataset.signed==='1';
     const o={signature:signed?cv.toDataURL('image/png'):'',note,amount:$('#d_amt').value,fund:$('#d_fund').value};
-    const chk=E.approveGrant(u(),a,Object.assign({dry:true},o));
+    const chk=await E.approveGrant(u(),a,Object.assign({dry:true},o));
     if(chk.err){msg.textContent=chk.err;toast(chk.err);return}
     pendingApproval=o;
     $('#d_confirm').innerHTML='<div class="callout info" style="margin-top:10px" role="group" aria-label="Confirm the grant approval"><b>Confirm the grant approval</b>'+
@@ -391,27 +381,27 @@ ACT.decide=function(t){
   R.app();
 };
 ACT.cancelconfirm=()=>{pendingApproval=null;$('#d_confirm').innerHTML='';$('#d_btns').style.display='flex'};
-ACT.confirmapprove=function(){
+ACT.confirmapprove=async function(){
   const a=D().apps.find(x=>x.id===state.curApp),msg=$('#d_msg'),keep=$('#d_remember')&&$('#d_remember').checked;
   if(!pendingApproval)return;
-  const res=E.approveGrant(u(),a,Object.assign({confirm:true},pendingApproval));
+  const res=await E.approveGrant(u(),a,Object.assign({confirm:true},pendingApproval));
   if(res.err){msg.textContent=res.err;toast(res.err);return}
-  if(keep){D().sigs[u().email]=pendingApproval.signature;C.save()}
+  if(keep){C.api.saveSignature(pendingApproval.signature)}
   pendingApproval=null;
   toast('Grant approved and signed. The student was notified by email and in-app.');
   R.app();
 };
 ACT.comment=function(t){
   const a=D().apps.find(x=>x.id===state.curApp),text=$('#c_text').value,fl=$('#c_files').files,to=$$('.c-to').filter(c=>c.checked).map(c=>c.value);
-  const done=ids=>{const r=E.comment(u(),a,text,ids,to);if(r.err){$('#c_msg').textContent=r.err;return}toast('Message sent. The people you chose were notified.');R.app()};
+  const done=async ids=>{const r=await E.comment(u(),a,text,ids,to);if(r.err){$('#c_msg').textContent=r.err;return}toast('Message sent. The people you chose were notified.');R.app()};
   if(fl.length)stageFiles(fl).then(done).catch(e=>{$('#c_msg').textContent=e.message});else done([]);
 };
 ACT.resubmit=function(){
   const a=D().apps.find(x=>x.id===state.curApp),text=$('#r_text').value,fl=$('#r_files').files;
-  const done=ids=>{const r=E.resubmit(u(),a,null,text,ids);if(r.err){$('#r_msg').textContent=r.err;return}toast('Resubmitted. It went back to the '+CH[CHAIN[a.stage]].label+'.');R.app()};
+  const done=async ids=>{const r=await E.resubmit(u(),a,null,text,ids);if(r.err){$('#r_msg').textContent=r.err;return}toast('Resubmitted. It went back to the '+CH[CHAIN[a.stage]].label+'.');R.app()};
   if(fl.length)stageFiles(fl).then(done).catch(e=>{$('#r_msg').textContent=e.message});else done([]);
 };
-ACT.remind=function(t){const a=D().apps.find(x=>x.id===t.dataset.id),r=E.remind(u(),a);toast(r.err||'Reminder sent by email and in-app.');R.app()};
+ACT.remind=async function(t){const a=D().apps.find(x=>x.id===t.dataset.id),r=await E.remind(u(),a);toast(r.err||'Reminder sent by email and in-app.');R.app()};
 
 /* ---------- application form ---------- */
 const FS={step:0,mode:'new',appId:null,file:null,done:null};
@@ -459,7 +449,7 @@ function formHTML(){
    '<div class="callout info" style="margin-top:12px">After you submit, routing is automatic: Thesis Adviser, then Department Chair, then Associate Dean, then Dean. You can reply to remarks and upload documents on the application page. Every version stays on record.</div></div>'+
   '<div id="formErr" class="callout bad" hidden style="margin-top:12px"></div>'+
   '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;justify-content:space-between"><div style="display:flex;gap:8px"><button type="button" class="btn sec" id="fBack">Back</button><button type="button" class="btn sec" id="fDraft" data-act="fdraft">Save draft</button></div>'+
-  '<div style="display:flex;gap:8px"><button type="button" class="btn sec" data-act="ffill">Fill example</button><button type="button" class="btn" id="fNext" data-act="fnext">Next</button></div></div></form>';
+  '<div style="display:flex;gap:8px"><button type="button" class="btn" id="fNext" data-act="fnext">Next</button></div></div></form>';
 }
 function readForm(){
   const v=id=>{const el=$('#'+id);return el?String(el.value).trim():''};
@@ -535,32 +525,23 @@ document.addEventListener('change',e=>{
   if(e.target.id==='f_ay'||e.target.id==='f_term')refUpdate();
   if(e.target.id==='f_file'){const f=e.target.files[0];if(!f)return;const bad=!/\.pdf$/i.test(f.name)?'The attachment must be a single PDF file.':f.size>10*1048576?'The file is larger than 10 MB.':'';
     if(bad){$('#m_f_filebtn').textContent=bad;e.target.value='';return}
-    const m=C.registerFile({orig:f.name,size:f.size,type:'application/pdf',by:u().name});C.FILES.put(m.id,f).then(()=>{FS.file={id:m.id,orig:m.orig,size:m.size};$('#m_f_filebtn').textContent='';fileUI()})}
+    C.uploadFile(f).then(m=>{FS.file={id:m.id,orig:m.orig,size:m.size};$('#m_f_filebtn').textContent='';fileUI()}).catch(err=>{$('#m_f_filebtn').textContent=err.message})}
 });
 ACT.pickfile=()=>$('#f_file').click();
-ACT.fdiscard=()=>{delete D().drafts[u().email];C.save();R.form()};
-ACT.fdraft=()=>{D().drafts[u().email]=readForm();C.save();toast('Draft saved on this browser. You can return to it any time.')};
+ACT.fdiscard=()=>{C.api.clearDraft().then(()=>R.form())};
+ACT.fdraft=()=>{C.api.saveDraft(readForm()).then(ok=>toast(ok?'Draft saved. You can return to it any time, on any device.':'The draft could not be saved. Try again.'))};
 document.addEventListener('click',e=>{if(e.target.id==='fBack'&&FS.step>0){FS.step--;$('#formErr').hidden=true;fShow()}});
-ACT.ffill=function(){
-  const pdf=C.makePdf('Consolidated requirements (sample)',['SAMPLE FILE for the demo.','1. Copy of the paper (full text)','2. Letter of acceptance or notification','3. Proof of indexing (Scopus)']);
-  const m=C.registerFile({orig:'consolidated-requirements.pdf',size:pdf.size,type:'application/pdf',by:u().name});
-  C.FILES.put(m.id,pdf).then(()=>{
-    writeForm({ay:'2627',term:'Term1',sid:'12145678',prog:u().program||'BSCS',year:'4',adv:'adviser.reyes@college.example',conf:'Sample International Conference on Applied Computing (SICAC 2027)',start:'2027-01-18',end:'2027-01-20',venue:'Tokyo, Japan',org:'Sample Applied Computing Society',etype:'Conference',scope:'intl',cls:'Paper presenter',ptype:'Full paper',index:'Scopus',title:'Sample Title on Federated Learning',cof:'Dr. Paolo Reyes',cos:'',
-      exp:[5000,600,4400,3000,2000].map((n,i)=>({amount:n||'',remarks:''})),file:{id:m.id,orig:m.orig,size:m.size},attConfirm:true,privacy:true,brand:true});
-    toast('Example data filled in, with a sample PDF attached.');if(FS.step===4)buildReview();
-  });
-};
-ACT.fnext=function(){
+ACT.fnext=async function(){
   const f=readForm(),errs=C.validateForm(f);
   if(FS.step<4){const here=errs.filter(e=>e.step===FS.step);showErrs(here);if(here.length){const el=$('#'+here[0].id);if(el&&el.focus)el.focus();return}FS.step++;$('#formErr').hidden=true;fShow();return}
   showErrs(errs);
   if(errs.length){FS.step=errs[0].step;fShow();showErrs(errs);const box=$('#formErr');box.className='callout bad';box.hidden=false;box.innerHTML='<b>Some required items are missing:</b> '+errs.map(e=>esc(e.msg)).join(' ');const el=$('#'+errs[0].id);if(el&&el.focus)el.focus();return}
   let res;
-  if(FS.mode==='edit'){const a=D().apps.find(x=>x.id===FS.appId);res=E.resubmit(u(),a,f,$('#f_reply').value,[])}
-  else res=E.submit(u(),f);
+  if(FS.mode==='edit'){const a=D().apps.find(x=>x.id===FS.appId);res=await E.resubmit(u(),a,f,$('#f_reply').value,[])}
+  else res=await E.submit(u(),f);
   if(res.err){const box=$('#formErr');box.className='callout bad';box.hidden=false;box.textContent=res.err;return}
   const a=res.app||D().apps.find(x=>x.id===FS.appId);
-  delete D().drafts[u().email];C.save();
+  C.api.clearDraft();
   FS.done='<div class="screen"><div class="screen-bar"><b>'+(FS.mode==='edit'?'Resubmitted':'Submitted')+'</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body"><div class="callout ok"><b>'+(FS.mode==='edit'?'Resubmitted':'Submitted')+' as '+esc(a.ref)+'.</b> '+(FS.mode==='edit'?'The file went back to the '+CH[CHAIN[a.stage]].label+'.':'Your Thesis Adviser, '+esc(C.nameOf(a.route.adviser))+', was notified by email and in-app.')+' Your PDF was saved as <span class="mono">'+esc(D().files[a.attach.fileId].name)+'</span>.</div>'+stepsHTML(a)+
     '<p class="muted">Routing continues automatically after each decision. You will be notified at every step.</p><div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-open="'+a.id+'">Open the application</button><button class="btn sec" data-act="fnew">Start another</button><button class="btn sec" data-go="dash">Go to dashboard</button></div></div></div>';
   FS.mode='new';FS.appId=null;FS.file=null;R.form();
@@ -606,7 +587,7 @@ R.par=function(){
    '<div class="field" style="margin-top:8px"><label for="p_missing">If something is not included, say why</label><textarea id="p_missing" rows="2">'+esc(p.missingNote||'')+'</textarea></div>'+
    '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px"><input id="p_file" type="file" accept="application/pdf,.pdf" hidden><button type="button" class="btn sec" data-act="parpick">Choose the consolidated PDF</button><span id="p_attname" class="muted">No file chosen.</span><button type="button" class="btn sm sec" id="p_prev" data-act="preview" data-id="" hidden>Preview</button></div>'+
    '<p class="muted" style="margin-top:6px">Saved as <b class="mono">'+esc(a.ref)+'-PAR'+(p.cycle?'-v'+(p.cycle+1):'')+'.pdf</b>, in the designated Google Drive folder.</p>'+viewerHTML()+
-   '<div id="p_err" class="callout bad" hidden style="margin-top:10px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="parSubmit" data-act="parsubmit">Submit post-activity report</button><button class="btn sec" data-act="parfill">Fill example</button></div></div></div>';
+   '<div id="p_err" class="callout bad" hidden style="margin-top:10px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="parSubmit" data-act="parsubmit">Submit post-activity report</button></div></div></div>';
   PS.file=null;renderRows();
 };
 function parCalc(){
@@ -621,32 +602,28 @@ document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.
 document.addEventListener('change',e=>{
   if(e.target.id==='p_app'){PS.appId=e.target.value;PS.rows=[];R.par()}
   if(e.target.id==='p_file'){const f=e.target.files[0];if(!f)return;if(!/\.pdf$/i.test(f.name)||f.size>10*1048576){toast('The report must be a single PDF under 10 MB.');e.target.value='';return}
-    const m=C.registerFile({orig:f.name,size:f.size,type:'application/pdf',by:u().name});C.FILES.put(m.id,f).then(()=>{PS.file={id:m.id,orig:m.orig,size:m.size};parFile()})}
+    C.uploadFile(f).then(m=>{PS.file={id:m.id,orig:m.orig,size:m.size};parFile()}).catch(err=>toast(err.message))}
 });
 function parFile(){const f=PS.file;$('#p_attname').textContent=f?f.orig+' ('+fmtSize(f.size)+')':'No file chosen.';$('#p_prev').hidden=!f;$('#p_prev').dataset.id=f?f.id:''}
 ACT.parpick=()=>$('#p_file').click();
-ACT.parfill=function(){
-  const a=D().apps.find(x=>x.id===PS.appId),shops={'Registration fee':'Sample Conference Secretariat','Pre-departure fees':'Sample Visa Center','Roundtrip airfare':'Sample Airlines','Accommodation':'Sample Hotel','Per diem':'Sample Meals Co.'};
-  PS.rows=C.suggestItems(a).map((x,n)=>({type:x.type,or:'OR-'+(5100+n),merchant:shops[x.type],amount:x.amount}));renderRows();
-  $$('.pl-doc').forEach(c=>c.checked=true);
-  const pdf=C.makePdf('Post-activity documents (sample)',['SAMPLE FILE for the demo.'].concat(C.REQ_POST.map((r,i)=>(i+1)+'. '+r[1])));
-  const m=C.registerFile({orig:'post-activity-documents.pdf',size:pdf.size,type:'application/pdf',by:u().name});
-  C.FILES.put(m.id,pdf).then(()=>{PS.file={id:m.id,orig:m.orig,size:m.size};parFile();toast('Example data filled in, with a sample PDF attached.')});
-};
-ACT.parsubmit=function(){
+ACT.parsubmit=async function(){
   const a=D().apps.find(x=>x.id===PS.appId),docs={};$$('.pl-doc').forEach(c=>docs[c.dataset.k]=c.checked);
-  const res=E.submitPost(u(),a,{file:PS.file,items:readRows(),docs,missingNote:$('#p_missing').value});
+  const res=await E.submitPost(u(),a,{file:PS.file,items:readRows(),docs,missingNote:$('#p_missing').value});
+  const a2=D().apps.find(x=>x.id===a.id);
   if(res.err){const b=$('#p_err');b.hidden=false;b.textContent=res.err;b.scrollIntoView({block:'center'});return}
-  PS.done='<div class="screen"><div class="screen-bar"><b>Report submitted</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body"><div class="callout ok"><b>Submitted.</b> Saved as <span class="mono">'+esc(D().files[a.post.fileId].name)+'</span>. The Administrative Assistant was notified and will verify your documents.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-open="'+a.id+'">Open the application</button><button class="btn sec" data-act="parnew">Back</button></div></div></div>';
+  PS.done='<div class="screen"><div class="screen-bar"><b>Report submitted</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body"><div class="callout ok"><b>Submitted.</b> Saved as <span class="mono">'+esc(D().files[a2.post.fileId].name)+'</span>. The Administrative Assistant was notified and will verify your documents.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-open="'+a.id+'">Open the application</button><button class="btn sec" data-act="parnew">Back</button></div></div></div>';
   PS.file=null;PS.rows=[];R.par();
 };
 ACT.parnew=()=>{PS.done=null;R.par()};
 
 /* ---------- start ---------- */
-C.start=function(){
-  C.load();E.autoRemind();buildLogin();
-  let em=null;try{em=sessionStorage.getItem('ccs-scgss-user')}catch(e){}
+C.start=async function(){
+  buildGate('loading');
+  const r=await C.api.load();
+  if(!r.ok){buildGate(r.status===401&&!/not reachable/.test(r.error||'')?'signin':r.status===403?'noaccess':'error',r);return}
   let h='';try{h=location.hash.slice(1)}catch(e){}
-  const acc=em&&C.acct(em);if(acc)doLogin(acc,h);
+  $('#login').hidden=true;doLogin(C.me,h);
 };
+/* pick up new work when the person comes back to this tab (read-only screens only, so nothing being typed is lost) */
+document.addEventListener('visibilitychange',()=>{if(document.hidden||!state.user)return;C.api.load().then(r=>{if(r.ok&&['dash','track','notif'].indexOf(state.cur)>-1)C.refresh()})});
 })(window.CCS);

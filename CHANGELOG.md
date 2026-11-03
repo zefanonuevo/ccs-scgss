@@ -24,7 +24,23 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
-## 3.1.2 (28 Oct 2026 · Prototype · current)
+## 4.0.0 (3 Nov 2026 · Pilot · current)
+
+A real back end. Approval rules, records and files move from the browser to a server on the CCS apps VM.
+
+### Added
+- Node.js, Express and SQLite server (`server/`) with the approval rules from 3.1.2 running on the server, written to the database after every action.
+- A roles table (`scgss_users`) and a **Roles** tab for the System Administrator, with safeguards: one Dean, one Associate Dean, one chair per program, and at least one System Administrator.
+- Sign-in through the CCS portal: the server asks the portal who is signed in, then checks its own roles table.
+- File upload and download through the server, with an access check per file.
+- Automatic reminders run every hour on the server.
+- Deploy bundle and guide (`deploy/`, `docs/DEPLOY.md`) and server tests.
+
+### Removed
+- Sample accounts and the demo password, the Simulation and Scenarios tabs, the Fill example buttons, Reset demo data, the Review and suggestions tab, and all seeded sample applications.
+- Browser storage (localStorage, IndexedDB) and the Apps Script URL and token fields in Settings. The token now lives only in the server's settings file.
+
+## 3.1.2 (28 Oct 2026 · Prototype)
 
 Dean dashboard shows the records.
 

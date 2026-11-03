@@ -10,15 +10,15 @@
  *   1. Create a Google Sheet. Open Extensions > Apps Script and paste this file.
  *   2. In Drive, create the designated folder (for example "CCS-SCGSS"). Copy its ID from the URL.
  *   3. Project Settings > Script properties, add:
- *        TOKEN           a long random string (also paste it in the app's Settings)
+ *        TOKEN           a long random string (also set as GAS_TOKEN in the SCGSS server's settings file on the VM)
  *        FOLDER_ID       the Drive folder ID
  *        ALLOWED_DOMAIN  optional, for example dlsu.edu.ph. Emails go only to this domain.
  *   4. Deploy > New deployment > Web app. Execute as: Me. Who has access: Anyone.
- *      Copy the web app URL and paste it, with the token, in the app under Settings.
+ *      Copy the web app URL and set it as GAS_URL in the SCGSS server's settings file on the VM.
  *   5. Run authorize() once from the editor so Google asks for Sheet, Drive and Mail permission.
  *
- * Security note: the token is a shared secret, not a user sign-in. It keeps strangers out, but anyone who holds the
- * token can write. A production build should check the signed-in Google user on every request.
+ * Security note: since v4.0 only the SCGSS server calls this script, and the token lives only in the server's settings file, never in a browser.
+ * The token is still a shared secret, not a user sign-in: keep it out of the repository and rotate it if it leaks.
  */
 var SHEET_NAME = 'Applications';
 

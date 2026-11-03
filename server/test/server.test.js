@@ -1,0 +1,155 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { open, makeStore } = require('../db');
+const { createEngine } = require('../engine');
+const { createGas } = require('../gas');
+const { createApp } = require('../app');
+const R = require('../../shared/rules');
+
+/* the portal is stubbed: the cookie "as=<email>" means the portal says that person is signed in */
+const me = async (cookie) => { const m = /as=([^;]+)/.exec(cookie || ''); return m ? { signedIn: true, email: decodeURIComponent(m[1]), name: '' } : { signedIn: false }; };
+const ORIGIN = 'https://ccs.dlsu.edu.ph';
+const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF');
+const SIG = 'data:image/svg+xml;utf8,%3Csvg%3E%3C/svg%3E';
+
+async function boot() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scgss-'));
+  const store = makeStore(open(':memory:'));
+  const gas = createGas({ url: '', token: '', filesDir: path.join(dir, 'files') });
+  const engine = createEngine({ store, gas });
+  const app = createApp({ store, engine, gas, me, config: { baseUrl: ORIGIN, filesDir: path.join(dir, 'files'), allowedDomain: 'dlsu.edu.ph' } });
+  const server = await new Promise((r) => { const s = app.listen(0, '127.0.0.1', () => r(s)); });
+  const base = 'http://127.0.0.1:' + server.address().port;
+  const as = (email) => ({
+    get: (p) => fetch(base + p, { headers: email ? { cookie: 'as=' + email } : {} }),
+    post: (p, body, extra) => fetch(base + p, { method: 'POST', headers: Object.assign({ cookie: email ? 'as=' + email : '', origin: ORIGIN, 'content-type': 'application/json' }, extra || {}), body: Buffer.isBuffer(body) ? body : JSON.stringify(body) }),
+    act: async (name, appId, ...args) => (await (await fetch(base + '/api/action', { method: 'POST', headers: { cookie: 'as=' + email, origin: ORIGIN, 'content-type': 'application/json' }, body: JSON.stringify({ name, appId, args }) })).json()),
+    upload: async (name) => (await (await fetch(base + '/api/files', { method: 'POST', headers: { cookie: 'as=' + email, origin: ORIGIN, 'x-file-name': name, 'content-type': 'application/pdf' }, body: PDF })).json()).file
+  });
+  const people = [
+    ['sys@dlsu.edu.ph', 'sysadmin', 'Sys Admin', ''], ['maria_santos@dlsu.edu.ph', 'student', 'Maria Santos', 'BSCS'],
+    ['paolo.reyes@dlsu.edu.ph', 'adviser', 'Dr. Reyes', ''], ['luis.mercado@dlsu.edu.ph', 'chair', 'Dr. Mercado', 'BSCS'],
+    ['carla.mendoza@dlsu.edu.ph', 'assoc', 'Dr. Mendoza', ''], ['elena.navarro@dlsu.edu.ph', 'dean', 'Dr. Navarro', ''], ['rosa.delgado@dlsu.edu.ph', 'admin', 'Rosa Delgado', '']
+  ];
+  people.forEach(([email, role, name, program]) => store.upsertUser({ email, role, name, program }));
+  return { store, engine, server, base, as, close: () => server.close() };
+}
+const form = (file, adv) => ({ ay: '2627', term: 'Term1', sid: '12145678', prog: 'BSCS', year: '4', adv, conf: 'ICSC 2026', start: '2026-10-05', end: '2026-10-09', venue: 'Kyoto', org: 'Society', etype: 'Conference', scope: 'intl', cls: 'Paper presenter', ptype: 'Full paper', index: 'Scopus', title: 'A Paper', cof: '', cos: '', exp: R.EXPENSE_TYPES.map((t, i) => ({ type: t, amount: [5500, 600, 4400, 3000, 1500][i], remarks: '' })), file, attConfirm: true, privacy: true, brand: true });
+const MARIA = 'maria_santos@dlsu.edu.ph', REYES = 'paolo.reyes@dlsu.edu.ph';
+
+test('sign-in comes from the portal, access from the SCGSS roles table', async (t) => {
+  const s = await boot(); t.after(s.close);
+  assert.equal((await s.as(null).get('/api/state')).status, 401);
+  assert.equal((await s.as('stranger@dlsu.edu.ph').get('/api/state')).status, 403);
+  s.store.upsertUser({ email: 'off@dlsu.edu.ph', role: 'student', active: false });
+  assert.equal((await s.as('off@dlsu.edu.ph').get('/api/state')).status, 403, 'a switched-off person is refused');
+  const ok = await (await s.as(MARIA).get('/api/state')).json();
+  assert.equal(ok.state.me.role, 'student');
+  assert.equal((await s.as(null).get('/healthz')).status, 200);
+});
+
+test('full application, every role, to filing at the FAO', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const maria = s.as(MARIA);
+  const file = await maria.upload('requirements.pdf');
+  const sub = await maria.act('submit', '', form(file, REYES));
+  assert.equal(sub.ok, true, JSON.stringify(sub.result)); const id = sub.result.appId;
+  const get = async (email) => (await (await s.as(email).get('/api/state')).json()).state.apps.find((a) => a.id === id);
+  assert.equal((await get(MARIA)).ref, '2627-Term1-001');
+  assert.equal(await get('sys@dlsu.edu.ph') !== undefined, true);
+  assert.equal(await get('carla.mendoza@dlsu.edu.ph') !== undefined, true, 'route members see it');
+  /* sequence is enforced */
+  let r = await s.as('luis.mercado@dlsu.edu.ph').act('endorse', id, 'too early');
+  assert.equal(r.ok, false);
+  assert.equal((await s.as(MARIA).act('endorse', id, 'x')).ok, false, 'applicants cannot act on their own application');
+  assert.equal((await s.as('rosa.delgado@dlsu.edu.ph').act('endorse', id, 'x')).ok, false);
+  for (const e of [REYES, 'luis.mercado@dlsu.edu.ph', 'carla.mendoza@dlsu.edu.ph']) assert.equal((await s.as(e).act('endorse', id, 'ok')).ok, true, e);
+  assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveGrant', id, { signature: SIG, confirm: true, amount: 16000, fund: 'x' })).ok, false, 'above the cap');
+  assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveGrant', id, { signature: SIG, confirm: true, amount: 13500, fund: "Dean's Office" })).ok, true);
+  assert.equal((await get(MARIA)).status, 'approved');
+  const pf = await maria.upload('post.pdf'); const docs = {}; R.REQ_POST.forEach((x) => { docs[x[0]] = true; });
+  const items = [{ type: 'Registration fee', or: 'OR-1', merchant: 'Secretariat', amount: 5500 }, { type: 'Roundtrip airfare', or: 'OR-2', merchant: 'Airline', amount: 4400 }];
+  assert.equal((await maria.act('submitPost', id, { file: pf, items, docs, missingNote: '' })).ok, true);
+  const adm = s.as('rosa.delgado@dlsu.edu.ph');
+  assert.equal((await s.as(REYES).act('postReview', id, { items: [] }, 'verify')).ok, false, 'only the Administrative Assistant verifies');
+  const rows = items.map((x) => ({ approved: x.amount, fund: "Dean's Office", why: '' }));
+  assert.equal((await adm.act('postReview', id, { checks: docs, remarks: {}, items: rows, overall: 'ok' }, 'verify')).ok, true);
+  assert.equal((await adm.act('complete', id, { rfp: 'RFP-1' })).ok, true);
+  const done = await get(MARIA); assert.equal(done.status, 'completed'); assert.equal(done.report.rfp, 'RFP-1');
+  /* a failed action leaves nothing behind */
+  const n = done.history.length; await maria.act('comment', id, '', []); assert.equal((await get(MARIA)).history.length, n);
+});
+
+test('data survives a restart (state is written to SQLite)', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const file = await s.as(MARIA).upload('r.pdf');
+  const sub = await s.as(MARIA).act('submit', '', form(file, REYES)); assert.equal(sub.ok, true);
+  const again = createEngine({ store: s.store, gas: createGas({ url: '', token: '', filesDir: os.tmpdir() }) });
+  assert.equal(again.db.apps.length, 1); assert.equal(again.db.apps[0].ref, '2627-Term1-001');
+  assert.equal(again.db.counters['2627-Term1'], 1);
+});
+
+test('files: only people on the application can open them; bad types refused', async (t) => {
+  const s = await boot(); t.after(s.close);
+  s.store.upsertUser({ email: 'other_student@dlsu.edu.ph', role: 'student', program: 'BSIT' });
+  const file = await s.as(MARIA).upload('r.pdf');
+  const sub = await s.as(MARIA).act('submit', '', form(file, REYES)); assert.equal(sub.ok, true);
+  assert.equal((await s.as(MARIA).get('/api/files/' + file.id)).status, 200);
+  assert.equal((await s.as(REYES).get('/api/files/' + file.id)).status, 200);
+  assert.equal((await s.as('other_student@dlsu.edu.ph').get('/api/files/' + file.id)).status, 404);
+  assert.equal((await s.as(null).get('/api/files/' + file.id)).status, 401);
+  const bad = await fetch(s.base + '/api/files', { method: 'POST', headers: { cookie: 'as=' + MARIA, origin: ORIGIN, 'x-file-name': 'run.exe' }, body: PDF });
+  assert.equal(bad.status, 400);
+  const fake = await fetch(s.base + '/api/files', { method: 'POST', headers: { cookie: 'as=' + MARIA, origin: ORIGIN, 'x-file-name': 'a.pdf' }, body: Buffer.from('not a pdf') });
+  assert.equal(fake.status, 400);
+});
+
+test('requests that change data must come from the portal address', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const r = await fetch(s.base + '/api/action', { method: 'POST', headers: { cookie: 'as=' + MARIA, origin: 'https://evil.example', 'content-type': 'application/json' }, body: '{}' });
+  assert.equal(r.status, 403);
+});
+
+test('roles screen: System Administrator only, with safeguards', async (t) => {
+  const s = await boot(); t.after(s.close);
+  assert.equal((await s.as(MARIA).get('/api/users')).status, 403);
+  assert.equal((await s.as(MARIA).post('/api/users', { email: 'x@dlsu.edu.ph', role: 'dean' })).status, 403);
+  const sys = s.as('sys@dlsu.edu.ph');
+  assert.equal((await sys.post('/api/users', { email: 'new@gmail.com', role: 'student' })).status, 400, 'outside the DLSU domain');
+  assert.equal((await sys.post('/api/users', { email: 'two@dlsu.edu.ph', role: 'dean' })).status, 400, 'only one Dean');
+  assert.equal((await sys.post('/api/users', { email: 'c@dlsu.edu.ph', role: 'chair' })).status, 400, 'chair needs a program');
+  assert.equal((await sys.post('/api/users', { email: 'c2@dlsu.edu.ph', role: 'chair', program: 'BSCS' })).status, 400, 'one chair per program');
+  assert.equal((await sys.post('/api/users', { email: 'c3@dlsu.edu.ph', role: 'chair', program: 'BSIT', name: 'Dr. Tan' })).status, 200);
+  assert.equal((await sys.post('/api/users', { email: 'sys@dlsu.edu.ph', role: 'student' })).status, 400, 'last System Administrator');
+  assert.equal((await sys.post('/api/users', { email: 'sys@dlsu.edu.ph', role: 'sysadmin', active: false })).status, 400);
+  assert.equal((await sys.post('/api/users', { email: MARIA, role: 'student', program: 'BSCS', active: false })).status, 200);
+  assert.equal((await s.as(MARIA).get('/api/state')).status, 403, 'switching someone off takes effect at once');
+});
+
+test('Dean as adviser: the Associate Dean approves in the Dean\'s place', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const file = await s.as(MARIA).upload('r.pdf');
+  const sub = await s.as(MARIA).act('submit', '', form(file, 'elena.navarro@dlsu.edu.ph')); assert.equal(sub.ok, true, JSON.stringify(sub.result)); const id = sub.result.appId;
+  assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('endorse', id, 'ok')).ok, true);
+  assert.equal((await s.as('luis.mercado@dlsu.edu.ph').act('endorse', id, 'ok')).ok, true);
+  assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveGrant', id, { signature: SIG, confirm: true, amount: 5000, fund: 'x' })).ok, false, 'the Dean cannot approve their own advisee');
+  assert.equal((await s.as('carla.mendoza@dlsu.edu.ph').act('approveGrant', id, { signature: SIG, confirm: true, amount: 5000, fund: "Dean's Office" })).ok, true);
+});
+
+test('routing refuses when a signer is missing', async (t) => {
+  const s = await boot(); t.after(s.close);
+  s.store.setActive('carla.mendoza@dlsu.edu.ph', false);
+  const file = await s.as(MARIA).upload('r.pdf');
+  const sub = await s.as(MARIA).act('submit', '', form(file, REYES));
+  assert.equal(sub.ok, false); assert.match(sub.result.err, /Associate Dean or Dean is not set/);
+});
+
+test('only the listed files are served', async (t) => {
+  const s = await boot(); t.after(s.close);
+  for (const p of ['/server/app.js', '/google/Code.gs', '/.git/config', '/js/../server/db.js', '/CHANGELOG.md']) assert.equal((await s.as(null).get(p)).status, 404, p);
+  assert.equal((await s.as(null).get('/shared/rules.js')).status, 200);
+});
