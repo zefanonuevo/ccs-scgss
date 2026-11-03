@@ -6,7 +6,7 @@
  *   action "file":   saves an uploaded file in the designated Drive folder, in a sub-folder (for example Applications/2627-Term1).
  *   action "email":  sends a notification email.
  *
- * Setup (about 10 minutes):
+ * Setup (about 10 minutes). Do every step signed in as computerstudies@dlsu.edu.ph so emails are sent from that address and the Sheet and Drive folder belong to it:
  *   1. Create a Google Sheet. Open Extensions > Apps Script and paste this file.
  *   2. In Drive, create the designated folder (for example "CCS-SCGSS"). Copy its ID from the URL.
  *   3. Project Settings > Script properties, add:
@@ -84,7 +84,8 @@ function saveFile_(path, name, mime, b64) {
 function sendEmail_(to, subject, body) {
   var domain = PropertiesService.getScriptProperties().getProperty('ALLOWED_DOMAIN');
   if (domain && String(to).toLowerCase().slice(-(domain.length + 1)) !== '@' + domain.toLowerCase()) return;
-  MailApp.sendEmail(to, subject, body);
+  // Sent from the Google account that owns this script (deploy it while signed in as computerstudies@dlsu.edu.ph).
+  MailApp.sendEmail(to, subject, body, { name: 'CCS Student Grants (SCGSS)', replyTo: 'computerstudies@dlsu.edu.ph' });
 }
 
 /** Run once from the editor to grant permissions. */
