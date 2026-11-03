@@ -5,7 +5,7 @@ Student conference grants for the College of Computer Studies: application form,
 **Version 4.0 is a real system**, not the browser simulation of 3.x. The rules, records and files live on a server on the CCS apps VM. Sign-in is the CCS portal's Google sign-in; what a person may do comes from this system's own Roles table.
 
 - `shared/rules.js`: constants, status helpers and form validation, used by both the server and the page.
-- `server/`: Node.js, Express and SQLite. `engine.js` (approval rules), `app.js` (HTTP), `db.js` (storage and roles), `users.js` (command-line roles tool), `test/`.
+- `server/`: Node.js, Express and PostgreSQL. `engine.js` (approval rules), `app.js` (HTTP), `db.js` (storage and roles), `users.js` (command-line roles tool), `test/`.
 - `js/`, `index.html`: the screens. They keep no data; they call the server.
 - `google/Code.gs`: Apps Script that writes the Sheet row, saves files in Drive and sends email. Only the server calls it.
 - `deploy/`, `docs/DEPLOY.md`: install on the apps VM, Apache path, backups.

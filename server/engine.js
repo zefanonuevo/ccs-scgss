@@ -2,14 +2,14 @@
 /* SCGSS engine: the approval rules, run on the server.
    The rule code below (status flow, routing, skip logic, grant limits, reimbursement checks, reminders) is the code from the browser
    prototype (js/core.js v3.1.2), unchanged except where it touched browser storage, the sample accounts or the Google link.
-   State lives in memory and is written to SQLite after every action (store.commit). */
+   State lives in memory and is written to PostgreSQL after every action (one transaction). */
 const R = require('../shared/rules');
 const { money, fmtT, fmtD, pad3, round2 } = R.u;
 const { PAR_DAYS, ADVISER_ROLES, EXPENSE_TYPES, REQ_POST, CHAIN, CH, ROLE_NAME, CAP, regionLabel, info, projected, dueDate, total, manilaToday, daysBetween, validateForm, nameOf } = R;
 
-function createEngine({ store, gas }) {
+async function createEngine({ store, gas }) {
   const now = () => Date.now();
-  const db = store.loadAll();
+  const db = await store.loadAll();
   db.sigs = {}; db.drafts = {};
   const syncLog = [];
   R.setDirectory((email) => { const u = store.getUser(email); return u ? decorate(u) : null; });
@@ -26,7 +26,17 @@ function createEngine({ store, gas }) {
   }
   const advisers = () => store.listUsers().filter((u) => u.active === 1 && ADVISER_ROLES.indexOf(u.role) > -1).map(decorate);
 
-  const save = () => store.commit(db);
+  /* actions run one at a time; the state is changed in memory, then written to the database in one transaction.
+     If the write fails, the memory is reloaded from the database, so memory and database never disagree. */
+  let chain = Promise.resolve();
+  const locked = (fn) => { const p = chain.then(fn, fn); chain = p.catch(() => {}); return p; };
+  const save = () => {}; /* the rule code calls this after a change; the write happens once, after the whole action, in run() */
+  async function persist() {
+    try { await store.commit(db); } catch (e) {
+      const fresh = await store.loadAll(); Object.keys(db).forEach((k) => { delete db[k]; }); Object.assign(db, fresh); db.sigs = {}; db.drafts = {};
+      throw e;
+    }
+  }
   const byId = (id) => db.apps.find((a) => a.id === id);
   const addDays = R.addDays;
   const fundsOf = R.fundsOf;
@@ -343,12 +353,12 @@ E.markViewed=function(actor,a,fileId){
 };
 
   /* ---------- registering uploaded files ---------- */
-  function registerFile(o) { const id = 'f' + (++db.seq); db.files[id] = Object.assign({ id, orig: 'document.pdf', size: 0, type: 'application/pdf', by: '', at: now(), name: null, appId: null, folder: 'Unfiled', kind: '', version: 1 }, o); save(); return db.files[id]; }
+  const registerFile = (o) => locked(async () => { const id = 'f' + (++db.seq); db.files[id] = Object.assign({ id, orig: 'document.pdf', size: 0, type: 'application/pdf', by: '', at: now(), name: null, appId: null, folder: 'Unfiled', kind: '', version: 1 }, o); await persist(); return db.files[id]; });
 
   /* ---------- what a person may see ---------- */
   const isStaff = (u) => u.role === 'admin' || u.role === 'sysadmin';
   const mayView = (u, a) => isStaff(u) || a.studentEmail === u.email || Object.keys(a.route).some((k) => a.route[k] === u.email);
-  function snapshotFor(u) {
+  async function snapshotFor(u) {
     const apps = db.apps.filter((a) => mayView(u, a));
     const ids = new Set(apps.map((a) => a.id));
     const files = {}; Object.values(db.files).forEach((f) => { if ((f.appId && ids.has(f.appId)) || (!f.appId && f.byEmail === u.email)) files[f.id] = f; });
@@ -357,30 +367,29 @@ E.markViewed=function(actor,a,fileId){
       me: decorate(u), apps, files, directory: dir, settings: signers(), counters: db.counters,
       notifs: db.notifs.filter((n) => n.to === u.email).slice(0, 200),
       outbox: u.role === 'sysadmin' ? db.outbox.slice(0, 200) : db.outbox.filter((m) => m.to === u.email).slice(0, 100),
-      syncLog: isStaff(u) ? syncLog.slice(0, 80) : [], draft: store.getDraft(u.email), sig: store.getSig(u.email), live: gas.live(), serverTime: now()
+      syncLog: isStaff(u) ? syncLog.slice(0, 80) : [], draft: await store.getDraft(u.email), sig: await store.getSig(u.email), live: gas.live(), serverTime: now()
     };
   }
 
   /* ---------- run one action on the server ---------- */
   const ACTIONS = new Set(['submit', 'endorse', 'approveGrant', 'returnApp', 'reject', 'comment', 'resubmit', 'submitPost', 'postReview', 'complete', 'remind', 'markRead', 'markViewed']);
-  function run(actor, name, appId, args) {
+  const runNow = (actor, name, appId, args) => {
     if (!ACTIONS.has(name)) return ERR('Unknown action.');
-    let r;
-    if (name === 'submit') { r = E.submit(actor, args[0]); save(); return r; }
+    if (name === 'submit') return E.submit(actor, args[0]);
     if (name === 'markRead') { E.markRead(actor.email, args[0]); return OK; }
     const a = byId(appId);
     if (!a || !mayView(actor, a)) return ERR('That application was not found.');
     if (name === 'markViewed') { E.markViewed(actor, a, args[0]); return OK; }
     const before = JSON.stringify(a), filesBefore = JSON.stringify(db.files);
-    r = E[name](actor, a, ...args);
+    const r = E[name](actor, a, ...args);
     if (r && r.err && !r.denied) { /* a failed action leaves nothing behind */
       const snap = JSON.parse(before); Object.keys(a).forEach((k) => { delete a[k]; }); Object.assign(a, snap); db.files = JSON.parse(filesBefore);
     }
-    save();
     return r;
-  }
+  };
+  const run = (actor, name, appId, args) => locked(async () => { const r = runNow(actor, name, appId, args); await persist(); return r; });
 
-  return { E, db, run, byId, registerFile, snapshotFor, mayView, signers, advisers, nextRef, advisories, acct, decorate, commit: save, syncLog, autoRemind: () => E.autoRemind(), sweep: (actor, days) => E.sweep(actor, days) };
+  return { E, db, run, byId, registerFile, snapshotFor, mayView, signers, advisers, nextRef, advisories, acct, decorate, syncLog, autoRemind: () => locked(async () => { const n = E.autoRemind(); await persist(); return n; }), sweep: (actor, days) => locked(async () => { const n = E.sweep(actor, days); await persist(); return n; }) };
 }
 
 module.exports = { createEngine };

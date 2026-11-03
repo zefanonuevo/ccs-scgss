@@ -4,6 +4,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const crypto = require('node:crypto');
+const { Pool } = require('pg');
+const PGURL = process.env.TEST_DATABASE_URL;
+if (!PGURL) { console.log('Set TEST_DATABASE_URL to a throwaway PostgreSQL database to run these tests.'); process.exit(0); }
 const { open, makeStore } = require('../db');
 const { createEngine } = require('../engine');
 const { createGas } = require('../gas');
@@ -18,9 +22,11 @@ const SIG = 'data:image/svg+xml;utf8,%3Csvg%3E%3C/svg%3E';
 
 async function boot() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scgss-'));
-  const store = makeStore(open(':memory:'));
+  const schema = 't' + crypto.randomBytes(6).toString('hex');
+  const admin = new Pool({ connectionString: PGURL }); await admin.query('CREATE SCHEMA ' + schema); await admin.end();
+  const store = makeStore(open({ url: PGURL, schema })); await store.init();
   const gas = createGas({ url: '', token: '', filesDir: path.join(dir, 'files') });
-  const engine = createEngine({ store, gas });
+  const engine = await createEngine({ store, gas });
   const app = createApp({ store, engine, gas, me, config: { baseUrl: ORIGIN, filesDir: path.join(dir, 'files'), allowedDomain: 'dlsu.edu.ph' } });
   const server = await new Promise((r) => { const s = app.listen(0, '127.0.0.1', () => r(s)); });
   const base = 'http://127.0.0.1:' + server.address().port;
@@ -35,8 +41,8 @@ async function boot() {
     ['paolo.reyes@dlsu.edu.ph', 'adviser', 'Dr. Reyes', ''], ['luis.mercado@dlsu.edu.ph', 'chair', 'Dr. Mercado', 'BSCS'],
     ['carla.mendoza@dlsu.edu.ph', 'assoc', 'Dr. Mendoza', ''], ['elena.navarro@dlsu.edu.ph', 'dean', 'Dr. Navarro', ''], ['rosa.delgado@dlsu.edu.ph', 'admin', 'Rosa Delgado', '']
   ];
-  people.forEach(([email, role, name, program]) => store.upsertUser({ email, role, name, program }));
-  return { store, engine, server, base, as, close: () => server.close() };
+  for (const [email, role, name, program] of people) await store.upsertUser({ email, role, name, program });
+  return { store, engine, server, base, as, close: async () => { server.closeAllConnections(); server.close(); await store.close(); } };
 }
 const form = (file, adv) => ({ ay: '2627', term: 'Term1', sid: '12145678', prog: 'BSCS', year: '4', adv, conf: 'ICSC 2026', start: '2026-10-05', end: '2026-10-09', venue: 'Kyoto', org: 'Society', etype: 'Conference', scope: 'intl', cls: 'Paper presenter', ptype: 'Full paper', index: 'Scopus', title: 'A Paper', cof: '', cos: '', exp: R.EXPENSE_TYPES.map((t, i) => ({ type: t, amount: [5500, 600, 4400, 3000, 1500][i], remarks: '' })), file, attConfirm: true, privacy: true, brand: true });
 const MARIA = 'maria_santos@dlsu.edu.ph', REYES = 'paolo.reyes@dlsu.edu.ph';
@@ -45,7 +51,7 @@ test('sign-in comes from the portal, access from the SCGSS roles table', async (
   const s = await boot(); t.after(s.close);
   assert.equal((await s.as(null).get('/api/state')).status, 401);
   assert.equal((await s.as('stranger@dlsu.edu.ph').get('/api/state')).status, 403);
-  s.store.upsertUser({ email: 'off@dlsu.edu.ph', role: 'student', active: false });
+  await s.store.upsertUser({ email: 'off@dlsu.edu.ph', role: 'student', active: false });
   assert.equal((await s.as('off@dlsu.edu.ph').get('/api/state')).status, 403, 'a switched-off person is refused');
   const ok = await (await s.as(MARIA).get('/api/state')).json();
   assert.equal(ok.state.me.role, 'student');
@@ -84,18 +90,18 @@ test('full application, every role, to filing at the FAO', async (t) => {
   const n = done.history.length; await maria.act('comment', id, '', []); assert.equal((await get(MARIA)).history.length, n);
 });
 
-test('data survives a restart (state is written to SQLite)', async (t) => {
+test('data survives a restart (state is written to PostgreSQL)', async (t) => {
   const s = await boot(); t.after(s.close);
   const file = await s.as(MARIA).upload('r.pdf');
   const sub = await s.as(MARIA).act('submit', '', form(file, REYES)); assert.equal(sub.ok, true);
-  const again = createEngine({ store: s.store, gas: createGas({ url: '', token: '', filesDir: os.tmpdir() }) });
+  const again = await createEngine({ store: s.store, gas: createGas({ url: '', token: '', filesDir: os.tmpdir() }) });
   assert.equal(again.db.apps.length, 1); assert.equal(again.db.apps[0].ref, '2627-Term1-001');
   assert.equal(again.db.counters['2627-Term1'], 1);
 });
 
 test('files: only people on the application can open them; bad types refused', async (t) => {
   const s = await boot(); t.after(s.close);
-  s.store.upsertUser({ email: 'other_student@dlsu.edu.ph', role: 'student', program: 'BSIT' });
+  await s.store.upsertUser({ email: 'other_student@dlsu.edu.ph', role: 'student', program: 'BSIT' });
   const file = await s.as(MARIA).upload('r.pdf');
   const sub = await s.as(MARIA).act('submit', '', form(file, REYES)); assert.equal(sub.ok, true);
   assert.equal((await s.as(MARIA).get('/api/files/' + file.id)).status, 200);
@@ -142,7 +148,7 @@ test('Dean as adviser: the Associate Dean approves in the Dean\'s place', async 
 
 test('routing refuses when a signer is missing', async (t) => {
   const s = await boot(); t.after(s.close);
-  s.store.setActive('carla.mendoza@dlsu.edu.ph', false);
+  await s.store.setActive('carla.mendoza@dlsu.edu.ph', false);
   const file = await s.as(MARIA).upload('r.pdf');
   const sub = await s.as(MARIA).act('submit', '', form(file, REYES));
   assert.equal(sub.ok, false); assert.match(sub.result.err, /Associate Dean or Dean is not set/);

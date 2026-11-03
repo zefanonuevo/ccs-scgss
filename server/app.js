@@ -30,6 +30,7 @@ function portalChecker(portalUrl, ttlMs = 10000) {
 function createApp({ store, engine, gas, me, config }) {
   const cfg = Object.assign({ siteRoot: path.resolve(__dirname, '..'), filesDir: path.resolve(__dirname, 'data/files'), baseUrl: '' }, config);
   fs.mkdirSync(cfg.filesDir, { recursive: true });
+  const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -41,11 +42,11 @@ function createApp({ store, engine, gas, me, config }) {
   app.get('/healthz', (req, res) => res.type('text').send('ok'));
 
   /* ---------- who is asking ---------- */
-  async function who(req, res, next) {
+  async function who(req, res, next) {  // eslint-disable-line
     const p = await me(req.headers.cookie || '');
     if (!p.signedIn) return res.status(401).json({ ok: false, error: p.unreachable ? 'The portal sign-in service is not reachable. Try again shortly.' : 'Sign in to the portal first.', signedIn: false });
     const u = store.activeUser(p.email);
-    if (!u) { store.audit(p.email, 'no_access', 'not listed or switched off', req.ip); return res.status(403).json({ ok: false, error: 'Your account is not set up for the Grant Support System. Ask the System Administrator to add you.', signedIn: true, email: p.email, enrolled: false }); }
+    if (!u) { await store.audit(p.email, 'no_access', 'not listed or switched off', req.ip); return res.status(403).json({ ok: false, error: 'Your account is not set up for the Grant Support System. Ask the System Administrator to add you.', signedIn: true, email: p.email, enrolled: false }); }
     req.user = engine.decorate(u);
     if (!req.user.name || req.user.name === req.user.email) req.user.name = p.name || req.user.email;
     next();
@@ -59,30 +60,30 @@ function createApp({ store, engine, gas, me, config }) {
   const sysadminOnly = (req, res, next) => (req.user.role === 'sysadmin' ? next() : res.status(403).json({ ok: false, error: 'Only the System Administrator can do this.' }));
 
   /* ---------- state and actions ---------- */
-  app.get('/api/state', who, (req, res) => res.json({ ok: true, state: engine.snapshotFor(req.user) }));
+  app.get('/api/state', who, ah(async (req, res) => res.json({ ok: true, state: await engine.snapshotFor(req.user) })));
 
-  app.post('/api/action', sameOrigin, who, express.json({ limit: '2mb' }), (req, res) => {
+  app.post('/api/action', sameOrigin, who, express.json({ limit: '2mb' }), ah(async (req, res) => {
     const b = req.body || {};
     const name = String(b.name || ''), args = Array.isArray(b.args) ? b.args : [];
     let result;
-    try { result = engine.run(req.user, name, b.appId ? String(b.appId) : '', args); } catch (e) { console.error('[action]', name, e); result = { err: 'Something went wrong on the server. Nothing was saved.' }; }
-    if (result && result.err) store.audit(req.user.email, 'action_refused', name + ': ' + result.err, req.ip);
+    try { result = await engine.run(req.user, name, b.appId ? String(b.appId) : '', args); } catch (e) { console.error('[action]', name, e); result = { err: 'Something went wrong on the server. Nothing was saved.' }; }
+    if (result && result.err) await store.audit(req.user.email, 'action_refused', name + ': ' + result.err, req.ip);
     const out = Object.assign({}, result); delete out.app;
     if (result && result.app) out.appId = result.app.id;
-    res.json({ ok: !(result && result.err), result: out, state: engine.snapshotFor(req.user) });
-  });
+    res.json({ ok: !(result && result.err), result: out, state: await engine.snapshotFor(req.user) });
+  }));
 
   /* ---------- files ---------- */
-  app.post('/api/files', sameOrigin, who, express.raw({ type: '*/*', limit: MAX_FILE }), (req, res) => {
+  app.post('/api/files', sameOrigin, who, express.raw({ type: '*/*', limit: MAX_FILE }), ah(async (req, res) => {
     const orig = path.basename(decodeURIComponent(String(req.get('x-file-name') || 'upload.pdf'))).slice(0, 120);
     const ext = path.extname(orig).toLowerCase();
     if (!FILE_TYPES[ext]) return res.status(400).json({ ok: false, error: 'This file type is not accepted. Use PDF, PNG, JPG, DOCX, XLSX or TXT.' });
     if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ ok: false, error: 'The file is empty.' });
     if (ext === '.pdf' && req.body.subarray(0, 5).toString('latin1') !== '%PDF-') return res.status(400).json({ ok: false, error: 'This does not look like a PDF file.' });
-    const meta = engine.registerFile({ orig, size: req.body.length, type: FILE_TYPES[ext], by: req.user.name, byEmail: req.user.email });
+    const meta = await engine.registerFile({ orig, size: req.body.length, type: FILE_TYPES[ext], by: req.user.name, byEmail: req.user.email });
     fs.writeFileSync(path.join(cfg.filesDir, meta.id), req.body);
     res.json({ ok: true, file: { id: meta.id, orig: meta.orig, size: meta.size } });
-  });
+  }));
   app.get('/api/files/:id', who, (req, res) => {
     const id = String(req.params.id);
     const f = /^f\d+$/.test(id) ? engine.db.files[id] : null;
@@ -96,19 +97,19 @@ function createApp({ store, engine, gas, me, config }) {
   });
 
   /* ---------- drafts and the remembered signature ---------- */
-  app.post('/api/draft', sameOrigin, who, express.json({ limit: '256kb' }), (req, res) => {
-    if (req.body && req.body.clear) store.delDraft(req.user.email); else store.putDraft(req.user.email, req.body && req.body.form || {});
+  app.post('/api/draft', sameOrigin, who, express.json({ limit: '256kb' }), ah(async (req, res) => {
+    if (req.body && req.body.clear) await store.delDraft(req.user.email); else await store.putDraft(req.user.email, req.body && req.body.form || {});
     res.json({ ok: true });
-  });
-  app.post('/api/sig', sameOrigin, who, express.json({ limit: '256kb' }), (req, res) => {
+  }));
+  app.post('/api/sig', sameOrigin, who, express.json({ limit: '256kb' }), ah(async (req, res) => {
     const d = req.body && req.body.data;
     if (typeof d !== 'string' || d.indexOf('data:image') !== 0) return res.status(400).json({ ok: false, error: 'Not a signature image.' });
-    store.putSig(req.user.email, d); res.json({ ok: true });
-  });
+    await store.putSig(req.user.email, d); res.json({ ok: true });
+  }));
 
   /* ---------- roles: System Administrator only ---------- */
-  app.get('/api/users', who, sysadminOnly, (req, res) => res.json({ ok: true, users: store.listUsers(), roles: store.ROLES, programs: store.PROGRAMS, audit: store.lastAudit(30) }));
-  app.post('/api/users', sameOrigin, who, sysadminOnly, express.json({ limit: '32kb' }), (req, res) => {
+  app.get('/api/users', who, sysadminOnly, ah(async (req, res) => res.json({ ok: true, users: store.listUsers(), roles: store.ROLES, programs: store.PROGRAMS, audit: await store.lastAudit(30) })));
+  app.post('/api/users', sameOrigin, who, sysadminOnly, express.json({ limit: '32kb' }), ah(async (req, res) => {
     const b = req.body || {};
     try {
       const email = String(b.email || '').trim().toLowerCase(), role = String(b.role || '').trim().toLowerCase();
@@ -123,17 +124,18 @@ function createApp({ store, engine, gas, me, config }) {
       }
       /* the last active System Administrator cannot be demoted or switched off */
       if (was && was.role === 'sysadmin' && was.active === 1 && (role !== 'sysadmin' || !active) && store.usersByRole('sysadmin').length < 2) throw new Error('There must be at least one active System Administrator.');
-      const u = store.upsertUser({ email, role, name: b.name, program, active });
-      store.audit(req.user.email, 'user_set', email + ' role=' + u.role + (u.program ? ' program=' + u.program : '') + ' active=' + u.active, req.ip);
+      const u = await store.upsertUser({ email, role, name: b.name, program, active });
+      await store.audit(req.user.email, 'user_set', email + ' role=' + u.role + (u.program ? ' program=' + u.program : '') + ' active=' + u.active, req.ip);
       res.json({ ok: true, user: u, users: store.listUsers() });
     } catch (e) { res.status(400).json({ ok: false, error: e.message }); }
-  });
+  }));
 
   /* ---------- the page itself: an explicit list, nothing else in the repo is served ---------- */
   app.get('/', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(cfg.siteRoot, 'index.html')));
   app.use('/js', express.static(path.join(cfg.siteRoot, 'js'), { dotfiles: 'deny', index: false, redirect: false, setHeaders: (r) => r.set('Cache-Control', 'no-cache') }));
   app.get('/shared/rules.js', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(cfg.siteRoot, 'shared/rules.js')));
   app.use((req, res) => res.status(404).type('text').send('Not found'));
+  app.use((err, req, res, next) => { console.error('[error]', req.method, req.path, err); if (res.headersSent) return next(err); res.status(500).json({ ok: false, error: 'Something went wrong on the server. Nothing was saved.' }); });
   return app;
 }
 
