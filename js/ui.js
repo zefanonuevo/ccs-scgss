@@ -28,7 +28,8 @@ const unread=()=>D().notifs.filter(n=>n.to===u().email&&!n.read).length;
 const tabLabel=t=>t[0]==='notif'&&unread()?'Notifications ('+unread()+')':t[1];
 function buildTabs(){tabsEl.innerHTML='';myTabs().forEach(t=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.dataset.v=t[0];b.textContent=tabLabel(t);tabsEl.appendChild(b)})}
 function tabFade(){tabsEl.classList.toggle('more',tabsEl.scrollWidth-tabsEl.clientWidth-tabsEl.scrollLeft>4)}
-tabsEl.addEventListener('scroll',tabFade,{passive:true});window.addEventListener('resize',tabFade);
+tabsEl.addEventListener('scroll',tabFade,{passive:true});
+tabsEl.addEventListener('keydown',e=>{const k=e.key;if(k!=='ArrowRight'&&k!=='ArrowLeft'&&k!=='Home'&&k!=='End')return;const bs=Array.from(tabsEl.querySelectorAll('button'));const i=bs.indexOf(document.activeElement);if(i<0)return;e.preventDefault();const n=k==='Home'?0:k==='End'?bs.length-1:(i+(k==='ArrowRight'?1:-1)+bs.length)%bs.length;bs[n].focus();bs[n].click()});window.addEventListener('resize',tabFade);
 function show(id,push,appId){
   if(!u())return;
   if(id==='app'){if(D().apps.some(a=>a.id===appId))state.curApp=appId;else id='dash'}

@@ -230,6 +230,16 @@ button,[role=tab],.card{-webkit-tap-highlight-color:transparent;touch-action:man
     background:color-mix(in srgb,var(--paper) 72%,transparent);border-bottom:1px solid var(--line);margin-left:-16px;margin-right:-16px;padding-left:16px;padding-right:16px}
   .tabbar{-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
 }
+/* ===== v4.1: network mesh background and wrapping tabs ===== */
+.ambient-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.ambient-bg canvas{display:block}
+main{position:relative;z-index:1}
+@media (min-width:901px){
+  .tabs{flex-wrap:wrap;overflow:visible;width:100%;-webkit-mask-image:none!important;mask-image:none!important}
+  .tabs button{flex:0 0 auto}
+}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+@media print{.ambient-bg{display:none!important}}
 /* diagram text sized for the system font */
 .flow text[font-size="12.5"]{font-size:12px}
 .sub{font-size:10px}
@@ -371,6 +381,7 @@ tr.sel td{background:var(--accent-soft)}
   <div class="tabbar" id="tabbar" hidden><div class="tabs" role="tablist" id="tabs"></div></div>
 </div></div>
 
+<div class="ambient-bg" aria-hidden="true"><canvas id="scgss-network"></canvas></div>
 <main id="main">
 
 <section id="login"></section>
@@ -511,6 +522,7 @@ tr.sel td{background:var(--accent-soft)}
 </main>
 
 <script src="js/theme.js"></script>
+<script src="js/network.js"></script>
 <script src="shared/rules.js"></script>
 <script src="js/core.js"></script>
 <script src="js/pdf.js"></script>

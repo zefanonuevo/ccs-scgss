@@ -140,7 +140,7 @@ function createApp({ store, engine, gas, me, config }) {
 
   /* ---------- the page itself: an explicit list, nothing else in the repo is served ---------- */
   /* Cloudflare puts a 30-minute browser cache on .js files, so every script address carries a version that changes whenever a file changes. */
-  const SCRIPTS = ['js/core.js', 'js/pdf.js', 'js/ui.js', 'js/ui2.js', 'js/theme.js', 'js/theme-early.js', 'js/start.js', 'shared/rules.js'];
+  const SCRIPTS = ['js/core.js', 'js/pdf.js', 'js/ui.js', 'js/ui2.js', 'js/theme.js', 'js/theme-early.js', 'js/network.js', 'js/start.js', 'shared/rules.js'];
   const buildTag = () => SCRIPTS.reduce((m, f) => { try { return Math.max(m, Math.floor(fs.statSync(path.join(cfg.siteRoot, f)).mtimeMs)); } catch (e) { return m; } }, 0).toString(36);
   app.get('/', (req, res) => {
     let html;

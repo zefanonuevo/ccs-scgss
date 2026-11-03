@@ -24,6 +24,11 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
+## Unreleased
+
+- **Navigation:** on screens wider than 900 px the tabs wrap onto a second row so every tab is visible; on narrow screens they still scroll sideways and the active tab scrolls into view. Arrow keys, Home and End move between tabs.
+- **Background:** a network mesh (drifting dots joined by thin lines that react to the mouse) behind the pages, drawn on a canvas by `js/network.js`. It follows the light or dark theme, pauses when the tab is hidden, stays still when Reduce motion is on, and is not printed.
+
 ## 4.0.0 (3 Nov 2026 · Pilot · current)
 
 A real back end. Approval rules, records and files move from the browser to a server on the CCS apps VM.
