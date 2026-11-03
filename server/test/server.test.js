@@ -196,3 +196,10 @@ test('the access list CSV: highest role wins, chairs carry a department', () => 
   assert.equal(by['a.b@dlsu.edu.ph'].name, 'A B');
   assert.equal(parseAccessCsv('Janitor,x@dlsu.edu.ph').problems.length, 1);
 });
+
+test('the access list reads commas, tabs, spaces and stray quotes', () => {
+  const { parseAccessCsv } = require('../access-csv');
+  const r = parseAccessCsv('Dean,a.b@dlsu.edu.ph\n"Thesis Adviser    c.d@dlsu.edu.ph    "\nThesis Adviser\te.f@dlsu.edu.ph\nDepartment Chair   g.h@dlsu.edu.ph   DIT\n');
+  assert.equal(r.problems.length, 0, r.problems.join());
+  assert.deepEqual(r.rows.map((x) => x.role + ':' + x.email + ':' + x.program), ['dean:a.b@dlsu.edu.ph:', 'adviser:c.d@dlsu.edu.ph:', 'adviser:e.f@dlsu.edu.ph:', 'chair:g.h@dlsu.edu.ph:DIT']);
+});

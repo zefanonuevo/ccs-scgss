@@ -10,7 +10,8 @@ function parseAccessCsv(text) {
   const best = new Map(), problems = [];
   String(text).split(/\r?\n/).forEach((line, i) => {
     if (!line.trim()) return;
-    const [label, email, dept] = line.split(',').map((s) => s.trim());
+    /* the columns may be separated by commas, tabs or two or more spaces (pasted from a sheet); quote marks are ignored */
+    const [label, email, dept] = line.replace(/["\u201c\u201d\ufeff]/g, '').trim().split(/\s*[,\t]\s*|\s{2,}/).map((s) => s.trim());
     const role = MAP[String(label || '').toLowerCase()], mail = String(email || '').toLowerCase();
     if (!role || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) { problems.push('Line ' + (i + 1) + ': cannot read "' + line + '"'); return; }
     const cur = best.get(mail);

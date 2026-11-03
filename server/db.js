@@ -58,6 +58,8 @@ function makeStore(pool) {
     async init() {
       await q(SCHEMA);
       users.clear();
+      /* a student's program must be one of the current degree codes (an older code such as BSCS is cleared) */
+      await q("UPDATE scgss_users SET program = '' WHERE role = 'student' AND program <> '' AND NOT (program = ANY($1))", [PROGRAMS]);
       (await q('SELECT email, role, name, program, active FROM scgss_users')).rows.forEach((r) => users.set(r.email, row(r)));
     },
     close: () => pool.end(),
