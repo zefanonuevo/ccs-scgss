@@ -1,6 +1,6 @@
 # Deploying SCGSS v4.0
 
-Status: **Proposed. Written and tested against a stubbed portal sign-in. Not yet run on the VM.** Follows the *SCGSS Backend Setup Guide* (30 Oct 2026) and its architecture diagram: portal VM (Apache, portal sign-in) in front, one apps VM on a private VLAN, one service per app with its own database and port.
+Status: **Running on the CCS apps VM behind the portal (Nov 2026). The Google link (Sheet, Drive, email) is set up in step 4a.** Follows the *SCGSS Backend Setup Guide* (30 Oct 2026) and its architecture diagram: portal VM (Apache, portal sign-in) in front, one apps VM on a private VLAN, one service per app with its own database and port.
 
 ## What runs where
 ```
@@ -10,7 +10,7 @@ Browser -> Apache on the portal VM (https://ccs.dlsu.edu.ph/scgss/)  -- ProxyPas
                                                                                       '-- Google Apps Script (Sheet row, Drive copy, email) using GAS_URL and GAS_TOKEN
 ```
 - **Sign-in is the portal's.** SCGSS has no sign-in page. If the portal cookie is missing the page says to sign in to the portal first.
-- **Access is SCGSS's own.** The signed-in email must be an active row in the `scgss_users` table, or the server answers 403. Roles: student, adviser, chair (per program), assoc (Associate Dean), dean, admin (Administrative Assistant), sysadmin. The System Administrator edits them on the **Roles** tab. One Dean, one Associate Dean and one chair per program can be active.
+- **Access is SCGSS's own.** The signed-in email must be an active row in the `scgss_users` table, or the server answers 403. Roles: student, adviser, chair (per department), assoc (Associate Dean), dean, admin (Administrative Assistant), sysadmin. The System Administrator edits them on the **Roles** tab. One Dean, one Associate Dean and one chair per department can be active.
 - **Rules** (routing, signer overlaps, grant limits, reimbursement checks, reminders) run on the server in `server/engine.js`, copied from the prototype's `js/core.js` v3.1.2. Every action is checked against the person's role.
 - **Differences from the guide, by choice:** files on the apps VM disk (the guide's own fallback while the Data Protection Officer's answer is open) with a copy sent to Drive by Apps Script; email through Apps Script, not the Gmail API.
 
@@ -27,7 +27,18 @@ PostgreSQL listens on 127.0.0.1 only. The tables (including `scgss_users`) are c
 
 **3. Install** on the apps VM, as root, after reading it: `sudo bash deploy/setup-scgss.sh` (set `BRANCH=backend` until the branch is merged). It creates the `app_scgss` user, `/srv/apps/scgss`, the service template and the settings file.
 
-**4. Settings:** edit `/etc/apps/scgss.env`: set `DATABASE_URL=postgres://app_scgss:<password>@127.0.0.1:5432/app_scgss`, `HOST` to the apps VM's private address, and `GAS_URL`/`GAS_TOKEN` (see `google/Code.gs`). Leave Google empty to run without it.
+**4. Settings:** edit `/etc/apps/scgss.env`: set `DATABASE_URL=postgres://app_scgss:<password>@127.0.0.1:5432/app_scgss`, `HOST` to the apps VM's private address, and `GAS_URL`/`GAS_TOKEN` (step 4a). Leave Google empty to run without it.
+
+**4a. Google link (Sheet, Drive, email).** Do all of it signed in as **computerstudies@dlsu.edu.ph**: emails are sent from the account that owns the script, and the Sheet and Drive folder belong to it.
+1. Create a Google Sheet ("CCS SCGSS Applications") and a Drive folder ("CCS-SCGSS"); copy the folder ID from its URL.
+2. In the Sheet: Extensions > Apps Script, paste all of `google/Code.gs`.
+3. Project Settings > Script properties: `TOKEN` (long random string, `openssl rand -hex 32`), `FOLDER_ID` (the folder ID), `ALLOWED_DOMAIN` = `dlsu.edu.ph`.
+4. Run `authorize` once and accept the Sheet, Drive and Mail permissions.
+5. Deploy > New deployment > Web app: Execute as **Me**, Who has access **Anyone**. If "Anyone" is not offered, the university Workspace admin must allow it; the server is not signed in to Google and cannot call the script otherwise. Copy the `/exec` URL.
+6. On the apps VM, put `GAS_URL=<the /exec URL>` and `GAS_TOKEN=<the TOKEN>` in `/etc/apps/scgss.env`, then `sudo systemctl restart app@scgss`.
+7. Test (sends one email): `curl -sL -X POST "<GAS_URL>" -H "Content-Type: application/json" -d '{"token":"<TOKEN>","action":"email","to":"you@dlsu.edu.ph","subject":"SCGSS test","body":"It works."}'` must print `{"ok":true}`. Then submit a test application: a row appears in the "Applications" sheet and the file in Drive under Applications/<year-term>.
+
+If Google is unreachable, SCGSS keeps working and the email stays in its outbox. A workspace account may send about 1,500 emails a day. Keep the token out of the repository and rotate it if it leaks (change it in Script properties and in `scgss.env`).
 
 **5. First administrator and start:**
 ```
@@ -54,10 +65,11 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 - Signed out: `/scgss/` shows "Sign in to the CCS portal first". A DLSU account with no row shows "Your account is not set up yet" (403).
 - Roles tab works for the System Administrator and is refused for everyone else.
 - A test application goes from student to Dean to the Administrative Assistant and is filed with an RFP number.
+- The Google test in step 4a returns `{"ok":true}`, the email arrives from CCS Student Grants (SCGSS), and the test application shows in the Sheet and Drive.
 - From a student-network machine, `http://<apps-vm-private-ip>:3001/` is unreachable.
 
 ## Updating
 `sudo bash deploy/setup-scgss.sh` again (pulls, installs, keeps your settings), then `sudo systemctl restart app@scgss`.
 
 ## What was and was not tested
-Tested: `cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` against a throwaway PostgreSQL 16 (each test uses its own schema; 9 tests over real HTTP with a stubbed portal sign-in: sign-in and role gating, a whole application to filing, restart persistence (reloaded from PostgreSQL), file access, origin check, roles screen safeguards, signer overlaps, public file list) and a simulated-browser load of the page for each role. **Not tested:** the real portal `/api/me`, Apache, the firewall, the Apps Script link, the backup script, real PDFs from a browser upload, and any phone or desktop layout check.
+Tested: `cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` against a throwaway PostgreSQL 16 (each test uses its own schema; 9 tests over real HTTP with a stubbed portal sign-in: sign-in and role gating, a whole application to filing, restart persistence (reloaded from PostgreSQL), file access, origin check, roles screen safeguards, signer overlaps, public file list) and a simulated-browser load of the page for each role. **Not tested by me:** the Apps Script link on the live account, the firewall, the backup script, real PDFs from a browser upload, and any phone or desktop layout check.
