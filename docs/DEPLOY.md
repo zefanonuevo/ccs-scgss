@@ -36,7 +36,7 @@ sudo systemctl enable --now app@scgss
 curl http://<apps-vm-private-ip>:3001/healthz        # prints ok
 ```
 
-**6. Apache on the portal VM:** copy `deploy/apache-app-scgss.conf` to `/etc/apache2/conf-available/app-scgss.conf`, put in the apps VM's private address, add `IncludeOptional conf-available/app-scgss.conf` **inside the portal's HTTPS virtual host above** `ProxyPass / ...`, then `sudo apache2ctl configtest && sudo systemctl reload apache2`. Take a Proxmox snapshot first; the portal is production.
+**6. Apache on the portal VM:** copy `deploy/apache-app-scgss.conf` to `/etc/apache2/conf-available/app-scgss.conf`, put in the apps VM's private address, add `IncludeOptional conf-available/app-scgss.conf` **inside the portal's HTTPS virtual host, after the `ProxyPass /.well-known/ !` line and above** `ProxyPass / ...` (in `/etc/apache2/sites-available/ccs-portal.conf`; the include also sets a Content-Security-Policy for `/scgss/` that allows `blob:` previews), then `sudo apache2ctl configtest && sudo systemctl reload apache2`. Take a Proxmox snapshot first; the portal is production.
 
 **7. Roles:** sign in to the portal, open `/scgss/`, then **Roles** and add the Dean, Associate Dean, a chair for each of BSCS, BSIT and BSIS, the Administrative Assistant, advisers and students. Students' emails look like `juan_dela_cruz@dlsu.edu.ph`, staff like `maria.delacruz@dlsu.edu.ph`. Applications cannot be submitted until every signer exists.
 

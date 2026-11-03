@@ -363,7 +363,7 @@ tr.sel td{background:var(--accent-soft)}
   .paper{border:0;padding:0}
 }
 </style>
-<script>try{var ct=localStorage.getItem('ccs-theme');if(ct==='light'||ct==='dark')document.documentElement.setAttribute('data-theme',ct)}catch(e){}</script>
+<script src="js/theme-early.js"></script>
 
 <div class="top"><div class="top-in">
   <div class="top-row"><div class="brand"><span class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M3 4.5h14M3 10h10M3 15.5h6" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg></span><div><h1>CCS Student Conference Grant Support System<span class="vtag">v4.0.0</span></h1><p>College of Computer Studies · De La Salle University</p></div></div>
@@ -510,27 +510,12 @@ tr.sel td{background:var(--accent-soft)}
 
 </main>
 
-<script>
-(function(){
-"use strict";
-var $=function(s,r){return (r||document).querySelector(s)};
-var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
-/* theme switch */
-(function(){var KEY='ccs-theme',root=document.documentElement,box=$('#theme');if(!box)return;
-  function mode(){try{var m=localStorage.getItem(KEY);return m==='light'||m==='dark'?m:'system'}catch(e){return 'system'}}
-  function apply(m){if(m==='light'||m==='dark')root.setAttribute('data-theme',m);else root.removeAttribute('data-theme');
-    $$('button',box).forEach(function(b){b.setAttribute('aria-checked',String(b.dataset.themeSet===m))})}
-  apply(mode());
-  box.addEventListener('click',function(e){var b=e.target.closest('button[data-theme-set]');if(!b)return;var m=b.dataset.themeSet;
-    try{if(m==='system')localStorage.removeItem(KEY);else localStorage.setItem(KEY,m)}catch(err){}apply(m)})})();
-
-})();
-</script>
+<script src="js/theme.js"></script>
 <script src="shared/rules.js"></script>
 <script src="js/core.js"></script>
 <script src="js/pdf.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/ui2.js"></script>
-<script>CCS.start();</script>
+<script src="js/start.js"></script>
 
 </body></html>
