@@ -85,7 +85,7 @@ ACT.retry=()=>C.start();
 function doLogin(acc,hash){
   state.user=acc;
   buildTabs();$('#tabbar').hidden=false;$('#me').hidden=false;
-  $('#me').innerHTML='<span class="av">'+ini(acc.name)+'</span><span><b>'+esc(acc.name)+'</b><small>'+esc(acc.label)+'</small></span><button type="button" class="btn sm ghost" data-logout>Sign out</button>';
+  $('#me').innerHTML='<span class="av">'+ini(acc.name)+'</span><span><b>'+esc(acc.name)+'</b><small>'+esc(acc.label)+'</small></span><a class="btn sm ghost" href="/" title="Back to the CCS portal">Home</a><button type="button" class="btn sm ghost" data-logout>Sign out</button>';
   show(hash&&allowed(hash)?hash:'dash',true);
 }
 /* signing out happens on the CCS portal, which owns the session */

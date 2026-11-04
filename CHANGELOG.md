@@ -24,7 +24,11 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
-## 1.0.0-rc.1 (5 Nov 2026 · Release candidate · current)
+## 1.0.0-rc.2 (5 Nov 2026 · Release candidate · current)
+
+- A **Home** button in the top bar, between the signed-in name and Sign out, goes back to the CCS portal. No other change.
+
+## 1.0.0-rc.1 (5 Nov 2026 · Release candidate)
 
 The first numbered release. It is build 4.2.0 renumbered; the code is the same. It becomes 1.0.0 when `docs/QA-TEST-PLAN.md` passes on the live server and the Data Protection Officer approves the privacy notice (`docs/DATA-PRIVACY.md`, section 10).
 
