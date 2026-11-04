@@ -62,7 +62,7 @@ Do not `UPDATE`, `DELETE` or `DROP` by hand. The app keeps copies in memory and 
 ## Backup and restore
 
 - **Nightly:** `deploy/apps-backup.sh` writes a `pg_dump` and a tar of the files folder, encrypts both with `age`, and copies them to the shared Drive. It needs `AGE_PUBLIC_KEY` set, plus `age` and `rclone`. Keep the private key off the server.
-- **Quick copy before an update** (no encryption tools needed): `sudo -u postgres pg_dump -Fc app_scgss -f /var/backups/app_scgss-before-update.dump`, then delete it after the update is confirmed. It contains personal data, so do not email it or leave it in a shared folder.
+- **Quick copy before an update** (no encryption tools needed): `sudo bash -c 'umask 077; sudo -u postgres pg_dump -Fc app_scgss > /var/backups/app_scgss-before-update.dump'`, then delete it after the update is confirmed. It contains personal data, so do not email it or leave it in a shared folder.
 - **Restore test** (do one before go-live): create an empty database, run `pg_restore -d <empty database> <dump file>`, and compare `SELECT count(*) FROM apps;` with the live database.
 - Restore the files folder from the same night's tar, or the application records will point to files that are missing.
 
