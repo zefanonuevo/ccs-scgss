@@ -57,6 +57,7 @@ One role per person: if someone is on the list more than once, the highest role 
 - **Students** with an email like `juan_dela_cruz@dlsu.edu.ph` (underscores, no dot) are added as Students on their first sign-in (`AUTO_STUDENTS=on`). Switch one off on the Roles tab and they stay off.
 - **Staff** with an email like `maria.delacruz@dlsu.edu.ph` (a dot) must be on the list, or they get 403.
 - **Degrees and chairs:** 10 degrees (BSCS-CSE, BSCS-NIS, BSCS-ST, BSDS, BSINFSC, BSIS, BSIET-AD, BSIET-GD, BSIT, BSMSCS) belong to three departments: DCT (BSCS-CSE, BSCS-NIS), DST (BSCS-ST, BSDS, BSIET-AD, BSIET-GD, BSMSCS), DIT (BSINFSC, BSIS, BSIT). An application goes to the chair of its degree's department. The table is in `shared/rules.js`.
+**Later changes** are done on the **Roles** tab: Delete, tick boxes with Switch off / Switch on / Delete selected, and a CSV upload with a preview (add and update; replace the staff list; or delete everyone listed). Delete removes access and the person's saved draft and signature; applications and history stay. `users.js delete <email>` does one person from the command line.
 Applications cannot be submitted until the Dean, Associate Dean and the chair of that department exist.
 
 **8. Backups:** schedule `deploy/apps-backup.sh` nightly (`pg_dump` of the database *and* the files folder, encrypted, copied to Drive). Keep the `age` private key off the server. Do one restore test before go-live.
