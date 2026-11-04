@@ -62,7 +62,8 @@ C.api={
   async clearDraft(){await post('api/draft',{clear:true});delete C.db.drafts[C.me.email]},
   async saveSignature(data){const r=await post('api/sig',{data});if(r.body&&r.body.ok)C.db.sigs[C.me.email]=data},
   users:()=>http('api/users',{cache:'no-store'}),
-  setUser:u=>post('api/users',u)
+  setUser:u=>post('api/users',u),
+  bulk:b=>post('api/users/bulk',b)
 };
 /* the same call names the screens always used; each now returns a promise */
 const E=C.E={

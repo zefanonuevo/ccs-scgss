@@ -26,6 +26,8 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 ## Unreleased
 
+- **Roles tab, delete and bulk changes (System Administrator):** a Delete button on every person (with a confirmation), tick boxes with Select all, search and a role filter, and Switch off / Switch on / Delete for the ticked people. Deleting removes access and the person's saved draft and signature; applications and history stay on record. You cannot delete or switch off yourself, the last System Administrator, or leave two Deans, two Associate Deans or two chairs in one department.
+- **Roles tab, CSV file:** upload a CSV and see a preview before anything changes. Three choices: add and update; the same and also delete staff who are not in the file; or delete everyone whose email is in the file. `users.js delete <email>` added.
 - **Navigation:** on screens wider than 900 px the tabs wrap onto a second row so every tab is visible; on narrow screens they still scroll sideways and the active tab scrolls into view. Arrow keys, Home and End move between tabs.
 - **Background:** a network mesh (drifting dots joined by thin lines that react to the mouse) behind the pages, drawn on a canvas by `js/network.js`. It follows the light or dark theme, pauses when the tab is hidden, stays still when Reduce motion is on, and is not printed.
 

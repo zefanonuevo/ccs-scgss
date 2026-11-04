@@ -91,6 +91,26 @@ function makeStore(pool) {
       return n;
     },
 
+    /** Several people at once, in one transaction: add or change some, delete others. A deleted person's saved draft and signature go too;
+        the applications, history and notices keep the name as text. */
+    async bulkApply({ upserts = [], deletes = [] }) {
+      const c = await pool.connect();
+      try {
+        await c.query('BEGIN');
+        for (const u of upserts) await c.query(`INSERT INTO scgss_users (email, role, name, program, active) VALUES ($1,$2,$3,$4,$5)
+          ON CONFLICT (email) DO UPDATE SET role = $2, name = $3, program = $4, active = $5, updated_at = now()`, [normEmail(u.email), u.role, String(u.name || '').trim(), u.program || '', !!u.active]);
+        const gone = deletes.map(normEmail);
+        if (gone.length) {
+          await c.query('DELETE FROM scgss_users WHERE email = ANY($1)', [gone]);
+          await c.query('DELETE FROM drafts WHERE email = ANY($1)', [gone]);
+          await c.query('DELETE FROM sigs WHERE email = ANY($1)', [gone]);
+        }
+        await c.query('COMMIT');
+      } catch (e) { await c.query('ROLLBACK').catch(() => {}); throw e; } finally { c.release(); }
+      upserts.forEach((u) => users.set(normEmail(u.email), row({ ...u, active: !!u.active })));
+      deletes.forEach((e) => users.delete(normEmail(e)));
+    },
+
     /* ----- audit, drafts, remembered signatures ----- */
     audit: (email, event, detail = '', ip = '') => q('INSERT INTO audit (email, event, detail, ip) VALUES ($1,$2,$3,$4)', [normEmail(email), event, String(detail).slice(0, 300), ip || '']).catch((e) => console.error('[audit]', e.message)),
     async lastAudit(n = 50) { return (await q('SELECT ts, email, event, detail, ip FROM audit ORDER BY id DESC LIMIT $1', [n])).rows; },

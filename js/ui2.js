@@ -207,6 +207,70 @@ ACT.readall=async()=>{await E.markRead(u().email);C.refresh()};
 ACT.nopen=async t=>{await E.markRead(u().email,t.dataset.id);C.go('app',true,t.dataset.app)};
 
 /* ---------- roles (System Administrator) ---------- */
+let PEOPLE=[];const PF={q:'',f:'',sel:new Set()};let CSVTEXT='';
+const shown=()=>{const q=PF.q.trim().toLowerCase();return PEOPLE.filter(x=>(!q||(x.name||'').toLowerCase().includes(q)||x.email.includes(q))&&(!PF.f||(PF.f==='_off'?!x.active:x.role===PF.f)))};
+function drawUsers(){
+  const me=C.me&&C.me.email,list=shown();
+  const rows=$('#u_rows');if(!rows)return;
+  rows.innerHTML=list.map(x=>{const at='data-email="'+esc(x.email)+'" data-name="'+esc(x.name||'')+'" data-role="'+x.role+'" data-prog="'+esc(x.program||'')+'"',you=x.email===me;
+    return '<tr><td><input type="checkbox" class="u-chk" data-email="'+esc(x.email)+'" aria-label="Select '+esc(x.name||x.email)+'"'+(PF.sel.has(x.email)?' checked':'')+(you?' disabled':'')+'></td><td>'+esc(x.name||'')+(you?' <span class="muted">(you)</span>':'')+'</td><td class="mono">'+esc(x.email)+'</td><td>'+esc(C.ROLE_NAME[x.role])+'</td><td>'+esc(x.program||'')+'</td><td>'+(x.active?'<span class="pill p-ok">Active</span>':'<span class="pill p-idle">Switched off</span>')+'</td>'+
+    '<td style="white-space:nowrap"><button class="btn sm sec" data-act="useredit" '+at+'>Edit</button> <button class="btn sm sec" data-act="usertoggle" '+at+' data-on="'+(x.active?1:0)+'"'+(you?' disabled':'')+'>'+(x.active?'Switch off':'Switch on')+'</button> <button class="btn sm bad" data-act="userdel" '+at+(you?' disabled':'')+'>Delete</button></td></tr>'}).join('')||'<tr><td colspan="7" class="muted">Nobody matches.</td></tr>';
+  $('#u_count').textContent=PEOPLE.length+(list.length!==PEOPLE.length?' · showing '+list.length:'');
+  const n=PF.sel.size;$('#u_sel').textContent=n?n+' selected':'None selected';
+  $$('#u_bar button').forEach(b=>b.disabled=!n);
+  const all=$('#u_all'),sel=list.filter(x=>x.email!==me);all.checked=sel.length>0&&sel.every(x=>PF.sel.has(x.email));all.disabled=!sel.length;
+}
+function modeNote(){const m=$('#u_mode');if(!m)return;$('#u_modenote').textContent={merge:'People already listed keep their name; their role and department are updated. Nobody is deleted.',sync:'Use this to replace the staff list with the file. Only staff roles (Thesis Adviser, Chair, Associate Dean, Dean, Administrative Assistant) not in the file are deleted. Students and System Administrators are never deleted this way.',remove:'The file can be any list with one email per line (or the same Role,email file). Those people are deleted. Emails that are not on the list are ignored.'}[m.value]}
+document.addEventListener('input',e=>{if(e.target.id==='u_q'){PF.q=e.target.value;drawUsers()}});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='u_f'){PF.f=t.value;drawUsers()}
+  else if(t.id==='u_mode'){modeNote();$('#u_prev').innerHTML=''}
+  else if(t.id==='u_file'){$('#u_prev').innerHTML=''}
+  else if(t.id==='u_all'){const me=C.me&&C.me.email;shown().forEach(x=>{if(x.email!==me){if(t.checked)PF.sel.add(x.email);else PF.sel.delete(x.email)}});drawUsers()}
+  else if(t.classList&&t.classList.contains('u-chk')){if(t.checked)PF.sel.add(t.dataset.email);else PF.sel.delete(t.dataset.email);drawUsers()}
+});
+const who=x=>(x.name?x.name+' · ':'')+x.email;
+const bulk=async b=>{const r=await C.api.bulk(b);if(!r.body||!r.body.ok)return {err:(r.body&&r.body.error)||'The server did not answer properly. Nothing was changed.'};return r.body};
+async function bulkEmails(action,emails,label){
+  const dry=await bulk({kind:'emails',action,emails,apply:false});
+  if(dry.err){toast(dry.err);return}
+  if(!dry.plan.ok){toast(dry.plan.problems[0]||'That is not allowed.');return}
+  const names=(action==='delete'?dry.plan.remove:emails.map(e=>PEOPLE.find(x=>x.email===e)).filter(Boolean)).slice(0,8).map(who).join('\n');
+  const msg=action==='delete'?'Delete '+emails.length+' '+(emails.length===1?'person':'people')+'?\n\n'+names+(emails.length>8?'\n…':'')+'\n\nThey lose access at once, and their saved draft and signature are removed. Their applications and history stay on record. This cannot be undone.':label+' '+emails.length+' '+(emails.length===1?'person':'people')+'?\n\n'+names+(emails.length>8?'\n…':'');
+  if(!window.confirm(msg))return;
+  const r=await bulk({kind:'emails',action,emails,apply:true});
+  if(r.err){toast(r.err);return}
+  await C.api.load();toast(action==='delete'?'Deleted.':'Done.');R.settings();
+}
+ACT.userdel=t=>bulkEmails('delete',[t.dataset.email]);
+ACT.userbulk=t=>{const emails=[...PF.sel];if(!emails.length)return;bulkEmails(t.dataset.do,emails,t.dataset.do==='off'?'Switch off':'Switch on')};
+function showPlan(p,box){
+  const c=p.counts,bits=[];
+  if(c.add)bits.push('<b>'+c.add+'</b> to add');if(c.change)bits.push('<b>'+c.change+'</b> to update');if(c.same)bits.push(c.same+' already the same');
+  if(c.remove)bits.push('<b>'+c.remove+'</b> to delete');if(c.notFound)bits.push(c.notFound+' not on the list (ignored)');
+  const list=(title,arr,f)=>arr.length?'<details style="margin-top:6px"><summary>'+title+' ('+arr.length+(arr.length>=200?'+':'')+')</summary><div class="mono" style="font-size:12px;margin-top:4px">'+arr.map(f).join('<br>')+'</div></details>':'';
+  box.innerHTML=(p.problems.length?'<div class="callout bad"><b>Cannot apply yet.</b><br>'+p.problems.map(esc).join('<br>')+'</div>':'<div class="callout ok">'+(bits.join(' · ')||'Nothing to change.')+'</div>')+
+   (p.problems.length&&bits.length?'<p class="muted" style="margin-top:6px">'+bits.join(' · ')+'</p>':'')+
+   list('To add',p.add,x=>esc(who(x))+' · '+esc(x.roleName)+(x.program?' '+esc(x.program):''))+list('To update',p.change,x=>esc(who(x))+' · '+esc(x.was)+' → '+esc(x.roleName)+(x.program?' '+esc(x.program):''))+list('To delete',p.remove,x=>esc(who(x))+' · '+esc(x.roleName))+list('Not on the list',p.notFound,esc)+
+   (p.ok?'<button class="btn '+(c.remove?'bad':'')+'" style="margin-top:10px" data-act="uimpgo">'+(p.mode==='remove'?'Delete '+c.remove+' people':'Apply')+'</button>':'');
+}
+ACT.uimpprev=async()=>{
+  const f=$('#u_file').files[0],box=$('#u_prev');
+  if(!f){box.innerHTML='<div class="callout bad">Choose a CSV file first.</div>';return}
+  if(f.size>500000){box.innerHTML='<div class="callout bad">That file is too large (500 KB limit).</div>';return}
+  CSVTEXT=await f.text();box.innerHTML='<div class="empty-note">Checking…</div>';
+  const r=await bulk({kind:'csv',mode:$('#u_mode').value,csv:CSVTEXT,apply:false});
+  if(r.err){box.innerHTML='<div class="callout bad">'+esc(r.err)+'</div>';return}
+  showPlan(r.plan,box);
+};
+ACT.uimpgo=async()=>{
+  const mode=$('#u_mode').value,box=$('#u_prev');
+  if(mode!=='merge'&&!window.confirm((mode==='remove'?'Delete everyone whose email is in the file?':'Delete the staff who are not in the file?')+'\n\nThey lose access at once. Their applications and history stay on record. This cannot be undone.'))return;
+  const r=await bulk({kind:'csv',mode,csv:CSVTEXT,apply:true});
+  if(r.err){box.innerHTML='<div class="callout bad">'+esc(r.err)+'</div>';return}
+  CSVTEXT='';await C.api.load();toast('Done.');R.settings();
+};
 R.settings=async function(){
   const box=$('#setBody');box.innerHTML='<div class="empty-note">Loading…</div>';
   const r=await C.api.users();
@@ -223,10 +287,20 @@ R.settings=async function(){
    '<p class="muted" style="margin-top:6px">Only one Dean, one Associate Dean and one Department Chair per department (DCT, DST, DIT) can be active. Switch the old holder off first.</p>'+
    '<div class="msg" id="u_msg" role="alert" style="color:var(--bad);font-size:12px;margin-top:6px"></div><button class="btn" style="margin-top:8px" data-act="userset">Save</button></div>'+
    '<div class="card"><h3>Recent changes</h3><div class="log" style="max-height:260px">'+(audit.map(a=>'<div><span><b>'+esc(a.event)+'</b> · '+esc(a.email||'')+' '+esc(a.detail)+'</span><span class="mono muted">'+esc(a.ts.slice(0,16).replace("T"," "))+'</span></div>').join('')||'<div class="muted">Nothing yet.</div>')+'</div></div></div>'+
-   '<h3 style="margin:18px 0 8px">People with a role ('+users.length+')</h3><div class="tbl"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Program</th><th>Status</th><th></th></tr></thead><tbody>'+
-   users.map(x=>'<tr><td>'+esc(x.name||'')+'</td><td class="mono">'+esc(x.email)+'</td><td>'+esc(C.ROLE_NAME[x.role])+'</td><td>'+esc(x.program||'')+'</td><td>'+(x.active?'<span class="pill p-ok">Active</span>':'<span class="pill p-idle">Switched off</span>')+'</td>'+
-    '<td><button class="btn sm sec" data-act="useredit" data-email="'+esc(x.email)+'" data-name="'+esc(x.name||'')+'" data-role="'+x.role+'" data-prog="'+esc(x.program||'')+'">Edit</button> <button class="btn sm sec" data-act="usertoggle" data-email="'+esc(x.email)+'" data-name="'+esc(x.name||'')+'" data-role="'+x.role+'" data-prog="'+esc(x.program||'')+'" data-on="'+(x.active?1:0)+'">'+(x.active?'Switch off':'Switch on')+'</button></td></tr>').join('')+'</tbody></table></div>'+
-   '<p class="muted" style="margin-top:8px">Signing in is done on the CCS portal. A person who is not in this list can sign in to the portal but is refused here.</p>';
+   '<div class="card" style="margin-top:12px"><h3>Import or remove with a CSV file</h3>'+
+   '<p class="muted">One line per person: <span class="mono">Role,email</span>, and for a Department Chair <span class="mono">Role,email,department</span> (DCT, DST or DIT). Roles: Dean, Associate Dean, Department Chair, Administrative Assistant, Thesis Adviser, System Administrator. Nothing changes until you have seen the preview and pressed Apply.</p>'+
+   '<div class="row" style="margin-top:8px"><div class="field"><label for="u_file">CSV file</label><input type="file" id="u_file" accept=".csv,.txt,text/csv,text/plain"></div>'+
+   '<div class="field"><label for="u_mode">What should it do?</label><select id="u_mode"><option value="merge">Add new people and update roles</option><option value="sync">Same, and delete staff who are not in the file</option><option value="remove">Delete everyone whose email is in the file</option></select></div></div>'+
+   '<p class="muted" id="u_modenote" style="margin-top:6px"></p>'+
+   '<button class="btn" style="margin-top:8px" data-act="uimpprev">Preview</button><div id="u_prev" style="margin-top:10px"></div></div>'+
+   '<h3 style="margin:18px 0 8px">People with a role (<span id="u_count">'+users.length+'</span>)</h3>'+
+   '<div class="row" style="align-items:flex-end;gap:8px;margin-bottom:8px"><div class="field" style="flex:2"><label for="u_q">Search</label><input id="u_q" autocomplete="off" placeholder="Name or email"></div>'+
+   '<div class="field"><label for="u_f">Show</label><select id="u_f"><option value="">Everyone</option>'+roles.map(x=>opt(x,C.ROLE_NAME[x])).join('')+'<option value="_off">Switched off</option></select></div></div>'+
+   '<div id="u_bar" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px"><span class="muted" id="u_sel">None selected</span>'+
+   '<button class="btn sm sec" data-act="userbulk" data-do="off">Switch off selected</button><button class="btn sm sec" data-act="userbulk" data-do="on">Switch on selected</button><button class="btn sm bad" data-act="userbulk" data-do="delete">Delete selected</button></div>'+
+   '<div class="tbl"><table><thead><tr><th style="width:34px"><input type="checkbox" id="u_all" aria-label="Select everyone shown"></th><th>Name</th><th>Email</th><th>Role</th><th>Program</th><th>Status</th><th></th></tr></thead><tbody id="u_rows"></tbody></table></div>'+
+   '<p class="muted" style="margin-top:8px">Signing in is done on the CCS portal. A person who is not in this list can sign in to the portal but is refused here. Deleting a person only removes their access (and their saved draft and signature): their applications and history stay on record. To keep someone on record but stop access for now, use Switch off.</p>';
+  PEOPLE=users;PF.sel=new Set();drawUsers();modeNote();
 };
 const saveUser=async u=>{const r=await C.api.setUser(u);if(!r.body||!r.body.ok){const m=(r.body&&r.body.error)||'Not saved.';$('#u_msg').textContent=m;toast(m);return false}await C.api.load();toast('Saved.');R.settings();return true};
 ACT.userset=()=>saveUser({email:$('#u_email').value,name:$('#u_name').value,role:$('#u_role').value,program:$('#u_prog').value,active:$('#u_active').checked});

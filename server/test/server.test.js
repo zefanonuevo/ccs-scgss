@@ -226,3 +226,40 @@ test('the student types their own name as Last Name, First Name MI', async (t) =
   assert.equal(a.studentName, 'dela Cruz, Maria L.', 'spaces tidied, otherwise as typed');
   assert.equal(a.history[0].by, 'dela Cruz, Maria L.');
 });
+
+test('bulk delete, switch off and CSV import with a preview first', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const sys = s.as('sys@dlsu.edu.ph');
+  const bulk = async (b) => { const r = await sys.post('/api/users/bulk', b); return { status: r.status, body: await r.json() }; };
+  assert.equal((await s.as(MARIA).post('/api/users/bulk', { kind: 'emails', action: 'delete', emails: [REYES] })).status, 403, 'System Administrator only');
+  /* a preview changes nothing */
+  let r = await bulk({ kind: 'emails', action: 'delete', emails: [REYES, MARIA] });
+  assert.equal(r.body.plan.ok, true); assert.equal(r.body.applied, false); assert.ok(s.store.getUser(REYES));
+  /* the safeguards: yourself, the last System Administrator, the only Dean */
+  assert.equal((await bulk({ kind: 'emails', action: 'delete', emails: ['sys@dlsu.edu.ph'] })).body.plan.ok, false);
+  assert.equal((await bulk({ kind: 'emails', action: 'off', emails: ['elena.navarro@dlsu.edu.ph'], apply: true })).status, 200, 'switching the Dean off is allowed (a new Dean can be added)');
+  assert.equal((await bulk({ kind: 'emails', action: 'on', emails: ['elena.navarro@dlsu.edu.ph'], apply: true })).status, 200);
+  /* delete for real: access ends at once, and the saved draft goes with the person */
+  await s.store.putDraft(REYES, { a: 1 });
+  r = await bulk({ kind: 'emails', action: 'delete', emails: [REYES], apply: true });
+  assert.equal(r.status, 200); assert.equal(r.body.applied, true); assert.equal(s.store.getUser(REYES), null);
+  assert.equal(await s.store.getDraft(REYES), null);
+  assert.equal((await s.as(REYES).get('/api/state')).status, 403);
+  /* CSV, add and update: a second Dean in the file is refused, a new adviser is added, the Associate Dean's role is changed */
+  const csv1 = 'Thesis Adviser,new.adviser@dlsu.edu.ph\nDean,second.dean@dlsu.edu.ph\n';
+  r = await bulk({ kind: 'csv', mode: 'merge', csv: csv1, apply: true });
+  assert.equal(r.status, 400, 'two Deans');
+  const csv2 = 'Thesis Adviser,new.adviser@dlsu.edu.ph\nDepartment Chair,new.chair@dlsu.edu.ph,DIT\nAdministrative Assistant,rosa.delgado@dlsu.edu.ph\n';
+  r = await bulk({ kind: 'csv', mode: 'merge', csv: csv2 });
+  assert.deepEqual([r.body.plan.counts.add, r.body.plan.counts.same], [2, 1]);
+  r = await bulk({ kind: 'csv', mode: 'merge', csv: csv2, apply: true });
+  assert.equal(r.status, 200); assert.equal(s.store.getUser('new.chair@dlsu.edu.ph').program, 'DIT');
+  /* replace the staff list: staff not in the file are deleted, students and System Administrators never are */
+  r = await bulk({ kind: 'csv', mode: 'sync', csv: 'Dean,elena.navarro@dlsu.edu.ph\nAssociate Dean,carla.mendoza@dlsu.edu.ph\nDepartment Chair,luis.mercado@dlsu.edu.ph,DST\nAdministrative Assistant,rosa.delgado@dlsu.edu.ph\n', apply: true });
+  assert.equal(r.status, 200); assert.equal(s.store.getUser('new.adviser@dlsu.edu.ph'), null); assert.equal(s.store.getUser('new.chair@dlsu.edu.ph'), null);
+  assert.ok(s.store.getUser(MARIA)); assert.ok(s.store.getUser('sys@dlsu.edu.ph'));
+  /* delete by a list of emails, in any layout */
+  r = await bulk({ kind: 'csv', mode: 'remove', csv: 'email\n"' + MARIA + '"; nobody@dlsu.edu.ph\n', apply: true });
+  assert.equal(r.status, 200); assert.equal(s.store.getUser(MARIA), null); assert.deepEqual(r.body.plan.notFound, ['nobody@dlsu.edu.ph']);
+  assert.equal((await bulk({ kind: 'csv', mode: 'remove', csv: 'sys@dlsu.edu.ph', apply: true })).status, 400, 'cannot delete yourself');
+});

@@ -5,6 +5,7 @@
 const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
+const people = require('./people');
 
 const MAX_FILE = 20 * 1024 * 1024;
 /** juan_dela_cruz@dlsu.edu.ph: letters/digits/hyphens, at least one underscore, no dot before the @, and the allowed domain. */
@@ -135,6 +136,30 @@ function createApp({ store, engine, gas, me, config }) {
       const u = await store.upsertUser({ email, role, name: b.name, program, active });
       await store.audit(req.user.email, 'user_set', email + ' role=' + u.role + (u.program ? ' program=' + u.program : '') + ' active=' + u.active, req.ip);
       res.json({ ok: true, user: u, users: store.listUsers() });
+    } catch (e) { res.status(400).json({ ok: false, error: e.message }); }
+  }));
+
+  /* Several people at once. kind "csv": mode merge | sync | remove with the file text. kind "emails": action delete | off | on with the ticked emails.
+     Without apply:true it only reports what would happen. The result must still follow the signer rules and keep a System Administrator. */
+  app.post('/api/users/bulk', sameOrigin, who, sysadminOnly, express.json({ limit: '600kb' }), ah(async (req, res) => {
+    const b = req.body || {};
+    try {
+      let plan;
+      if (b.kind === 'csv') {
+        if (!['merge', 'sync', 'remove'].includes(b.mode)) throw new Error('Choose what to do with the file.');
+        plan = people.planFromCsv(store, { mode: b.mode, csv: String(b.csv || ''), self: req.user.email, domain: cfg.allowedDomain });
+      } else if (b.kind === 'emails') {
+        if (!['delete', 'off', 'on'].includes(b.action)) throw new Error('Unknown action.');
+        plan = people.planFromEmails(store, { action: b.action, emails: Array.isArray(b.emails) ? b.emails.slice(0, 2000) : [], self: req.user.email });
+      } else throw new Error('Unknown request.');
+      const out = people.summary(plan);
+      if (b.apply === true) {
+        if (!plan.ok) throw new Error(plan.problems[0] || 'Nothing to do.');
+        await store.bulkApply({ upserts: plan.upserts, deletes: plan.deletes });
+        const first = plan.deletes.concat(plan.upserts.map((u) => u.email)).slice(0, 6).join(', ');
+        await store.audit(req.user.email, 'user_bulk', (b.mode || b.action) + ': +' + plan.add.length + ' changed ' + (plan.change.length + (plan.mode === 'off' || plan.mode === 'on' ? plan.upserts.length : 0)) + ' removed ' + plan.deletes.length + ' (' + first + ')', req.ip);
+      }
+      res.json({ ok: true, applied: b.apply === true, plan: out, users: store.listUsers() });
     } catch (e) { res.status(400).json({ ok: false, error: e.message }); }
   }));
 
