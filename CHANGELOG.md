@@ -31,7 +31,23 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 - **Navigation:** on screens wider than 900 px the tabs wrap onto a second row so every tab is visible; on narrow screens they still scroll sideways and the active tab scrolls into view. Arrow keys, Home and End move between tabs.
 - **Background:** a network mesh (drifting dots joined by thin lines that react to the mouse) behind the pages, drawn on a canvas by `js/network.js`. It follows the light or dark theme, pauses when the tab is hidden, stays still when Reduce motion is on, and is not printed.
 
-## 4.0.0 (3 Nov 2026 · Pilot · current)
+## 4.1.0 (4 Nov 2026 · Pilot · current)
+
+A new dashboard layout for the Dean, the other approvers and the office staff, in the same look as the CCS portal.
+
+### Added
+- **Stat cards**: applications and how many are in approval; grants approved with the average days to the Dean's decision; reimbursement approved as a share of the grants; filed at the FAO and how many still need an RFP.
+- **Where applications are**: a bar for each stage, with the count and share.
+- **Grants and reimbursement by degree**: granted and approved-for-reimbursement amounts for each degree.
+- **Needs attention**: applications open for 2 days or more, with the days waiting, who holds them, and the reminder button.
+- **Status tabs** with counts replace the five wide boxes above the list.
+
+### Fixed
+- The Academic year and Term filters no longer touch the boxes below them.
+- Labels no longer run into the numbers in the stat boxes. On phones the boxes sit two to a row.
+- The background mesh is lighter, so its dots and lines no longer cut across the boxes.
+
+## 4.0.0 (3 Nov 2026 · Pilot)
 
 A real back end. Approval rules, records and files move from the browser to a server on the CCS apps VM.
 

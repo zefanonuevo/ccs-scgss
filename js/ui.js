@@ -118,7 +118,7 @@ const dashP={ay:'',term:''}; /* period filter for the approver and staff dashboa
 const periodApps=()=>D().apps.filter(a=>(!dashP.ay||a.ay===dashP.ay)&&(!dashP.term||a.term===dashP.term));
 const periodLabel=()=>(dashP.ay?ayLabel(dashP.ay):'All academic years')+' · '+(dashP.term?dashP.term.replace('Term','Term '):'All terms');
 function periodBar(){
-  return '<div class="row" style="max-width:560px;margin:12px 0 0"><div class="field"><label for="dp_ay">Academic year</label><select id="dp_ay"><option value="">All academic years</option>'+C.AYS.map(v=>opt(v,ayLabel(v),dashP.ay===v)).join('')+'</select></div>'+
+  return '<div class="toolbar" role="group" aria-label="Period"><div class="field"><label for="dp_ay">Academic year</label><select id="dp_ay"><option value="">All academic years</option>'+C.AYS.map(v=>opt(v,ayLabel(v),dashP.ay===v)).join('')+'</select></div>'+
    '<div class="field"><label for="dp_term">Term</label><select id="dp_term"><option value="">All terms</option>'+C.TERMS.map(v=>opt(v,v.replace('Term','Term '),dashP.term===v)).join('')+'</select></div></div>';
 }
 /* an approver may hold more than one signing step on an application (for example a Chair who is also the Thesis Adviser), so buckets follow the person, not the role */
@@ -136,34 +136,63 @@ const CHIPS=[['assigned','Assigned'],['pending','Pending'],['approved','Approved
 const CHIP_HELP={
   approver:{assigned:'Every application routed to you',pending:'Waiting for your decision now',approved:'You endorsed or approved',returned:'You returned to the student',rejected:'You rejected'},
   staff:{assigned:'All applications',pending:'Reports waiting for verification',approved:'Verified or filed at the FAO',returned:'Returned to students',rejected:'Rejected'}};
-function chipsHTML(b,help){return '<div class="kpis chips">'+CHIPS.map(c=>'<button type="button" class="kpi" data-act="dfilter" data-f="'+c[0]+'" aria-pressed="'+(dashF===c[0])+'"><b>'+b[c[0]].length+'</b><span>'+c[1]+' <small class="muted">· '+help[c[0]]+'</small></span></button>').join('')+'</div>'}
+function chipsHTML(b){return '<div class="stabs" role="group" aria-label="Show applications by status">'+CHIPS.map(c=>'<button type="button" data-act="dfilter" data-f="'+c[0]+'" aria-pressed="'+(dashF===c[0])+'">'+c[1]+'<span class="cnt">'+b[c[0]].length+'</span></button>').join('')+'</div>'}
 function dashList(b,o){
   const list=b[dashF].filter(a=>matches(a,dashQ));
   return '<div class="field"><label for="dsearch">Search these applications</label><input id="dsearch" type="search" value="'+esc(dashQ)+'" placeholder="Reference, student, conference, program"></div>'+
-   '<p class="muted">'+list.length+' '+CHIPS.filter(c=>c[0]===dashF)[0][1].toLowerCase()+' application'+(list.length===1?'':'s')+'</p>'+listTable(list,o);
+   '<p class="muted">'+list.length+' '+CHIPS.filter(c=>c[0]===dashF)[0][1].toLowerCase()+' application'+(list.length===1?'':'s')+(o.help?' · '+o.help[dashF]:'')+'</p>'+listTable(list,o);
 }
 ACT.dfilter=t=>{dashF=t.dataset.f;dashPicked=true;R.dash()};
 document.addEventListener('input',e=>{if(e.target.id==='dsearch'){dashQ=e.target.value;const p=e.target.selectionStart;R.dash();const el=$('#dsearch');if(el){el.focus();el.setSelectionRange(p,p)}}});
 document.addEventListener('change',e=>{if(e.target.id==='dp_ay'||e.target.id==='dp_term'){dashP[e.target.id==='dp_ay'?'ay':'term']=e.target.value;R.dash()}});
+/* ---------- dashboard analytics: stat cards, pipeline, funding, attention ---------- */
+const DAY=864e5;
+const stat=(label,value,sub,tone)=>'<div class="stat'+(tone?' '+tone:'')+'"><span class="stat-l">'+label+'</span><b>'+value+'</b><span class="stat-s">'+sub+'</span></div>';
+const pct=(n,d)=>d?Math.round(n/d*100)+'%':'–';
+const peso=n=>'₱'+money(n);
+const reimbOf=a=>a.post&&a.post.verify&&!a.post.verify.draft&&a.post.verify.total!=null?a.post.verify.total:0;
+const STAGES=[
+  ['Thesis Adviser',a=>a.status==='pending'&&a.stage===0],['Department Chair',a=>a.status==='pending'&&a.stage===1],['Associate Dean',a=>a.status==='pending'&&a.stage===2],['Dean',a=>a.status==='pending'&&a.stage===3],
+  ['Returned to the student',a=>a.status==='returned','warn'],['Approved, report due',a=>a.status==='approved'&&a.post.status==='none'],['Report returned',a=>a.status==='approved'&&a.post.status==='returned','warn'],
+  ['Report to verify',a=>a.status==='approved'&&a.post.status==='submitted'],['Verified, RFP to record',a=>a.status==='verified'],['Filed at the FAO',a=>a.status==='completed','done'],['Rejected',a=>a.status==='rejected','bad']];
+function pipelineHTML(apps){
+  const total=apps.length;
+  return '<div class="panel"><h3>Where applications are</h3><p class="muted">Every application in this view, by stage. Bars are shares of '+total+'.</p><div class="hbars">'+
+    STAGES.map(st=>{const n=apps.filter(st[1]).length;return '<div class="hb'+(n?'':' zero')+(st[2]?' '+st[2]:'')+'"><span class="hb-l">'+st[0]+'</span><span class="hb-t" aria-hidden="true"><i style="width:'+(total?n/total*100:0)+'%"></i></span><span class="hb-n"><b>'+n+'</b><small>'+pct(n,total)+'</small></span></div>'}).join('')+'</div></div>';
+}
+function fundingHTML(apps){
+  const by={};
+  apps.filter(a=>a.grant).forEach(a=>{const g=by[a.program]=by[a.program]||{n:0,grant:0,reimb:0};g.n++;g.grant+=a.grant.total;g.reimb+=reimbOf(a)});
+  const keys=Object.keys(by).sort((x,y)=>by[y].grant-by[x].grant),max=Math.max.apply(null,keys.map(k=>by[k].grant).concat([1]));
+  return '<div class="panel"><h3>Grants and reimbursement by degree</h3><p class="muted">Light bar: granted by the Dean. Dark part: approved for reimbursement.</p>'+
+    (keys.length?'<div class="hbars">'+keys.map(k=>{const g=by[k];return '<div class="hb fund"><span class="hb-l">'+esc(k)+'<small>'+g.n+' grant'+(g.n===1?'':'s')+'</small></span><span class="hb-t" aria-hidden="true"><i class="g" style="width:'+g.grant/max*100+'%"><i style="width:'+(g.grant?g.reimb/g.grant*100:0)+'%"></i></i></span><span class="hb-n"><b>'+peso(g.reimb)+'</b><small>of '+peso(g.grant)+'</small></span></div>'}).join('')+'</div>':'<p class="empty-note">No grants approved in this period.</p>')+'</div>';
+}
+function attentionHTML(apps,remind){
+  const now=Date.now(),open=a=>['completed','rejected'].indexOf(a.status)<0;
+  const rows=apps.filter(open).map(a=>({a,d:Math.floor((now-a.updated)/DAY)})).filter(x=>x.d>=2||x.a.status==='verified').sort((x,y)=>y.d-x.d).slice(0,6);
+  return '<div class="panel"><div class="panel-h"><h3>Needs attention</h3>'+(remind&&rows.length?'<button class="btn sm sec" data-act="sweep">Send reminders</button>':'')+'</div><p class="muted">Open for 2 days or more, or verified and waiting for an RFP number.</p>'+
+    (rows.length?'<ul class="att">'+rows.map(x=>{const i=C.info(x.a);return '<li><button class="lnk mono" data-open="'+x.a.id+'">'+esc(x.a.ref)+'</button><span class="att-t">'+esc(i.label)+'<small>'+esc(x.a.studentName)+(i.who&&x.a.status==='pending'?' · waiting on '+esc(i.who):'')+'</small></span><span class="att-d'+(x.d>=7?' late':'')+'">'+x.d+' d</span></li>'}).join('')+'</ul>':'<p class="empty-note">Nothing is overdue.</p>')+'</div>';
+}
+const dashHead=(title,sub)=>'<header class="dash-head"><div><h2>'+title+'</h2><p class="muted">'+sub+'</p></div>'+periodBar()+'</header>';
 R.dash=function(){
   const r=u().role,body=$('#dashBody');
   if(r==='student')body.innerHTML=dashStudent();
   else if(CHAIN.indexOf(r)>-1){
     const apps=periodApps(),b=approverBuckets(u().email,apps);
     if(!dashPicked)dashF=b.pending.length?'pending':'assigned'; /* nothing waiting: show the records instead of an empty list */
-    const granted=b.approved.filter(a=>a.grant&&a.grant.byEmail===u().email);
-    body.innerHTML='<header><h2>'+esc(u().label)+' dashboard</h2><p class="muted">Your applications by status. Pick a box to filter the list. You can act only when it is your turn.</p></header>'+
-      (b.pending.length?'<div class="callout info"><b>'+b.pending.length+'</b> application'+(b.pending.length>1?'s':'')+' waiting for your decision.</div>':'<div class="callout ok">Nothing is waiting for you.</div>')+
-      periodBar()+chipsHTML(b,CHIP_HELP.approver)+(r==='dean'?'<div class="kpis" style="margin-top:12px">'+kpi('₱'+money(C.total(granted.map(a=>({v:a.grant.total})),'v')),'Total grants approved · '+periodLabel())+kpi(granted.length,'Grants approved in this period')+'</div>':'')+
-      '<div class="card" style="margin-top:14px">'+dashList(b,{action:a=>a.status==='pending'&&a.route[CHAIN[a.stage]]===u().email?'<button class="btn sm" data-open="'+a.id+'">Review</button>':'<button class="btn sm sec" data-open="'+a.id+'">Open</button>'})+'</div>';
+    const granted=b.approved.filter(a=>a.grant&&a.grant.byEmail===u().email),dl=apps.filter(a=>a.grant).map(a=>(a.grant.at-a.created)/DAY),avg=dl.length?(dl.reduce((x,y)=>x+y,0)/dl.length).toFixed(1):'–';
+    body.innerHTML=dashHead(esc(u().label)+' dashboard','Your applications by status. Pick a status to filter the list. You can act only when it is your turn.')+
+      '<div class="stats">'+stat('Waiting for you',b.pending.length,b.pending.length?'Decide in the list below':'Nothing is waiting',b.pending.length?'attn':'')+stat('Approved by you',b.approved.length,pct(b.approved.length,b.assigned.length)+' of '+b.assigned.length+' assigned')+stat('Returned or rejected by you',b.returned.length+b.rejected.length,b.returned.length+' returned · '+b.rejected.length+' rejected')+
+      (r==='dean'?stat('Grants you approved',peso(C.total(granted.map(a=>({v:a.grant.total})),'v')),granted.length+' grant'+(granted.length===1?'':'s')+' · avg '+avg+' days to decide'):'')+'</div>'+
+      '<div class="dash-cols">'+pipelineHTML(b.assigned)+(r==='dean'?fundingHTML(b.assigned):attentionHTML(b.assigned,false))+'</div>'+
+      '<div class="card" style="margin-top:14px"><h3 style="margin-bottom:8px">Applications</h3>'+chipsHTML(b)+dashList(b,{help:CHIP_HELP.approver,action:a=>a.status==='pending'&&a.route[CHAIN[a.stage]]===u().email?'<button class="btn sm" data-open="'+a.id+'">Review</button>':'<button class="btn sm sec" data-open="'+a.id+'">Open</button>'})+'</div>';
   }else{
-    const all=periodApps(),b=staffBuckets(all),wait=all.filter(a=>['completed','rejected'].indexOf(a.status)<0&&Date.now()-a.updated>2*864e5);
-    const grants=C.total(all.filter(a=>a.grant).map(a=>({v:a.grant.total})),'v'),reimb=C.total(all.filter(a=>a.post.verify&&a.post.verify.total!=null&&!a.post.verify.draft).map(a=>({v:a.post.verify.total})),'v'),filed=all.filter(a=>a.status==='completed');
-    body.innerHTML='<header><h2>'+esc(u().label)+' dashboard</h2><p class="muted">'+(r==='admin'?'Validate post-activity documents, edit reimbursement items, download the reimbursement report and record the RFP.':'All applications, with every tab available for testing.')+'</p></header>'+
-      periodBar()+chipsHTML(b,CHIP_HELP.staff)+
-      '<div class="kpis" style="margin-top:12px">'+kpi('₱'+money(grants),'Grants approved by the Dean · '+periodLabel())+kpi('₱'+money(reimb),'Reimbursement approved')+kpi(filed.length,'Filed at FAO (RFP recorded)')+kpi(all.filter(a=>a.status==='verified').length,'Verified, RFP still to record')+kpi(wait.length,'Waiting more than 2 days')+kpi(D().notifs.filter(n=>n.to===u().email&&!n.read).length,'Unread notifications')+'</div>'+
-      '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+(wait.length?'<button class="btn sec" data-act="sweep">Send reminders for the '+wait.length+' waiting</button>':'')+'<button class="btn sec" data-go="track">Open the tracking table</button></div>'+
-      '<div class="card" style="margin-top:14px">'+dashList(b,{rfp:true,action:a=>{
+    const all=periodApps(),b=staffBuckets(all),granted=all.filter(a=>a.grant),grants=C.total(granted.map(a=>({v:a.grant.total})),'v'),reimb=C.total(all.map(a=>({v:reimbOf(a)})),'v'),filed=all.filter(a=>a.status==='completed'),
+      inflight=all.filter(a=>a.status==='pending').length,dl=granted.map(a=>(a.grant.at-a.created)/DAY),avg=dl.length?(dl.reduce((x,y)=>x+y,0)/dl.length).toFixed(1):'–';
+    body.innerHTML=dashHead(esc(u().label)+' dashboard',r==='admin'?'Validate post-activity documents, edit reimbursement items, download the reimbursement report and record the RFP.':'All applications, with every tab available for testing.')+
+      '<div class="stats">'+stat('Applications',all.length,inflight+' in approval · '+all.filter(a=>a.status==='approved').length+' approved, awaiting report')+stat('Grants approved',peso(grants),granted.length+' grant'+(granted.length===1?'':'s')+' · avg '+avg+' days to decide')+stat('Reimbursement approved',peso(reimb),pct(reimb,grants)+' of the grants approved')+stat('Filed at the FAO',filed.length,all.filter(a=>a.status==='verified').length+' verified, RFP still to record',all.some(a=>a.status==='verified')?'attn':'')+'</div>'+
+      '<div class="dash-cols">'+pipelineHTML(all)+fundingHTML(all)+attentionHTML(all,true)+'</div>'+
+      '<div class="card" style="margin-top:14px"><div class="panel-h"><h3>Applications</h3><button class="btn sm sec" data-go="track">Open the tracking table</button></div>'+chipsHTML(b)+dashList(b,{rfp:true,help:CHIP_HELP.staff,action:a=>{
         if(r==='admin'&&a.status==='approved'&&a.post.status==='submitted')return '<button class="btn sm" data-act="verifyopen" data-id="'+a.id+'">Verify</button>';
         if(a.status==='verified'||a.status==='completed')return '<button class="btn sm sec" data-act="rptopen" data-id="'+a.id+'">Report</button>';
         return '<button class="btn sm sec" data-open="'+a.id+'">Open</button>'}})+'</div>';
