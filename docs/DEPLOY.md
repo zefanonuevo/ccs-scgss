@@ -1,4 +1,4 @@
-# Deploying SCGSS v4.2
+# Deploying SCGSS v1.0
 
 Read `docs/DATA-PRIVACY.md` first and get the University Data Protection Officer's approval of the notice **before real students use the system**. After install, run the checks in `docs/QA-TEST-PLAN.md`. People who use the system read `docs/USER-MANUAL.md`.
 
@@ -64,7 +64,7 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 
 **8. Backups:** schedule `deploy/apps-backup.sh` nightly (`pg_dump` of the database *and* the files folder, encrypted, copied to Drive). Keep the `age` private key off the server. Do one restore test before go-live.
 
-**9. Privacy settings (v4.2):** in `/etc/apps/scgss.env` set `AUDIT_KEEP_DAYS` (default 365; the notice tells students access logs are kept 12 months). The service deletes older access-log rows once a day. Then:
+**9. Privacy settings (v1.0):** in `/etc/apps/scgss.env` set `AUDIT_KEEP_DAYS` (default 365; the notice tells students access logs are kept 12 months). The service deletes older access-log rows once a day. Then:
 - Have the DPO approve the notice text in `shared/rules.js` (`PRIVACY`), add the DPO contact, and change `PRIVACY_VERSION` whenever the text changes. Each application stores the version the student accepted.
 - Answer an access request (a person asking for their data) with: `sudo -u app_scgss bash -c 'set -a; . /etc/apps/scgss.env; node /srv/apps/scgss/current/server/users.js export person_name@dlsu.edu.ph'`. Send the output by a secure channel, never by ordinary email.
 - Confirm the VM disk is encrypted and that MFA is on for the portal and the computerstudies@dlsu.edu.ph account (see `docs/DATA-PRIVACY.md`, section 9).
@@ -75,7 +75,7 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 - A test application goes from student to Dean to the Administrative Assistant and is filed with an RFP number.
 - The Google test in step 4a returns `{"ok":true}`, the email arrives from CCS Student Grants (SCGSS), and the test application shows in the Sheet and Drive.
 - From a student-network machine, `http://<apps-vm-private-ip>:3001/` is unreachable.
-- Privacy (v4.2): the form shows the new notice; a submitted application records the notice version; opening an uploaded file adds a `file_view` row in the access log (`node users.js audit 10`); renaming a program to `.pdf` is refused; an email ends with the applicant, reference, event, status and the confidentiality line.
+- Privacy (v1.0): the form shows the new notice; a submitted application records the notice version; opening an uploaded file adds a `file_view` row in the access log (`node users.js audit 10`); renaming a program to `.pdf` is refused; an email ends with the applicant, reference, event, status and the confidentiality line.
 
 ## Updating
 1. Take a database backup first: `sudo bash deploy/apps-backup.sh`.

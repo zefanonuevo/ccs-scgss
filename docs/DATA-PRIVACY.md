@@ -1,6 +1,6 @@
 # SCGSS Data Privacy Paper
 
-**System:** CCS Student Conference Grant Support System (SCGSS), version 4.2.0
+**System:** CCS Student Conference Grant Support System (SCGSS), version 1.0.0-rc.1 (build 4.2.0)
 **Controller:** De La Salle University, College of Computer Studies (CCS)
 **Prepared:** 5 November 2026, from a review of the system's code and setup
 **Status:** Draft for the University Data Protection Officer (DPO) to review and approve. It is a working assessment, not legal advice. Items marked **[confirm]** are my reading of a rule or a fact about the University that someone with authority must check before go-live.
@@ -32,7 +32,7 @@ This paper does three things for SCGSS: it lists the personal data the system ho
 
 | Requirement | Source | State in SCGSS |
 |---|---|---|
-| Transparency, legitimate purpose, proportionality | RA 10173 s.11 | Notice rewritten in v4.2.0 to list data, purpose, recipients, storage and transfer, retention and rights. Data limited to what the grant needs. Emails show name, reference, event, dates and status only, no amounts. |
+| Transparency, legitimate purpose, proportionality | RA 10173 s.11 | Notice rewritten in this release to list data, purpose, recipients, storage and transfer, retention and rights. Data limited to what the grant needs. Emails show name, reference, event, dates and status only, no amounts. |
 | Lawful basis, consent for sensitive data | s.12, s.13 | Consent tick box before submission. The consent time **and notice version** are now stored on each application. |
 | Rights of the data subject | s.16, IRR | Access: `node users.js export <email>` produces everything held on one person. Correction: through Return and resubmit, or the Administrative Assistant. Withdrawal and erasure: handled by request (section 7), subject to retention duties. |
 | Security measures: organizational, physical, technical | s.20, NPC Circular 2023-06 **[confirm]** | See section 5. |
@@ -63,7 +63,7 @@ The Act is the binding law. The standards below are used as a yardstick. GDPR ap
 | Web application security | OWASP ASVS 4.0.3 | Parameterized queries, same-origin checks, no inline file execution, upload magic-byte checks | No external penetration test |
 | Deletion | ISO/IEC 27001 A.8.10 | Log purge; delete of user removes draft and signature | Application records have no deletion schedule |
 
-## 5. Controls in place after v4.2.0
+## 5. Controls in place in this release
 
 Technical: sign-in only through the CCS portal; every action checked against the person's role and turn; requests that change data accepted only from the portal's address; file access only for people allowed to view that application; uploads limited to six types, 20 MB, and the first bytes must match the type; stored files never run; security headers including a ban on camera, microphone and location; every file view and download logged with who, which application and network address; access logs deleted after `AUDIT_KEEP_DAYS` (365 by default); nightly encrypted backups with the key kept off the server; emails carry a confidentiality line.
 

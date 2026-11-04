@@ -1,4 +1,4 @@
-# SCGSS QA Test Plan (v4.2)
+# SCGSS QA Test Plan (v1.0)
 
 Run this after every install or update, on the live VM or a test copy, with test accounts only. Record pass or fail and the date. A failed line blocks go-live.
 

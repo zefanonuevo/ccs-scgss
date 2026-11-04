@@ -24,7 +24,13 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
-## 4.2.0 (5 Nov 2026 · Pilot · current)
+## 1.0.0-rc.1 (5 Nov 2026 · Release candidate · current)
+
+The first numbered release. It is build 4.2.0 renumbered; the code is the same. It becomes 1.0.0 when `docs/QA-TEST-PLAN.md` passes on the live server and the Data Protection Officer approves the privacy notice (`docs/DATA-PRIVACY.md`, section 10).
+
+Numbering: before this release the numbers were build numbers. 1.0 to 3.1.2 were the browser-only prototype (`main` branch); 4.0 to 4.2.0 were the server builds used in the pilot. They stay below as history and are not counted in 1.x.
+
+## 4.2.0 (5 Nov 2026 · Pilot)
 
 Data privacy safeguards, a fuller email summary, and manuals.
 

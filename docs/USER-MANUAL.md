@@ -1,4 +1,4 @@
-# SCGSS User Manual (v4.2)
+# SCGSS User Manual (v1.0)
 
 SCGSS is the College of Computer Studies system for conference grant requests. You sign in through the CCS portal, so there is no separate password. Address: https://ccs.dlsu.edu.ph/scgss/
 
