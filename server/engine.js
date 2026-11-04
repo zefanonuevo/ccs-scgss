@@ -51,9 +51,17 @@ async function createEngine({ store, gas }) {
       if (!email) return; const k = key + ':' + email; if (db.keys[k]) return; db.keys[k] = 1;
       const subj = '[' + (a.ref || 'draft') + '] ' + subject;
       db.notifs.unshift({ id: 'n' + (++db.seq), to: email, at: now(), appId: a.id, title: subject, body, read: false });
-      db.outbox.unshift({ id: 'm' + (++db.seq), to: email, at: now(), subject: subj, body });
-      gas.post({ action: 'email', to: email, subject: subj, body });
+      const mail = body + summary(a);
+      db.outbox.unshift({ id: 'm' + (++db.seq), to: email, at: now(), subject: subj, body: mail });
+      gas.post({ action: 'email', to: email, subject: subj, body: mail });
     });
+  }
+  /* email footer: who and what, no amounts or thesis details (email is stored and forwarded) */
+  function summary(a) {
+    const c = a.conf || {};
+    return '\n\n---\nApplicant: ' + (a.studentName || '-') + (a.program ? ' (' + a.program + ')' : '') + '\nReference: ' + (a.ref || 'draft') +
+      '\nEvent: ' + (c.title || '-') + (c.scope ? ', ' + regionLabel(c.scope) : '') + (c.start ? '\nDates: ' + fmtD(c.start) + (c.end && c.end !== c.start ? ' to ' + fmtD(c.end) : '') : '') +
+      '\nStatus: ' + info(a).label + '\nOpen the application in SCGSS to see the full details.';
   }
   const SHEET_COLS = R.makeSheetCols(() => db.files);
   function sync(a, why) {

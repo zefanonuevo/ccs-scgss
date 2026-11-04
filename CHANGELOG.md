@@ -31,6 +31,10 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 - **Navigation:** on screens wider than 900 px the tabs wrap onto a second row so every tab is visible; on narrow screens they still scroll sideways and the active tab scrolls into view. Arrow keys, Home and End move between tabs.
 - **Background:** a network mesh (drifting dots joined by thin lines that react to the mouse) behind the pages, drawn on a canvas by `js/network.js`. It follows the light or dark theme, pauses when the tab is hidden, stays still when Reduce motion is on, and is not printed.
 
+## Unreleased
+
+- Notification emails now end with the applicant's name and program, the reference, the event, its location and dates, and the current status. Amounts and thesis details are left out on purpose.
+
 ## 4.1.0 (4 Nov 2026 · Pilot · current)
 
 A new dashboard layout for the Dean, the other approvers and the office staff, in the same look as the CCS portal.
