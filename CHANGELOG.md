@@ -24,18 +24,27 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
-## Unreleased
+## 4.2.0 (5 Nov 2026 · Pilot · current)
 
-- **Roles tab, delete and bulk changes (System Administrator):** a Delete button on every person (with a confirmation), tick boxes with Select all, search and a role filter, and Switch off / Switch on / Delete for the ticked people. Deleting removes access and the person's saved draft and signature; applications and history stay on record. You cannot delete or switch off yourself, the last System Administrator, or leave two Deans, two Associate Deans or two chairs in one department.
-- **Roles tab, CSV file:** upload a CSV and see a preview before anything changes. Three choices: add and update; the same and also delete staff who are not in the file; or delete everyone whose email is in the file. `users.js delete <email>` added.
-- **Navigation:** on screens wider than 900 px the tabs wrap onto a second row so every tab is visible; on narrow screens they still scroll sideways and the active tab scrolls into view. Arrow keys, Home and End move between tabs.
-- **Background:** a network mesh (drifting dots joined by thin lines that react to the mouse) behind the pages, drawn on a canvas by `js/network.js`. It follows the light or dark theme, pauses when the tab is hidden, stays still when Reduce motion is on, and is not printed.
+Data privacy safeguards, a fuller email summary, and manuals.
 
-## Unreleased
+### Added
 
-- Notification emails now end with the applicant's name and program, the reference, the event, its location and dates, and the current status. Amounts and thesis details are left out on purpose.
+- A full data privacy notice (data, purpose, recipients, Google and cross-border processing, retention, rights, how to complain to the NPC). The notice version is saved with each application.
+- Notification emails end with the applicant's name and program, the reference, the event, its location and dates, the status, and a confidentiality line. Amounts and thesis details are left out on purpose.
+- Every file view and download is written to the access log. Access logs older than `AUDIT_KEEP_DAYS` (365 by default) are deleted daily.
+- Uploads are refused when the first bytes do not match the file type.
+- `node users.js export <email>` lists everything held about one person (access request).
+- `Permissions-Policy` header.
+- `docs/DATA-PRIVACY.md` (privacy paper), `docs/USER-MANUAL.md`, `docs/QA-TEST-PLAN.md`, and a troubleshooting table and rollback steps in `docs/DEPLOY.md`.
 
-## 4.1.0 (4 Nov 2026 · Pilot · current)
+### Not done yet
+
+- No retention schedule or automatic deletion for applications and files; the Records Officer and Finance must set the period.
+- Failed Google syncs are not retried.
+- The page still loads its stylesheet from GitHub Pages.
+
+## 4.1.0 (4 Nov 2026 · Pilot)
 
 A new dashboard layout for the Dean, the other approvers and the office staff, in the same look as the CCS portal.
 

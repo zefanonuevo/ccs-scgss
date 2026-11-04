@@ -34,6 +34,11 @@ if (!env.DATABASE_URL) { console.error('DATABASE_URL is not set (postgres://app_
   async function remind() { try { const n = await engine.autoRemind(); if (n) console.log('[remind]', n, 'reminder(s) sent'); } catch (e) { console.error('[remind]', e); } }
   remind(); setInterval(remind, 60 * 60 * 1000).unref();
 
+  /* access logs older than AUDIT_KEEP_DAYS (default 365, as the privacy notice says) are deleted daily */
+  const keep = Number(env.AUDIT_KEEP_DAYS) > 0 ? Number(env.AUDIT_KEEP_DAYS) : 365;
+  async function purge() { try { const n = await store.purgeAudit(keep); if (n) console.log('[privacy]', n, 'old access log row(s) deleted'); } catch (e) { console.error('[privacy]', e.message); } }
+  purge(); setInterval(purge, 24 * 60 * 60 * 1000).unref();
+
   const port = Number(env.PORT || 3001), host = env.HOST || '127.0.0.1';
   app.listen(port, host, () => console.log('SCGSS listening on ' + host + ':' + port + (gas.live() ? ' (Google sync on)' : ' (Google sync off)')));
 })().catch((e) => { console.error('SCGSS could not start:', e.message); process.exit(1); });

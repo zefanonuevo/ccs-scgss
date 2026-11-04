@@ -1,4 +1,6 @@
-# Deploying SCGSS v4.0
+# Deploying SCGSS v4.2
+
+Read `docs/DATA-PRIVACY.md` first and get the University Data Protection Officer's approval of the notice **before real students use the system**. After install, run the checks in `docs/QA-TEST-PLAN.md`. People who use the system read `docs/USER-MANUAL.md`.
 
 Status: **Running on the CCS apps VM behind the portal (Nov 2026). The Google link (Sheet, Drive, email) is set up in step 4a.** Follows the *SCGSS Backend Setup Guide* (30 Oct 2026) and its architecture diagram: portal VM (Apache, portal sign-in) in front, one apps VM on a private VLAN, one service per app with its own database and port.
 
@@ -62,15 +64,40 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 
 **8. Backups:** schedule `deploy/apps-backup.sh` nightly (`pg_dump` of the database *and* the files folder, encrypted, copied to Drive). Keep the `age` private key off the server. Do one restore test before go-live.
 
+**9. Privacy settings (v4.2):** in `/etc/apps/scgss.env` set `AUDIT_KEEP_DAYS` (default 365; the notice tells students access logs are kept 12 months). The service deletes older access-log rows once a day. Then:
+- Have the DPO approve the notice text in `shared/rules.js` (`PRIVACY`), add the DPO contact, and change `PRIVACY_VERSION` whenever the text changes. Each application stores the version the student accepted.
+- Answer an access request (a person asking for their data) with: `sudo -u app_scgss bash -c 'set -a; . /etc/apps/scgss.env; node /srv/apps/scgss/current/server/users.js export person_name@dlsu.edu.ph'`. Send the output by a secure channel, never by ordinary email.
+- Confirm the VM disk is encrypted and that MFA is on for the portal and the computerstudies@dlsu.edu.ph account (see `docs/DATA-PRIVACY.md`, section 9).
+
 ## Check after install
 - Signed out: `/scgss/` shows "Sign in to the CCS portal first". A DLSU account with no row shows "Your account is not set up yet" (403).
 - Roles tab works for the System Administrator and is refused for everyone else.
 - A test application goes from student to Dean to the Administrative Assistant and is filed with an RFP number.
 - The Google test in step 4a returns `{"ok":true}`, the email arrives from CCS Student Grants (SCGSS), and the test application shows in the Sheet and Drive.
 - From a student-network machine, `http://<apps-vm-private-ip>:3001/` is unreachable.
+- Privacy (v4.2): the form shows the new notice; a submitted application records the notice version; opening an uploaded file adds a `file_view` row in the access log (`node users.js audit 10`); renaming a program to `.pdf` is refused; an email ends with the applicant, reference, event, status and the confidentiality line.
 
 ## Updating
-`sudo bash deploy/setup-scgss.sh` again (pulls, installs, keeps your settings), then `sudo systemctl restart app@scgss`.
+1. Take a database backup first: `sudo bash deploy/apps-backup.sh`.
+2. `cd /srv/apps/scgss/current && sudo BRANCH=backend bash deploy/setup-scgss.sh` (pulls, installs, keeps your settings).
+3. `sudo systemctl restart app@scgss`, then `sudo systemctl status app@scgss --no-pager` must say `active (running)`.
+4. `curl http://<apps-vm-private-ip>:3001/healthz` must print `ok`. Use the private address from `HOST` in `/etc/apps/scgss.env`: the service does not listen on `localhost`, so `curl http://localhost:3001/healthz` is expected to fail.
+5. Open https://ccs.dlsu.edu.ph/scgss/ and press Ctrl+F5. The version tag in the header must match `CHANGELOG.md`.
+
+**Going back** if an update misbehaves: `git log --oneline -5` on the VM, `sudo git checkout <previous commit>`, `sudo systemctl restart app@scgss`. New releases only add tables or columns, so older code still starts. If data was damaged, restore the nightly backup (see step 8) after one restore test.
+
+## Troubleshooting (problems met in the first rollout)
+| Symptom | Cause and fix |
+|---|---|
+| `curl localhost:3001/healthz` fails | Normal. Use the private address from `HOST`. If that also fails, `sudo journalctl -u app@scgss -e --no-pager`. |
+| `psql: role "root" does not exist` | Do not run `psql` as root. Use `sudo -u postgres psql app_scgss`. Type the quotes exactly: `psql "$DATABASE_URL"` inside `bash -c`. |
+| Header still shows the old version | Cloudflare or the browser cached the scripts. Hard refresh (Ctrl+F5). Script addresses carry a version that changes with each release. |
+| Log says `Google sync off` | `GAS_URL` or `GAS_TOKEN` is empty in `/etc/apps/scgss.env`. Set both, restart. |
+| Log says `[gas] rejected ... parent.mimeType` | `FOLDER_ID` in the Apps Script properties is not a normal folder (wrong ID, a shortcut, or a file). Copy the ID from the folder's address bar, after `/folders/`. |
+| Apps Script **Executions** all say "Completed" but the Sheet and Drive stay empty | "Completed" only means the script ran. It catches its own errors. Read the `[gas]` lines in the server log, and look for an `Applications` tab at the bottom of the Sheet. |
+| Sheet empty, no `Applications` tab | The script is not attached to that Sheet. Open the Sheet, Extensions, Apps Script, and paste `google/Code.gs` there. |
+| An application submitted before Google was switched on is missing from Sheet and Drive | Nothing resends it yet (known gap). Submit a new test, or have the Administrative Assistant re-save it. |
+| 403 "Your account is not set up" | The email is not in the Roles tab. Staff emails with a dot must be added by the System Administrator. |
 
 ## What was and was not tested
 Tested: `cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` against a throwaway PostgreSQL 16 (each test uses its own schema; 9 tests over real HTTP with a stubbed portal sign-in: sign-in and role gating, a whole application to filing, restart persistence (reloaded from PostgreSQL), file access, origin check, roles screen safeguards, signer overlaps, public file list) and a simulated-browser load of the page for each role. **Not tested by me:** the Apps Script link on the live account, the firewall, the backup script, real PDFs from a browser upload, and any phone or desktop layout check.

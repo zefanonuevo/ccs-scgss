@@ -1,5 +1,5 @@
 'use strict';
-/* Manage who may use SCGSS and in which role.  node users.js list | add <email> <role> [name] [program] | import <file.csv> | disable <email> | enable <email> | delete <email> | audit [n]
+/* Manage who may use SCGSS and in which role.  node users.js list | add <email> <role> [name] [program] | import <file.csv> | disable <email> | enable <email> | delete <email> | audit [n] | export <email>
    Roles: student, adviser, chair (needs a department: DCT, DST or DIT), assoc (Associate Dean), dean, admin (Administrative Assistant), sysadmin. */
 const path = require('node:path');
 const fs = require('node:fs');
@@ -37,8 +37,20 @@ try {
     const plan = require('./people').planFromEmails(store, { action: 'delete', emails: [a[0]], self: '' });
     if (!plan.ok) throw new Error(plan.problems[0] || 'Nothing to delete.');
     await store.bulkApply({ deletes: plan.deletes }); await store.audit('cli', 'user_bulk', 'delete: ' + a[0]); console.log('Deleted', a[0]);
+  } else if (cmd === 'export') {  // a person's right of access: everything held about one email, as JSON
+    if (!a[0]) throw new Error('Usage: export <email>');
+    const e = a[0].trim().toLowerCase(), q = (t, p) => store.pool.query(t, [p]).then((r) => r.rows);
+    const apps = (await q('SELECT data FROM apps WHERE student_email = $1', e)).map((r) => r.data);
+    const out = {
+      exportedAt: new Date().toISOString(), email: e, role: store.getUser(e) || null, applications: apps,
+      files: (await q('SELECT data FROM files WHERE app_id = ANY($1)', apps.map((x) => x.id))).map((r) => r.data),
+      notices: (await q('SELECT data FROM notifs WHERE to_email = $1', e)).map((r) => r.data),
+      accessLog: await q('SELECT ts, event, detail, ip FROM audit WHERE email = $1 ORDER BY id', e),
+      hasSavedDraft: !!(await store.getDraft(e)), hasSavedSignature: !!(await store.getSig(e))
+    };
+    await store.audit('cli', 'data_export', e); console.log(JSON.stringify(out, null, 2));
   } else if (cmd === 'audit') {
     (await store.lastAudit(Number(a[0]) || 30)).forEach((r) => console.log(new Date(r.ts).toISOString(), r.email || '-', r.event, r.detail));
-  } else { console.log('Commands: list | add <email> <role> [name] [program] | import <file.csv> | disable <email> | enable <email> | delete <email> | audit [n]'); }
+  } else { console.log('Commands: list | add <email> <role> [name] [program] | import <file.csv> | disable <email> | enable <email> | delete <email> | audit [n] | export <email>'); }
 } finally { await store.close(); }
 })().catch((e) => { console.error('Error:', e.message); process.exitCode = 1; });

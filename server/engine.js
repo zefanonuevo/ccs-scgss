@@ -61,7 +61,7 @@ async function createEngine({ store, gas }) {
     const c = a.conf || {};
     return '\n\n---\nApplicant: ' + (a.studentName || '-') + (a.program ? ' (' + a.program + ')' : '') + '\nReference: ' + (a.ref || 'draft') +
       '\nEvent: ' + (c.title || '-') + (c.scope ? ', ' + regionLabel(c.scope) : '') + (c.start ? '\nDates: ' + fmtD(c.start) + (c.end && c.end !== c.start ? ' to ' + fmtD(c.end) : '') : '') +
-      '\nStatus: ' + info(a).label + '\nOpen the application in SCGSS to see the full details.';
+      '\nStatus: ' + info(a).label + '\nOpen the application in SCGSS to see the full details.\n\nThis message contains personal information meant only for you (Data Privacy Act of 2012). Do not forward it. If it reached you by mistake, delete it and tell computerstudies@dlsu.edu.ph.';
   }
   const SHEET_COLS = R.makeSheetCols(() => db.files);
   function sync(a, why) {
@@ -112,7 +112,7 @@ E.submit=function(actor,f){
   const key=f.ay+'-'+f.term;db.counters[key]=(db.counters[key]||0)+1;
   const ref=key+'-'+pad3(db.counters[key]);
   const a={id:'a'+(++db.seq),ref,key,ay:f.ay,term:f.term,status:'pending',stage:0,cycle:1,studentEmail:actor.email,studentName:R.tidyName(f.name),route,
-    attach:{fileId:f.file.id,version:1},privacy:{at:now()},decisions:{},returned:null,rejected:null,grant:null,comments:[],history:[],post:{status:'none',cycle:0},report:null,viewed:{},created:now(),updated:now(),clar:0};
+    attach:{fileId:f.file.id,version:1},privacy:{at:now(),v:R.PRIVACY_VERSION},decisions:{},returned:null,rejected:null,grant:null,comments:[],history:[],post:{status:'none',cycle:0},report:null,viewed:{},created:now(),updated:now(),clar:0};
   applyForm(a,f);
   fm.name=ref+'.pdf';fm.appId=a.id;fm.kind='Application requirements';fm.folder='Applications/'+key;fm.by=nm(a,actor);fm.at=now();fm.version=1;
   db.apps.push(a);

@@ -113,6 +113,8 @@ function makeStore(pool) {
 
     /* ----- audit, drafts, remembered signatures ----- */
     audit: (email, event, detail = '', ip = '') => q('INSERT INTO audit (email, event, detail, ip) VALUES ($1,$2,$3,$4)', [normEmail(email), event, String(detail).slice(0, 300), ip || '']).catch((e) => console.error('[audit]', e.message)),
+    /** Access logs hold email and network addresses: keep them only as long as the notice says. */
+    async purgeAudit(days) { return (await q("DELETE FROM audit WHERE ts < now() - make_interval(days => $1)", [days])).rowCount; },
     async lastAudit(n = 50) { return (await q('SELECT ts, email, event, detail, ip FROM audit ORDER BY id DESC LIMIT $1', [n])).rows; },
     async getSig(email) { const r = (await q('SELECT data FROM sigs WHERE email = $1', [normEmail(email)])).rows[0]; return r ? r.data : null; },
     putSig: (email, data) => q('INSERT INTO sigs (email, data) VALUES ($1,$2) ON CONFLICT (email) DO UPDATE SET data = $2', [normEmail(email), String(data)]),

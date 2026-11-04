@@ -10,6 +10,12 @@ const people = require('./people');
 const MAX_FILE = 20 * 1024 * 1024;
 /** juan_dela_cruz@dlsu.edu.ph: letters/digits/hyphens, at least one underscore, no dot before the @, and the allowed domain. */
 const isStudentEmail = (email, domain) => { const m = /^([a-z0-9_-]+)@(.+)$/.exec(String(email || '').toLowerCase()); return !!m && m[1].indexOf('_') > 0 && (!domain || m[2] === domain); };
+/** The first bytes must match the extension, so a renamed program or script is not stored as a document. */
+const looksLike = (ext, b) => ext === '.pdf' ? b.subarray(0, 5).toString('latin1') === '%PDF-'
+  : ext === '.png' ? b.subarray(0, 4).toString('hex') === '89504e47'
+  : ext === '.jpg' || ext === '.jpeg' ? b.subarray(0, 3).toString('hex') === 'ffd8ff'
+  : ext === '.docx' || ext === '.xlsx' ? b.subarray(0, 4).toString('hex') === '504b0304'
+  : !b.subarray(0, 2048).includes(0);
 const FILE_TYPES = { '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', '.txt': 'text/plain' };
 
 /** Production: ask the portal who this cookie belongs to. Returns {signedIn, email, name} or {signedIn:false}. */
@@ -38,7 +44,7 @@ function createApp({ store, engine, gas, me, config }) {
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
   app.use((req, res, next) => {
-    res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'SAMEORIGIN', 'Cache-Control': 'no-store' });
+    res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'SAMEORIGIN', 'Cache-Control': 'no-store', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()' });
     next();
   });
 
@@ -88,7 +94,7 @@ function createApp({ store, engine, gas, me, config }) {
     const ext = path.extname(orig).toLowerCase();
     if (!FILE_TYPES[ext]) return res.status(400).json({ ok: false, error: 'This file type is not accepted. Use PDF, PNG, JPG, DOCX, XLSX or TXT.' });
     if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ ok: false, error: 'The file is empty.' });
-    if (ext === '.pdf' && req.body.subarray(0, 5).toString('latin1') !== '%PDF-') return res.status(400).json({ ok: false, error: 'This does not look like a PDF file.' });
+    if (!looksLike(ext, req.body)) return res.status(400).json({ ok: false, error: 'The file content does not match its type (' + ext + '). Use a real ' + ext.slice(1).toUpperCase() + ' file.' });
     const meta = await engine.registerFile({ orig, size: req.body.length, type: FILE_TYPES[ext], by: req.user.name, byEmail: req.user.email });
     fs.writeFileSync(path.join(cfg.filesDir, meta.id), req.body);
     res.json({ ok: true, file: { id: meta.id, orig: meta.orig, size: meta.size } });
@@ -101,6 +107,7 @@ function createApp({ store, engine, gas, me, config }) {
     if (!allowed) return res.status(404).json({ ok: false, error: 'File not found.' });
     const p = path.join(cfg.filesDir, id);
     if (!fs.existsSync(p)) return res.status(404).json({ ok: false, error: 'The stored file is missing.' });
+    store.audit(req.user.email, req.query.download ? 'file_download' : 'file_view', (a ? a.ref : 'draft') + ' ' + id, req.ip); // who opened which personal document
     res.set({ 'Content-Type': f.type || 'application/octet-stream', 'Content-Disposition': (req.query.download ? 'attachment' : 'inline') + '; filename="' + String(f.name || f.orig).replace(/[^\w.\-]+/g, '_') + '"', 'Cache-Control': 'private, no-store' });
     fs.createReadStream(p).pipe(res);
   });
@@ -181,4 +188,4 @@ function createApp({ store, engine, gas, me, config }) {
   return app;
 }
 
-module.exports = { createApp, portalChecker, FILE_TYPES, isStudentEmail };
+module.exports = { createApp, portalChecker, FILE_TYPES, isStudentEmail, looksLike };
