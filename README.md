@@ -9,7 +9,7 @@ Student conference grants for the College of Computer Studies: application form,
 - `js/`, `index.html`: the screens. They keep no data; they call the server.
 - `google/Code.gs`: Apps Script that writes the Sheet row, saves files in Drive and sends email. Only the server calls it.
 - `deploy/`, `docs/DEPLOY.md`: install and update on the apps VM, Apache path, backups, troubleshooting.
-- `docs/USER-MANUAL.md` (students, approvers, staff), `docs/QA-TEST-PLAN.md` (checks after each install), `docs/DATA-PRIVACY.md` (privacy paper for the Data Protection Officer).
+- `docs/USER-MANUAL.md` (students, approvers, staff), `docs/QA-TEST-PLAN.md` (checks after each install), `docs/DATA-PRIVACY.md` (privacy paper for the Data Protection Officer), `docs/DATABASE.md` (tables, what is stored, backup and restore), `docs/WORKFLOW.md` (statuses, approval and reimbursement steps, who can do what).
 
 ## Roles
 student, adviser, chair (one per program), assoc (Associate Dean), dean, admin (Administrative Assistant), sysadmin. People are added on the **Roles** tab (or `node server/users.js add <email> <role> [name] [program]`). A signed-in DLSU account with no row is refused.

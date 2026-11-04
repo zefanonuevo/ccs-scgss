@@ -26,7 +26,8 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 ## 1.0.0-rc.2 (5 Nov 2026 · Release candidate · current)
 
-- A **Home** button in the top bar, between the signed-in name and Sign out, goes back to the CCS portal. No other change.
+- A **Home** button in the top bar, between the signed-in name and Sign out, goes back to the CCS portal. No other change to the program.
+- New documents: `docs/DATABASE.md` (tables and backup) and `docs/WORKFLOW.md` (the process in writing). The update steps in `docs/DEPLOY.md` now use a plain `pg_dump` for the pre-update copy.
 
 ## 1.0.0-rc.1 (5 Nov 2026 · Release candidate)
 

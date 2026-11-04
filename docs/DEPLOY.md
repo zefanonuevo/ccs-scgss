@@ -1,6 +1,6 @@
 # Deploying SCGSS v1.0
 
-Read `docs/DATA-PRIVACY.md` first and get the University Data Protection Officer's approval of the notice **before real students use the system**. After install, run the checks in `docs/QA-TEST-PLAN.md`. People who use the system read `docs/USER-MANUAL.md`.
+Read `docs/DATA-PRIVACY.md` first and get the University Data Protection Officer's approval of the notice **before real students use the system**. After install, run the checks in `docs/QA-TEST-PLAN.md`. People who use the system read `docs/USER-MANUAL.md`. The tables are described in `docs/DATABASE.md` and the process in `docs/WORKFLOW.md`.
 
 Status: **Running on the CCS apps VM behind the portal (Nov 2026). The Google link (Sheet, Drive, email) is set up in step 4a.** Follows the *SCGSS Backend Setup Guide* (30 Oct 2026) and its architecture diagram: portal VM (Apache, portal sign-in) in front, one apps VM on a private VLAN, one service per app with its own database and port.
 
@@ -78,7 +78,7 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 - Privacy (v1.0): the form shows the new notice; a submitted application records the notice version; opening an uploaded file adds a `file_view` row in the access log (`node users.js audit 10`); renaming a program to `.pdf` is refused; an email ends with the applicant, reference, event, status and the confidentiality line.
 
 ## Updating
-1. Take a database backup first: `sudo bash deploy/apps-backup.sh`.
+1. Take a database copy first: `sudo -u postgres pg_dump -Fc app_scgss -f /var/backups/app_scgss-before-update.dump` (delete it once the update is confirmed; it holds personal data). The nightly `deploy/apps-backup.sh` needs `AGE_PUBLIC_KEY` set, so it does not run as a bare command.
 2. `cd /srv/apps/scgss/current && sudo BRANCH=backend bash deploy/setup-scgss.sh` (pulls, installs, keeps your settings).
 3. `sudo systemctl restart app@scgss`, then `sudo systemctl status app@scgss --no-pager` must say `active (running)`.
 4. `curl http://<apps-vm-private-ip>:3001/healthz` must print `ok`. Use the private address from `HOST` in `/etc/apps/scgss.env`: the service does not listen on `localhost`, so `curl http://localhost:3001/healthz` is expected to fail.
