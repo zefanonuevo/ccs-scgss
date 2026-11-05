@@ -4,20 +4,9 @@ This is the written version of the **Workflow** tab in the app. The rules are en
 
 ## Status at a glance
 
-```mermaid
-stateDiagram-v2
-    [*] --> pending: Student submits (reference assigned)
-    pending --> pending: Endorse (next approver)
-    pending --> returned: Return with remarks
-    returned --> pending: Student resubmits (same approver continues)
-    pending --> rejected: Reject (reason required)
-    pending --> approved: Dean approves (one amount, one funding source, e-signature)
-    approved --> approved: Post-activity report submitted, returned, resubmitted
-    approved --> verified: Administrative Assistant verifies
-    verified --> completed: Filed at FAO with RFP number
-    rejected --> [*]
-    completed --> [*]
-```
+![SCGSS application status: Pending, Returned, Rejected, Approved, Verified, Completed](diagrams/workflow.svg)
+
+Editable source: `diagrams/workflow.html`.
 
 ## Phase 1: application and approval
 

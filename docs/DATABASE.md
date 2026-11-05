@@ -4,6 +4,10 @@ SCGSS keeps its records in one PostgreSQL 16 database, `app_scgss`, with its own
 
 ## Tables
 
+![SCGSS database tables and how they link](diagrams/database.svg)
+
+The diagram shows the eight main tables. `kv` (counters) and `dedupe` (duplicate-send keys) are housekeeping and are not drawn. Editable source: `diagrams/database.html`.
+
 | Table | Holds | Key | Link to other tables (kept by the app, not by database constraints) |
 |---|---|---|---|
 | `scgss_users` | Who may sign in, and in which role: `email`, `role` (student, adviser, chair, assoc, dean, admin, sysadmin), `name`, `program` (the department for a Chair), `active`, `updated_at` | `email` | `apps.student_email`, `drafts.email`, `sigs.email` |

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCGSS database tables</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f4f7f3;
+      --color-ink:     #111a15;
+      --color-muted:   #4a5a51;
+      --color-accent:  #0b5d45;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: var(--color-ink); margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1040px; display: block; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">ER / data model · Diagram Design</p>
+    <h1>SCGSS database tables</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 1040 680" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="scgss-database-title scgss-database-desc">
+        <title id="scgss-database-title">SCGSS database tables</title>
+        <desc id="scgss-database-desc">Entity diagram of the eight main SCGSS tables: users own applications, applications have files and notices, users keep one draft and one signature, and the audit and outbox logs stand alone.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4a5a51"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0b5d45"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f4f7f3"/>
+<rect x="324" y="424" width="552" height="200" rx="8" fill="rgba(17,26,21,0.02)" stroke="rgba(17,26,21,0.10)" stroke-width="0.8"/>
+<rect x="546.0" y="428" width="108" height="12" rx="2" fill="#f4f7f3"/>
+<text x="600.0" y="437" fill="#55645b" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">NOT LINKED · LOGS</text>
+<line x1="240" y1="264" x2="340" y2="264" stroke="#4a5a51" stroke-width="1.2"/>
+<rect x="272.0" y="244" width="36" height="12" rx="2" fill="#f4f7f3"/>
+<text x="290" y="253" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">OWNS</text>
+<text x="246" y="258" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">1</text>
+<text x="334" y="258" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.06em">N</text>
+<line x1="560" y1="232" x2="660" y2="232" stroke="#4a5a51" stroke-width="1.2"/>
+<rect x="594.0" y="212" width="32" height="12" rx="2" fill="#f4f7f3"/>
+<text x="610" y="221" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HAS</text>
+<text x="566" y="226" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">1</text>
+<text x="654" y="226" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.06em">N</text>
+<line x1="560" y1="304" x2="660" y2="304" stroke="#4a5a51" stroke-width="1" stroke-dasharray="5,4"/>
+<rect x="584.0" y="284" width="52" height="12" rx="2" fill="#f4f7f3"/>
+<text x="610" y="293" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NOTIFIES</text>
+<text x="566" y="298" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">1</text>
+<text x="654" y="298" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="end" letter-spacing="0.06em">N</text>
+<line x1="140" y1="200" x2="140" y2="128" stroke="#4a5a51" stroke-width="1.2"/>
+<rect x="148.0" y="158" width="44" height="12" rx="2" fill="#f4f7f3"/>
+<text x="170" y="167" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SAVES</text>
+<text x="148" y="192" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">1</text>
+<text x="148" y="142" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">0..1</text>
+<line x1="140" y1="352" x2="140" y2="424" stroke="#4a5a51" stroke-width="1.2"/>
+<rect x="148.0" y="382" width="64" height="12" rx="2" fill="#f4f7f3"/>
+<text x="180" y="391" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SIGNS WITH</text>
+<text x="148" y="366" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">1</text>
+<text x="148" y="414" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">0..1</text>
+<rect x="40" y="200" width="200" height="152" rx="6" fill="#f4f7f3"/>
+<rect x="40" y="200" width="200" height="152" rx="6" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="48" y="208" width="44" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="70" y="217" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="50" y="236" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">scgss_users</text>
+<line x1="40" y1="244" x2="240" y2="244" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="50" y="260" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># email</text>
+<text x="50" y="276" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">role</text>
+<text x="50" y="292" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">name</text>
+<text x="50" y="308" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">program</text>
+<text x="50" y="324" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">active</text>
+<text x="50" y="340" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">updated_at</text>
+<rect x="340" y="200" width="220" height="136" rx="6" fill="#f4f7f3"/>
+<rect x="340" y="200" width="220" height="136" rx="6" fill="rgba(11,93,69,0.08)" stroke="#0b5d45" stroke-width="1"/>
+<rect x="348" y="208" width="44" height="12" rx="2" fill="transparent" stroke="rgba(11,93,69,0.50)" stroke-width="0.8"/>
+<text x="370" y="217" fill="#0b5d45" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="350" y="236" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">apps</text>
+<line x1="340" y1="244" x2="560" y2="244" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="350" y="260" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+<text x="350" y="276" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">ref (unique)</text>
+<text x="350" y="292" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">→ student_email</text>
+<text x="350" y="308" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">status</text>
+<text x="350" y="324" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">data (json)</text>
+<rect x="660" y="160" width="200" height="104" rx="6" fill="#f4f7f3"/>
+<rect x="660" y="160" width="200" height="104" rx="6" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="668" y="168" width="44" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="690" y="177" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="670" y="196" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">files</text>
+<line x1="660" y1="204" x2="860" y2="204" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="670" y="220" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+<text x="670" y="236" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">→ app_id</text>
+<text x="670" y="252" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">data (json)</text>
+<rect x="660" y="288" width="200" height="104" rx="6" fill="#f4f7f3"/>
+<rect x="660" y="288" width="200" height="104" rx="6" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="668" y="296" width="44" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="690" y="305" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="670" y="324" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">notifs</text>
+<line x1="660" y1="332" x2="860" y2="332" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="670" y="348" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+<text x="670" y="364" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">→ to_email</text>
+<text x="670" y="380" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">data (json)</text>
+<rect x="40" y="40" width="200" height="88" rx="6" fill="#f4f7f3"/>
+<rect x="40" y="40" width="200" height="88" rx="6" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="48" y="48" width="44" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="70" y="57" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="50" y="76" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">drafts</text>
+<line x1="40" y1="84" x2="240" y2="84" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="50" y="100" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># email (user)</text>
+<text x="50" y="116" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">data (json)</text>
+<rect x="40" y="424" width="200" height="88" rx="6" fill="#f4f7f3"/>
+<rect x="40" y="424" width="200" height="88" rx="6" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="48" y="432" width="44" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="70" y="441" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="50" y="460" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">sigs</text>
+<line x1="40" y1="468" x2="240" y2="468" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="50" y="484" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># email (user)</text>
+<text x="50" y="500" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">data (png)</text>
+<rect x="340" y="456" width="220" height="152" rx="6" fill="#f4f7f3"/>
+<rect x="340" y="456" width="220" height="152" rx="6" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="348" y="464" width="44" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="370" y="473" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="350" y="492" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">audit</text>
+<line x1="340" y1="500" x2="560" y2="500" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="350" y="516" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+<text x="350" y="532" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">ts</text>
+<text x="350" y="548" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">email</text>
+<text x="350" y="564" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">event</text>
+<text x="350" y="580" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">detail</text>
+<text x="350" y="596" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">ip</text>
+<rect x="660" y="456" width="200" height="88" rx="6" fill="#f4f7f3"/>
+<rect x="660" y="456" width="200" height="88" rx="6" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="668" y="464" width="44" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="690" y="473" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ENTITY</text>
+<text x="670" y="492" fill="#111a15" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif">outbox</text>
+<line x1="660" y1="500" x2="860" y2="500" stroke="rgba(17,26,21,0.12)" stroke-width="0.8"/>
+<text x="670" y="516" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace"># id</text>
+<text x="670" y="532" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace">data (json)</text>
+<line x1="30" y1="640" x2="1010" y2="640" stroke="rgba(17,26,21,0.10)" stroke-width="0.8"/>
+<text x="30" y="656" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.14em">LEGEND</text>
+<line x1="100" y1="653" x2="124" y2="653" stroke="#4a5a51" stroke-width="1.2"/>
+<text x="132" y="656" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">COLUMN LINK</text>
+<line x1="230" y1="653" x2="254" y2="653" stroke="#4a5a51" stroke-width="1" stroke-dasharray="5,4"/>
+<text x="262" y="656" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">LINK IN JSON</text>
+<rect x="380" y="646" width="14" height="12" rx="2" fill="rgba(11,93,69,0.08)" stroke="#0b5d45" stroke-width="1"/>
+<text x="402" y="656" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">MAIN RECORD</text>
+<text x="520" y="656" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em"># KEY   → LINK COLUMN</text>
+<text x="700" y="656" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">LINKS ARE KEPT BY THE APP, NOT BY THE DATABASE</text>
+
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCGSS application status</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f4f7f3;
+      --color-ink:     #111a15;
+      --color-muted:   #4a5a51;
+      --color-accent:  #0b5d45;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body { font-family: var(--font-sans); background: var(--color-paper); color: var(--color-ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 0.5rem; }
+    h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; color: var(--color-ink); margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1040px; display: block; }
+    @media print { .diagram-container { overflow-x: visible; } svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">State machine · Diagram Design</p>
+    <h1>SCGSS application status</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 1040 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="scgss-workflow-title scgss-workflow-desc">
+        <title id="scgss-workflow-title">SCGSS application status</title>
+        <desc id="scgss-workflow-desc">State machine showing an application moving from Pending through approval, report verification and filing at the FAO, with return and reject paths.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4a5a51"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0b5d45"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f4f7f3"/>
+<line x1="46" y1="200" x2="112" y2="200" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="58.0" y="180" width="44" height="12" rx="2" fill="#f4f7f3"/>
+<text x="80" y="189" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SUBMIT</text>
+<path d="M172,160 C172,124 232,124 232,160" fill="none" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="176.0" y="108" width="52" height="12" rx="2" fill="#f4f7f3"/>
+<text x="202" y="117" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">ENDORSE</text>
+<line x1="252" y1="200" x2="352" y2="200" stroke="#0b5d45" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+<rect x="276.0" y="180" width="52" height="12" rx="2" fill="#f4f7f3"/>
+<text x="302" y="189" fill="#0b5d45" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">APPROVE</text>
+<line x1="492" y1="200" x2="592" y2="200" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="520.0" y="180" width="44" height="12" rx="2" fill="#f4f7f3"/>
+<text x="542" y="189" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">VERIFY</text>
+<line x1="732" y1="200" x2="832" y2="200" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="750.0" y="180" width="64" height="12" rx="2" fill="#f4f7f3"/>
+<text x="782" y="189" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">FILE · RFP</text>
+<line x1="972" y1="200" x2="1000" y2="200" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="152" y1="240" x2="152" y2="320" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="100.0" y="274" width="44" height="12" rx="2" fill="#f4f7f3"/>
+<text x="122" y="283" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RETURN</text>
+<line x1="212" y1="320" x2="212" y2="240" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="220.0" y="274" width="56" height="12" rx="2" fill="#f4f7f3"/>
+<text x="248" y="283" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RESUBMIT</text>
+<path d="M132,160 V104 Q132,96 140,96 H352" fill="none" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="222.0" y="76" width="48" height="12" rx="2" fill="#f4f7f3"/>
+<text x="246" y="85" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">REJECT</text>
+<line x1="492" y1="96" x2="532" y2="96" stroke="#4a5a51" stroke-width="1.2" marker-end="url(#arrow)"/>
+<circle cx="40" cy="200" r="6" fill="#111a15"/>
+<circle cx="1008" cy="200" r="8" fill="none" stroke="#111a15" stroke-width="1"/><circle cx="1008" cy="200" r="5" fill="#111a15"/>
+<circle cx="540" cy="96" r="8" fill="none" stroke="#111a15" stroke-width="1"/><circle cx="540" cy="96" r="5" fill="#111a15"/>
+<rect x="112" y="160" width="140" height="80" rx="8" fill="#f4f7f3"/>
+<rect x="112" y="160" width="140" height="80" rx="8" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="120" y="168" width="40" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="140.0" y="177" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATE</text>
+<text x="182.0" y="202" fill="#111a15" font-size="14" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Pending</text>
+<text x="182.0" y="218" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">with one approver</text>
+<text x="182.0" y="230" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">adviser to dean</text>
+<rect x="352" y="160" width="140" height="80" rx="8" fill="#f4f7f3"/>
+<rect x="352" y="160" width="140" height="80" rx="8" fill="rgba(11,93,69,0.08)" stroke="#0b5d45" stroke-width="1"/>
+<rect x="360" y="168" width="40" height="12" rx="2" fill="transparent" stroke="rgba(11,93,69,0.50)" stroke-width="0.8"/>
+<text x="380.0" y="177" fill="#0b5d45" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATE</text>
+<text x="422.0" y="202" fill="#111a15" font-size="14" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Approved</text>
+<text x="422.0" y="218" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">report due in 15 days</text>
+<text x="422.0" y="230" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">one amount, one fund</text>
+<rect x="592" y="160" width="140" height="80" rx="8" fill="#f4f7f3"/>
+<rect x="592" y="160" width="140" height="80" rx="8" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="600" y="168" width="40" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="620.0" y="177" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATE</text>
+<text x="662.0" y="202" fill="#111a15" font-size="14" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Verified</text>
+<text x="662.0" y="218" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">amounts set per item</text>
+<text x="662.0" y="230" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">by the Admin Asst.</text>
+<rect x="832" y="160" width="140" height="80" rx="8" fill="#f4f7f3"/>
+<rect x="832" y="160" width="140" height="80" rx="8" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="840" y="168" width="40" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="860.0" y="177" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATE</text>
+<text x="902.0" y="202" fill="#111a15" font-size="14" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Completed</text>
+<text x="902.0" y="218" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">filed at the FAO</text>
+<text x="902.0" y="230" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">RFP number recorded</text>
+<rect x="352" y="56" width="140" height="80" rx="8" fill="#f4f7f3"/>
+<rect x="352" y="56" width="140" height="80" rx="8" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="360" y="64" width="40" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="380.0" y="73" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATE</text>
+<text x="422.0" y="98" fill="#111a15" font-size="14" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Rejected</text>
+<text x="422.0" y="114" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">closed</text>
+<text x="422.0" y="126" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">history kept</text>
+<rect x="112" y="320" width="140" height="80" rx="8" fill="#f4f7f3"/>
+<rect x="112" y="320" width="140" height="80" rx="8" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<rect x="120" y="328" width="40" height="12" rx="2" fill="transparent" stroke="rgba(17,26,21,0.40)" stroke-width="0.8"/>
+<text x="140.0" y="337" fill="#111a15" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">STATE</text>
+<text x="182.0" y="362" fill="#111a15" font-size="14" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Returned</text>
+<text x="182.0" y="378" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">student replies</text>
+<text x="182.0" y="390" fill="#4a5a51" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">same approver next</text>
+<line x1="30" y1="432" x2="1010" y2="432" stroke="rgba(17,26,21,0.10)" stroke-width="0.8"/>
+<text x="30" y="448" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.14em">LEGEND</text>
+<rect x="100" y="438" width="14" height="12" rx="2" fill="#ffffff" stroke="#111a15" stroke-width="1"/>
+<text x="122" y="448" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">STATUS</text>
+<rect x="200" y="438" width="14" height="12" rx="2" fill="rgba(11,93,69,0.08)" stroke="#0b5d45" stroke-width="1"/>
+<text x="222" y="448" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">GRANT APPROVED</text>
+<circle cx="366" cy="444" r="6" fill="none" stroke="#111a15" stroke-width="1"/><circle cx="366" cy="444" r="3.5" fill="#111a15"/>
+<text x="378" y="448" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">CASE CLOSED</text>
+<text x="500" y="448" fill="#4a5a51" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.06em">PENDING MOVES ADVISER &gt; CHAIR &gt; ASSOC. DEAN &gt; DEAN</text>
+
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
