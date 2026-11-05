@@ -5,6 +5,10 @@ Read `docs/DATA-PRIVACY.md` first and get the University Data Protection Officer
 Status: **Running on the CCS apps VM behind the portal (Nov 2026). The Google link (Sheet, Drive, email) is set up in step 4a.** Follows the *SCGSS Backend Setup Guide* (30 Oct 2026) and its architecture diagram: portal VM (Apache, portal sign-in) in front, one apps VM on a private VLAN, one service per app with its own database and port.
 
 ## What runs where
+
+![How a request reaches SCGSS: browser, Cloudflare, portal, apps VM, Google](diagrams/infrastructure.svg)
+
+The same in text:
 ```
 Browser -> Apache on the portal VM (https://ccs.dlsu.edu.ph/scgss/)  -- ProxyPass -->  apps VM, private address, port 3001 (service app@scgss)
                                                                                       |-- PostgreSQL database app_scgss (this VM, 127.0.0.1:5432) and uploaded files in /srv/apps/scgss/data

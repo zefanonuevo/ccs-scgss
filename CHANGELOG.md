@@ -24,6 +24,10 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
+## Unreleased
+
+- Four diagrams in `docs/diagrams/` (application architecture, infrastructure, database tables, status flow), drawn with the Diagram Design plugin in the CCS portal colours and embedded in the README, `docs/WORKFLOW.md`, `docs/DATABASE.md` and `docs/DEPLOY.md`.
+
 ## 1.0.0-rc.2 (5 Nov 2026 · Release candidate · current)
 
 - A **Home** button in the top bar, between the signed-in name and Sign out, goes back to the CCS portal. No other change to the program.

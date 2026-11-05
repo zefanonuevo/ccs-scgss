@@ -11,6 +11,12 @@ Student conference grants for the College of Computer Studies: application form,
 - `deploy/`, `docs/DEPLOY.md`: install and update on the apps VM, Apache path, backups, troubleshooting.
 - `docs/USER-MANUAL.md` (students, approvers, staff), `docs/QA-TEST-PLAN.md` (checks after each install), `docs/DATA-PRIVACY.md` (privacy paper for the Data Protection Officer), `docs/DATABASE.md` (tables, what is stored, backup and restore), `docs/WORKFLOW.md` (statuses, approval and reimbursement steps, who can do what).
 
+## Architecture
+
+![SCGSS application architecture: web app, API, rules engine, PostgreSQL, files, Google link](docs/diagrams/architecture.svg)
+
+More diagrams: [infrastructure](docs/diagrams/infrastructure.svg), [database](docs/diagrams/database.svg), [status flow](docs/diagrams/workflow.svg). Each has an editable `.html` source next to it.
+
 ## Roles
 student, adviser, chair (one per program), assoc (Associate Dean), dean, admin (Administrative Assistant), sysadmin. People are added on the **Roles** tab (or `node server/users.js add <email> <role> [name] [program]`). A signed-in DLSU account with no row is refused.
 
