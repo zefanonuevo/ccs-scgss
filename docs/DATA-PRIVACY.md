@@ -1,6 +1,6 @@
 # SCGSS Data Privacy Paper
 
-**System:** CCS Student Conference Grant Support System (SCGSS), version 1.0.0-rc.2
+**System:** CCS Student Conference Grant Support System (SCGSS), version 1.0.0-rc.3
 **Controller:** De La Salle University, College of Computer Studies (CCS)
 **Prepared:** 5 November 2026, from a review of the system's code and setup
 **Status:** Draft for the University Data Protection Officer (DPO) to review and approve. It is a working assessment, not legal advice. Items marked **[confirm]** are my reading of a rule or a fact about the University that someone with authority must check before go-live.

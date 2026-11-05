@@ -1,6 +1,6 @@
 {
   "name": "ccs-scgss-server",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "private": true,
   "description": "Back end for the CCS Student Conference Grant Support System: rules, roles, records. Runs on the CCS VM behind Apache. Sign-in comes from the CCS portal.",
   "main": "index.js",
