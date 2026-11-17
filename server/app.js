@@ -101,7 +101,7 @@ function createApp({ store, engine, gas, me, config }) {
   }));
   app.get('/api/files/:id', who, (req, res) => {
     const id = String(req.params.id);
-    const f = /^f\d+$/.test(id) ? engine.db.files[id] : null;
+    const f = /^f[0-9a-f]{1,32}$/.test(id) && Object.prototype.hasOwnProperty.call(engine.db.files, id) ? engine.db.files[id] : null;
     const a = f && f.appId ? engine.byId(f.appId) : null;
     const allowed = f && (a ? engine.mayView(req.user, a) : f.byEmail === req.user.email);
     if (!allowed) return res.status(404).json({ ok: false, error: 'File not found.' });

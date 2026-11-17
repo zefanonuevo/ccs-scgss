@@ -24,7 +24,22 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
-## 1.0.0-rc.3 (5 Nov 2026 · Release candidate · current)
+## 1.0.0-rc.4 (17 Nov 2026 · Release candidate · current)
+
+Security fix (OWASP A01, broken access control). No change to how people work.
+
+### Fixed
+
+- A file can be attached only by the person who uploaded it, and only while it is not attached to any application. Before this, a signed-in student could name another person's file id in a new application, a resubmission, a post-activity report or a message, and the file moved to their application: they could open it and the owner could not. This applies to `submit`, `resubmit`, `submitPost` and `comment`.
+- File ids are random (`f` + 32 hex characters) instead of `f1`, `f2` and so on. Existing files keep their ids.
+- Opening a document records "Viewed document" only for files that belong to that application.
+- New test: `a file can be attached only by the person who uploaded it, and only once`.
+
+### Check after updating
+
+- Existing records: run `SELECT id, data->>'byEmail', app_id FROM files WHERE app_id IS NOT NULL;` and confirm each application's files were uploaded by its student, by people on its route, or by an Administrative Assistant. A file whose uploader is not on that application may have been moved by this bug.
+
+## 1.0.0-rc.3 (5 Nov 2026 · Release candidate)
 
 - Four diagrams in `docs/diagrams/` (application architecture, infrastructure, database tables, status flow), drawn with the Diagram Design plugin in the CCS portal colours and embedded in the README, `docs/WORKFLOW.md`, `docs/DATABASE.md` and `docs/DEPLOY.md`.
 

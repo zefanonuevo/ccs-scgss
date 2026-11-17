@@ -263,3 +263,34 @@ test('bulk delete, switch off and CSV import with a preview first', async (t) =>
   assert.equal(r.status, 200); assert.equal(s.store.getUser(MARIA), null); assert.deepEqual(r.body.plan.notFound, ['nobody@dlsu.edu.ph']);
   assert.equal((await bulk({ kind: 'csv', mode: 'remove', csv: 'sys@dlsu.edu.ph', apply: true })).status, 400, 'cannot delete yourself');
 });
+
+test('a file can be attached only by the person who uploaded it, and only once', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const JUAN = 'juan_cruz@dlsu.edu.ph';
+  const mfile = await s.as(MARIA).upload('maria.pdf');
+  assert.match(mfile.id, /^f[0-9a-f]{32}$/, 'file ids are random, not f1, f2, ...');
+  const m = await s.as(MARIA).act('submit', '', form(mfile, REYES)); assert.equal(m.ok, true); const mid = m.result.appId;
+  assert.equal((await s.as(JUAN).get('/api/state')).status, 200);
+  /* Juan names Maria's file in his own application */
+  assert.equal((await s.as(JUAN).act('submit', '', form({ id: mfile.id }, REYES))).ok, false, 'another student\'s file is refused on submit');
+  assert.equal((await s.as(JUAN).get('/api/files/' + mfile.id)).status, 404, 'Juan still cannot open it');
+  assert.equal((await s.as(MARIA).get('/api/files/' + mfile.id)).status, 200, 'Maria still can');
+  /* Juan's own application, then Maria's file sent as a message attachment */
+  const jfile = await s.as(JUAN).upload('juan.pdf');
+  const j = await s.as(JUAN).act('submit', '', form(jfile, REYES)); assert.equal(j.ok, true); const jid = j.result.appId;
+  const c = await s.as(JUAN).act('comment', jid, 'see attached', [mfile.id]);
+  assert.equal(c.ok, false, 'another student\'s file is refused as a message attachment');
+  assert.equal((await s.as(MARIA).get('/api/files/' + mfile.id)).status, 200);
+  /* Maria cannot reuse her own file once it is attached */
+  assert.equal((await s.as(MARIA).act('comment', mid, 'again', [mfile.id])).ok, false, 'an attached file cannot be attached again');
+  /* an unknown or inherited property name is not a file */
+  assert.equal((await s.as(JUAN).act('submit', '', form({ id: '__proto__' }, REYES))).ok, false);
+  /* a returned application cannot take another person's file as its new requirements PDF */
+  assert.equal((await s.as(REYES).act('returnApp', jid, 'fix it')).ok, true);
+  assert.equal((await s.as(JUAN).act('resubmit', jid, form({ id: mfile.id }, REYES), 'done', [])).ok, false, 'refused on resubmit');
+  /* viewing a file that belongs to another application leaves no trace in this one */
+  const before = (await (await s.as(REYES).get('/api/state')).json()).state.apps.find((a) => a.id === jid).history.length;
+  await s.as(REYES).act('markViewed', jid, mfile.id);
+  const after = (await (await s.as(REYES).get('/api/state')).json()).state.apps.find((a) => a.id === jid).history.length;
+  assert.equal(after, before, 'markViewed ignores files of other applications');
+});

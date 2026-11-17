@@ -3,6 +3,7 @@
    The rule code below (status flow, routing, skip logic, grant limits, reimbursement checks, reminders) is the code from the browser
    prototype (js/core.js v3.1.2), unchanged except where it touched browser storage, the sample accounts or the Google link.
    State lives in memory and is written to PostgreSQL after every action (one transaction). */
+const crypto = require('node:crypto');
 const R = require('../shared/rules');
 const { money, fmtT, fmtD, pad3, round2 } = R.u;
 const { PAR_DAYS, ADVISER_ROLES, EXPENSE_TYPES, REQ_POST, CHAIN, CH, ROLE_NAME, CAP, regionLabel, info, projected, dueDate, total, manilaToday, daysBetween, validateForm, nameOf } = R;
@@ -97,6 +98,10 @@ function turnErr(a,actor){
 }
 function deny(a,actor,msg){hist(a,actor,'Denied (403)',msg,'bad');sync(a,'Denied action');return {err:msg,denied:true}}
 function fileExt(n){const m=/\.[A-Za-z0-9]+$/.exec(n||'');return m?m[0].toLowerCase():'.pdf'}
+/* a file can be attached only by the person who uploaded it, and only while it is not yet attached to any application */
+function ownFile(actor,id){const m=id&&Object.prototype.hasOwnProperty.call(db.files,id)?db.files[id]:null;return m&&m.byEmail===actor.email&&!m.appId?m:null}
+const NOT_YOURS='One of the attached files could not be used. Upload it again from your own computer.';
+const badFiles=(actor,ids)=>(ids||[]).some(id=>!ownFile(actor,id));
 function lineReq(a,s){notify(a.route[s],a,'Action required: '+CH[s].verb.toLowerCase()+' grant application',a.studentName+' ('+a.program+') applied for a conference grant: '+a.conf.title+'. It now needs your decision as '+CH[s].label+': '+CH[s].verb+', Return with remarks, or Reject.','req:'+a.id+':'+a.stage+':'+a.cycle)}
 function applyForm(a,f){
   a.studentName=R.tidyName(f.name)||a.studentName;a.sid=f.sid;a.program=f.prog;a.year=f.year;
@@ -108,7 +113,7 @@ E.submit=function(actor,f){
   if(!actor||actor.role!=='student')return ERR('Only students can submit an application.');
   const errs=validateForm(f);if(errs.length)return {err:errs[0].msg,errs};
   const route=routeFor(f.prog,f.adv);if(route.err)return route;
-  const fm=db.files[f.file.id];if(!fm)return ERR('The attached file could not be found. Attach it again.');
+  const fm=ownFile(actor,f.file&&f.file.id);if(!fm)return ERR('The attached file could not be found. Attach it again.');
   const key=f.ay+'-'+f.term;db.counters[key]=(db.counters[key]||0)+1;
   const ref=key+'-'+pad3(db.counters[key]);
   const a={id:'a'+(++db.seq),ref,key,ay:f.ay,term:f.term,status:'pending',stage:0,cycle:1,studentEmail:actor.email,studentName:R.tidyName(f.name),route,
@@ -190,7 +195,7 @@ E.reject=function(actor,a,note){
   sync(a,'Rejected');return OK;
 };
 function saveClar(a,actor,fileIds){
-  return (fileIds||[]).map(id=>{const m=db.files[id];if(!m)return null;a.clar++;m.name=a.ref+'-C'+a.clar+fileExt(m.orig);m.appId=a.id;m.kind='Clarification';m.folder='Clarifications/'+a.key;m.by=actor.name;m.at=now();return id}).filter(Boolean);
+  return (fileIds||[]).map(id=>{const m=ownFile(actor,id);if(!m)return null;a.clar++;m.name=a.ref+'-C'+a.clar+fileExt(m.orig);m.appId=a.id;m.kind='Clarification';m.folder='Clarifications/'+a.key;m.by=actor.name;m.at=now();return id}).filter(Boolean);
 }
 /* everyone who may be asked a question about an application: the student, each signatory and the Administrative Assistants */
 const participants=a=>Array.from(new Set([a.studentEmail].concat(Object.keys(a.route).map(k=>a.route[k])).concat(adminsOf())));
@@ -213,6 +218,7 @@ E.comment=function(actor,a,text,fileIds,to,topic){
   if(!text&&!(fileIds&&fileIds.length))return ERR('Write a message or attach a file.');
   let rcpt=to&&to.length?to.filter(e=>e!==actor.email&&participants(a).indexOf(e)>-1):counterparts(a,actor).filter(e=>e!==actor.email);
   if(!rcpt.length)return ERR('Choose who should receive this message.');
+  if(badFiles(actor,fileIds))return ERR(NOT_YOURS);
   const ids=saveClar(a,actor,fileIds);
   a.comments.push({id:'c'+(++db.seq),at:now(),by:nm(a,actor),role:actor.role,email:actor.email,text,files:ids,to:rcpt,topic:topic||null});
   hist(a,actor,topic?'Reimbursement question':'Comment','To '+rcpt.map(nameOf).join(', ')+(topic?' ['+topic.kind+(topic.item?' · '+topic.item:'')+']':'')+': '+(text.length>150?text.slice(0,150)+'...':text)+(ids.length?' · '+ids.length+' file(s): '+ids.map(i=>db.files[i].name).join(', '):''));
@@ -224,6 +230,8 @@ E.resubmit=function(actor,a,f,reply,fileIds){
   if(a.status!=='returned')return ERR('This application was not returned.');
   reply=String(reply||'').trim();
   if(!f&&!reply)return ERR('Reply to the remarks, or edit the application, before resubmitting.');
+  if(badFiles(actor,fileIds))return ERR(NOT_YOURS);
+  if(f&&f.file&&f.file.id!==a.attach.fileId&&!ownFile(actor,f.file.id))return ERR(NOT_YOURS);
   let changed=[];
   if(f){
     f=Object.assign({},f,{ay:a.ay,term:a.term});
@@ -263,7 +271,7 @@ E.submitPost=function(actor,a,d){
   if(ct>a.grant.total)return ERR('The total of ₱'+money(ct)+' is above the approved grant of ₱'+money(a.grant.total)+', so it cannot be accepted. Reduce the amounts to ₱'+money(a.grant.total)+' or less.');
   const missing=REQ_POST.filter(r=>!d.docs[r[0]]);
   if(missing.length&&!String(d.missingNote||'').trim())return ERR('Tick every document you included, or explain what is missing: '+missing.map(m=>m[1]).join(', ')+'.');
-  const fm=db.files[d.file.id];if(!fm)return ERR('The attached file could not be found. Attach it again.');
+  const fm=ownFile(actor,d.file.id);if(!fm)return ERR('The attached file could not be found. Attach it again.');
   const n=a.post.cycle+1;
   fm.name=a.ref+'-PAR'+(n>1?'-v'+n:'')+'.pdf';fm.appId=a.id;fm.kind='Post-activity report'+(n>1?' (v'+n+')':'');fm.folder='Post-activity/'+a.key;fm.by=actor.name;fm.at=now();fm.version=n;
   const prev=a.post.fileId&&db.files[a.post.fileId];if(prev)prev.superseded=true; /* a resubmission is saved as a new version; the original stays on record */
@@ -359,12 +367,13 @@ E.autoRemind=function(){
 };
 E.markRead=function(email,id){db.notifs.forEach(n=>{if(n.to===email&&(!id||n.id===id))n.read=true});save()};
 E.markViewed=function(actor,a,fileId){
+  const f=Object.prototype.hasOwnProperty.call(db.files,fileId)?db.files[fileId]:null;if(!f||f.appId!==a.id)return;
   const k=actor.email+':'+fileId+':'+a.cycle+':'+(a.post.cycle||0);if(db.keys['view:'+k])return;db.keys['view:'+k]=1;
   const m=db.files[fileId];hist(a,actor,'Viewed document',m?m.name:fileId);a.viewed[actor.email]=a.viewed[actor.email]||{};a.viewed[actor.email][fileId]=1;save();
 };
 
   /* ---------- registering uploaded files ---------- */
-  const registerFile = (o) => locked(async () => { const id = 'f' + (++db.seq); db.files[id] = Object.assign({ id, orig: 'document.pdf', size: 0, type: 'application/pdf', by: '', at: now(), name: null, appId: null, folder: 'Unfiled', kind: '', version: 1 }, o); await persist(); return db.files[id]; });
+  const registerFile = (o) => locked(async () => { const id = 'f' + crypto.randomUUID().replace(/-/g, ''); /* random, so one file's id says nothing about another's */ db.files[id] = Object.assign({ id, orig: 'document.pdf', size: 0, type: 'application/pdf', by: '', at: now(), name: null, appId: null, folder: 'Unfiled', kind: '', version: 1 }, o); await persist(); return db.files[id]; });
 
   /* ---------- what a person may see ---------- */
   const isStaff = (u) => u.role === 'admin' || u.role === 'sysadmin';
