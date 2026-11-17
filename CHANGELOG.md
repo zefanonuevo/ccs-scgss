@@ -24,7 +24,28 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
-## 1.0.0-rc.4 (17 Nov 2026 · Release candidate · current)
+## 1.0.0-rc.5 (18 Nov 2026 · Release candidate · current)
+
+Post-activity report changes requested by the College.
+
+### Changed
+
+- **Three uploads** instead of one PDF:
+  1. One consolidated PDF with, in this order: proof of acceptance or invitation, official receipts or invoices, billing statements, itinerary receipts, peso conversion rate, Student ID. The checklist shows them numbered in that order. The student can submit with a document missing, with an explanation.
+  2. The Post-Conference Report (PDF).
+  3. The article write-up: conference title and date (prefilled, editable), conference location (filled in from the application), and a summary of the work and key learnings of 300 to 500 words (counted on the page and checked on the server), with a high-resolution poster or social media graphic (PNG, JPG or PDF, up to 20 MB). Shown on the application page and the verification screen, and written to the Sheet, for CCS News and Events.
+- Files are saved as `<ref>-PAR.pdf`, `<ref>-PCR.pdf` and `<ref>-GRAPHIC.<ext>`. On a resubmission, an upload left empty keeps the earlier version.
+- The Administrative Assistant's checklist has eight items: the six documents, the Post-Conference Report, and the article with its graphic.
+- **Per diem** removed from the expense options (application form and post-activity report). Applications and drafts from before keep their Per diem amounts.
+- **Add a receipt** is now **Add an expense**.
+- The Post-activity report description, the guidelines and the reminders describe the three uploads.
+- **RFP email:** when the Administrative Assistant records the RFP number, the student gets the College's message (greeting by name, RFP reference number, Window A or B, Finance Office at St. La Salle Hall, 5 to 10 business days, original receipts or invoices). The privacy footer stays at the end.
+
+### Note for reports already submitted
+
+- Reports submitted before rc.5 have one PDF and no article. They can still be verified: tick the Post-Conference Report and article rows, or add a remark that they were not required then.
+
+## 1.0.0-rc.4 (17 Nov 2026 · Release candidate)
 
 Security fix (OWASP A01, broken access control). No change to how people work.
 

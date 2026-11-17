@@ -26,11 +26,11 @@ An application cannot be submitted until the Dean, Associate Dean and the Chair 
 
 ## Phase 2: post-activity report and reimbursement
 
-1. **Report.** After the event, within **15 days** of its end date, the student uploads one consolidated PDF and lists the receipts (OR or invoice number, merchant, amount).
+1. **Report.** After the event, within **15 days** of its end date, the student lists each expense (OR or invoice number, merchant, amount; no Per diem) and makes three uploads: (a) one consolidated PDF with, in order, proof of acceptance or invitation, official receipts or invoices, billing statements, itinerary receipts, peso conversion rate and Student ID (a missing document is allowed with the student's explanation); (b) the Post-Conference Report (PDF); (c) an article write-up of 300 to 500 words (conference title, date, location from the application, summary of the work and key learnings) with a high-resolution poster or social media graphic. The article may be used for CCS News and Events.
 2. **Reminders.** The system emails and notifies the student 15, 7, 3 and 1 days before the due date, on the due date, and every 3 days when overdue. Each reminder is sent once (a key in `dedupe` prevents repeats).
-3. **Verify.** The Administrative Assistant ticks each document found in the PDF, checks the receipts, sets the **approved amount per item**, and either **verifies** it (status `verified`) or **returns** it with remarks. A returned report is resubmitted as a new version and the original is kept.
+3. **Verify.** The Administrative Assistant ticks each of the six documents in the PDF, the Post-Conference Report and the article with its graphic, checks the receipts, sets the **approved amount per item**, and either **verifies** it (status `verified`) or **returns** it with remarks. A returned report is resubmitted as a new version and the original is kept.
 4. **Clarify with the Dean.** The Administrative Assistant can send a question about funding source or amounts to the Dean as a message. The reply comes back as a message.
-5. **File.** The Administrative Assistant downloads the **Reimbursement Report** (one PDF with the final approved amounts and signatures), submits it to the FAO, and enters the **RFP number**. The status becomes `completed` and the student is told to check with the FAO after 5 to 10 working days.
+5. **File.** The Administrative Assistant downloads the **Reimbursement Report** (one PDF with the final approved amounts and signatures), submits it to the FAO, and enters the **RFP number**. The status becomes `completed` and the student is emailed: the request was submitted to the FAO with the RFP number; check the status at Window A or B, Finance Office, St. La Salle Hall, in about 5 to 10 business days; bring the original receipts or invoices.
 
 ## Who can do what
 

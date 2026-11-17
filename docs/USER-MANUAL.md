@@ -24,9 +24,15 @@ Your role decides what you see. If you get "Your account is not set up", ask the
 
 **If it is returned.** Read the remarks, reply or upload what is asked, and resubmit. Earlier decisions stay. If it is rejected, the application closes and you see the reason.
 
-**After the event.** Within 15 days after the event ends, upload the post-activity report and reimbursement documents as **one PDF** with your actual expenses. You get reminders by email and in the app. The Administrative Assistant may return it with questions: upload a corrected PDF, which is saved as a new version.
+**After the event.** Within 15 days after the event ends, open **Post-activity report** and submit:
+1. **Expenses to be reimbursed.** One line per expense (Add an expense): type, OR or invoice number, merchant and amount. The total cannot be more than your approved grant. Per diem is not reimbursed.
+2. **One consolidated PDF**, in this order: proof of acceptance or invitation, official receipts or invoices, billing statements, itinerary receipts, peso conversion rate, Student ID. Tick each one you included. If one is missing, you can still submit: explain why in the box.
+3. **Your Post-Conference Report** as a PDF.
+4. **The article write-up:** the conference title and date (filled in for you, change them if needed), the location (taken from your application), and a summary of your work and key learnings of 300 to 500 words, with an acknowledgment. Add a high-resolution poster or social media graphic (PNG, JPG or PDF, up to 20 MB) following the CCS brand guidelines. The College may use the article for CCS News and Events.
 
-**Reimbursement.** When verified, you see the approved amount. The Administrative Assistant files the request at the FAO. You can check with the FAO after 5 to 10 working days.
+You get reminders by email and in the app. The Administrative Assistant may return it with questions: upload only what needs correcting. A new upload is saved as a new version; an upload you leave empty keeps the earlier one.
+
+**Reimbursement.** When verified, you see the approved amount. When the Administrative Assistant submits your request to the FAO and records the Request for Payment (RFP) number, you get an email. Check the status at Window A or B, Finance Office, St. La Salle Hall, about 5 to 10 business days later, and bring the original receipts or invoices (or printed copies of electronic receipts).
 
 ## Thesis Advisers, Chairs, Associate Dean, Dean
 1. You get an email and an in-app notice when it is your turn. Open the application, read the details and documents (open the PDF in the preview).

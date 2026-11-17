@@ -207,7 +207,7 @@ function dashStudent(){
   mine.forEach(a=>{
     if(a.status==='returned')needs.push('<div class="callout"><b>'+a.ref+'</b> was returned by your '+CH[a.returned.role].label+': "'+esc(a.returned.why)+'" <button class="btn sm" data-open="'+a.id+'" style="margin-left:8px">Reply or edit</button></div>');
     if(a.status==='approved'&&a.post.status==='none'){const left=C.daysBetween(today,C.dueDate(a)),late=left<0;
-      needs.push('<div class="callout '+(late?'':'info')+'"><b>'+a.ref+'</b> is approved. Submit the post-activity report and reimbursement requirements (one PDF) by <b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after '+fmtD(a.conf.end)+')'+(today>=a.conf.end?(late?'. <b>It is overdue by '+(-left)+' day'+(left===-1?'':'s')+'.</b>':'. '+left+' day'+(left===1?'':'s')+' left.'):'. You will get a reminder by email and in-app.')+' <button class="btn sm" data-act="gopar" data-id="'+a.id+'" style="margin-left:8px">Submit report</button></div>')}
+      needs.push('<div class="callout '+(late?'':'info')+'"><b>'+a.ref+'</b> is approved. Submit the post-activity report (consolidated PDF, Post-Conference Report, and article with graphic) by <b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after '+fmtD(a.conf.end)+')'+(today>=a.conf.end?(late?'. <b>It is overdue by '+(-left)+' day'+(left===-1?'':'s')+'.</b>':'. '+left+' day'+(left===1?'':'s')+' left.'):'. You will get a reminder by email and in-app.')+' <button class="btn sm" data-act="gopar" data-id="'+a.id+'" style="margin-left:8px">Submit report</button></div>')}
     if(a.status==='approved'&&a.post.status==='returned')needs.push('<div class="callout"><b>'+a.ref+'</b> post-activity requirements were returned: "'+esc(a.post.verify&&a.post.verify.overall||'see remarks')+'" <button class="btn sm" data-act="gopar" data-id="'+a.id+'" style="margin-left:8px">Correct and resubmit</button></div>');
   });
   const cnt=g=>mine.filter(a=>C.info(a).group===g).length;
@@ -318,7 +318,7 @@ function actionHTML(a){
     if(a.status==='returned')h+='<div class="card"><h3>Returned to you</h3><div class="callout"><b>'+esc(a.returned.by)+'</b> ('+CH[a.returned.role].label+'): '+esc(a.returned.why)+'</div><p class="muted" style="margin:8px 0">Earlier decisions are kept. After you resubmit, the file goes back to the '+CH[a.returned.role].label+', not to the start.</p>'+
       '<div class="field"><label for="r_text">Your reply</label><textarea id="r_text" rows="3" placeholder="Explain what you changed or attached"></textarea></div><div class="field" style="margin-top:8px"><label for="r_files">Attach documents (optional)</label><input id="r_files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"></div><div class="msg" id="r_msg" style="color:var(--bad);font-size:12px"></div>'+
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button class="btn sec" data-act="editapp">Edit the application</button><button class="btn" data-act="resubmit">Resubmit with my reply</button></div></div>';
-    else if(a.status==='approved'&&['none','returned'].indexOf(a.post.status)>-1)h+='<div class="card"><h3>Next: post-activity report</h3><p>Due <b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after the event). One consolidated PDF with all the documents, plus the receipts you are claiming.</p><button class="btn" style="margin-top:8px" data-act="gopar" data-id="'+a.id+'">'+(a.post.status==='returned'?'Correct and resubmit the report':'Submit post-activity report')+'</button></div>';
+    else if(a.status==='approved'&&['none','returned'].indexOf(a.post.status)>-1)h+='<div class="card"><h3>Next: post-activity report</h3><p>Due <b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after the event). Three uploads: a consolidated PDF of your documents, the Post-Conference Report (PDF), and an article of 300 to 500 words with a poster or social media graphic. List the expenses you are claiming.</p><button class="btn" style="margin-top:8px" data-act="gopar" data-id="'+a.id+'">'+(a.post.status==='returned'?'Correct and resubmit the report':'Submit post-activity report')+'</button></div>';
     else h+='<div class="card"><h3>Status</h3><p>'+esc(i.label)+'. '+(a.status==='pending'?'Waiting for the '+i.by+'.':a.status==='completed'?'You may check with the FAO after 5 to 10 working days for an update.':'')+'</p></div>';
   }
   else if(CHAIN.some(k=>a.route[k]===me)){
@@ -341,16 +341,24 @@ function actionHTML(a){
 function postHTML(a){
   if(a.post.status==='none')return '';
   const p=a.post,v=p.verify,ok=v&&!v.draft;
-  const flagged=v&&v.returns?C.REQ_POST.filter(r=>v.returns[r[0]]):[];
+  const flagged=v&&v.returns?C.REQ_CHECK.filter(r=>v.returns[r[0]]):[];
   return '<div class="card"><h3>Post-activity report <span class="pill '+(p.status==='verified'?'p-ok':p.status==='returned'?'p-warn':'p-wait')+'">'+p.status+'</span></h3>'+
    '<p class="muted">Submitted '+fmtT(p.submittedAt)+(p.cycle>1?' (version '+p.cycle+'; earlier versions stay on record)':'')+'</p>'+
    (p.status==='returned'&&flagged.length?'<div class="callout" style="margin-top:8px"><b>Requirements returned:</b> '+flagged.map(r=>esc(r[1])+(v.remarks[r[0]]?' ('+esc(v.remarks[r[0]])+')':'')).join('; ')+'</div>':'')+
    '<div class="tbl" style="margin-top:8px"><table><thead><tr><th>Expense</th><th>OR or invoice no.</th><th>Merchant</th><th class="r">For reimbursement (₱)</th>'+(ok?'<th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th>':'')+'</tr></thead><tbody>'+
    p.items.map((l,i)=>{const w=ok?v.items[i]:null;return '<tr><td>'+esc(l.type)+'</td><td class="mono">'+esc(w?w.or:l.or)+'</td><td>'+esc(w?w.merchant:l.merchant)+'</td><td class="r num">'+money(l.amount)+'</td>'+(w?'<td class="r num">'+money(w.approved)+'</td><td>'+esc(w.fund)+'</td><td class="muted">'+esc(w.why)+'</td>':'')+'</tr>'}).join('')+
    '</tbody><tfoot><tr><th colspan="3">Total (approved grant ₱'+money(a.grant.total)+')</th><th class="r num">'+money(p.claimedTotal)+'</th>'+(ok?'<th class="r num">'+money(v.total)+'</th><th colspan="2"></th>':'')+'</tr></tfoot></table></div>'+
-   '<h4 style="margin-top:12px">Documents the student says are in the PDF</h4><p class="muted">'+C.REQ_POST.map(r=>(p.docs[r[0]]?'✓ ':'✗ ')+r[1]).join(' · ')+'</p>'+(p.missingNote?'<p class="muted">Note: '+esc(p.missingNote)+'</p>':'')+'</div>';
+   '<h4 style="margin-top:12px">Documents the student says are in the consolidated PDF</h4><ol class="muted">'+C.REQ_POST.map(r=>'<li>'+(p.docs[r[0]]?'✓ ':'✗ ')+r[1]+'</li>').join('')+'</ol>'+(p.missingNote?'<p class="muted">Explanation for missing documents: '+esc(p.missingNote)+'</p>':'')+articleHTML(a)+'</div>';
 }
-C.postHTML=postHTML;
+/* the article write-up, ready to copy for CCS News and Events */
+function articleHTML(a){
+  const ar=a.post.article;if(!ar)return '';
+  const g=a.post.posterId&&D().files[a.post.posterId];
+  return '<h4 style="margin-top:12px">Article write-up <span class="muted">· '+C.wordCount(ar.summary)+' words · for News and Events</span></h4><dl class="who"><dt>Conference</dt><dd>'+esc(ar.title)+'</dd><dt>Date</dt><dd>'+esc(ar.date)+'</dd><dt>Location</dt><dd>'+esc(ar.location)+'</dd></dl>'+
+   '<div class="article-text" style="white-space:pre-wrap;margin-top:6px">'+esc(ar.summary)+'</div>'+
+   (g?'<p style="margin-top:8px"><button class="btn sm" data-act="preview" data-id="'+g.id+'">Preview the graphic</button> <button class="btn sm sec" data-act="download" data-id="'+g.id+'">Download '+esc(g.name)+'</button></p>':'');
+}
+C.postHTML=postHTML;C.articleHTML=articleHTML;
 R.app=function(){
   const a=D().apps.find(x=>x.id===state.curApp),box=$('#appBody');
   if(!a||!canView(a)){box.innerHTML='<div class="callout bad">You do not have access to this application.</div><button class="btn sec" data-act="back" style="margin-top:10px">Back</button>';return}
@@ -492,7 +500,7 @@ function writeForm(f){
   const set=(id,val)=>{const el=$('#'+id);if(el&&val!=null)el.value=val};
   set('f_ay',f.ay);set('f_term',f.term);set('f_name',f.name);set('f_sid',f.sid);set('f_prog',f.prog);set('f_year',f.year);set('f_adv',f.adv);set('f_conf',f.conf);set('f_start',f.start);set('f_end',f.end);set('f_venue',f.venue);set('f_org',f.org);set('f_etype',f.etype);set('f_scope',f.scope);
   set('f_class',f.cls);set('f_ptype',f.ptype);set('f_index',f.index);set('f_title',f.title);set('f_cof',f.cof);set('f_cos',f.cos);
-  (f.exp||[]).forEach((x,i)=>{$$('.ex')[i].value=x.amount;$$('.exr')[i].value=x.remarks||''});
+  (f.exp||[]).forEach((x,i)=>{const ex=$$('.ex')[i],er=$$('.exr')[i];if(!ex)return;ex.value=x.amount;er.value=x.remarks||''});
   FS.file=f.file||null;$('#f_attconfirm').checked=!!f.attConfirm;$('#f_privacy').checked=!!f.privacy;$('#f_brand').checked=!!f.brand;
   fileUI();expUpdate();refUpdate();
 }
@@ -580,13 +588,13 @@ ACT.fnew=()=>{FS.done=null;FS.mode='new';FS.appId=null;FS.file=null;R.form()};
 ACT.editapp=()=>{FS.done=null;FS.mode='edit';FS.appId=state.curApp;show('form',true)};
 
 /* ---------- post-activity report (student) ---------- */
-const PS={appId:null,file:null,done:null,rows:[]};
+const PS={appId:null,file:null,report:null,poster:null,done:null,rows:[]};
 const blankRow=type=>({type:type||C.EXPENSE_TYPES[0],or:'',merchant:'',amount:''});
 function parRow(r,i){
   return '<tr><td><select class="pr-type" aria-label="Expense type">'+C.EXPENSE_TYPES.map(t=>opt(t,t,r.type===t)).join('')+'</select></td>'+
    '<td><input class="pr-or" aria-label="OR or invoice number" value="'+esc(r.or)+'" maxlength="40"></td><td><input class="pr-mer" aria-label="Merchant name" value="'+esc(r.merchant)+'" maxlength="80"></td>'+
    '<td class="r"><input class="pr-amt" type="number" min="0" step="0.01" aria-label="Amount to be reimbursed in pesos" value="'+esc(r.amount)+'" style="width:120px;text-align:right"></td>'+
-   '<td><button type="button" class="btn sm ghost" data-act="parrm" data-i="'+i+'" aria-label="Remove this receipt">Remove</button></td></tr>';
+   '<td><button type="button" class="btn sm ghost" data-act="parrm" data-i="'+i+'" aria-label="Remove this expense">Remove</button></td></tr>';
 }
 const readRows=()=>$$('#parRows tr').map(tr=>({type:tr.querySelector('.pr-type').value,or:tr.querySelector('.pr-or').value,merchant:tr.querySelector('.pr-mer').value,amount:tr.querySelector('.pr-amt').value}));
 function renderRows(){$('#parRows').innerHTML=PS.rows.map(parRow).join('');parCalc()}
@@ -603,22 +611,32 @@ R.par=function(){
   if(!open.length){body.innerHTML='<div class="callout">You have no approved grant waiting for a post-activity report.</div>'+(other.length?'<div class="card" style="margin-top:12px"><h3>Already submitted</h3>'+listTable(other,{noStudent:true})+'</div>':'')+'<p style="margin-top:12px"><button class="btn sec" data-go="dash">Back to dashboard</button></p>';return}
   const a=D().apps.find(x=>x.id===PS.appId),p=a.post,v=p.verify;
   if(a.id!==prevApp||!PS.rows.length)PS.rows=p.items&&p.items.length?p.items.map(x=>({type:x.type,or:x.or,merchant:x.merchant,amount:x.amount})):a.expenses.filter(x=>x.amount>0).map(x=>blankRow(x.type));
-  const flagged=v&&v.returns?C.REQ_POST.filter(r=>v.returns[r[0]]):[];
+  const flagged=v&&v.returns?C.REQ_CHECK.filter(r=>v.returns[r[0]]):[];
   const left=C.daysBetween(C.manilaToday(),C.dueDate(a));
+  const ar=Object.assign({title:a.conf.title,date:fmtD(a.conf.start)+(a.conf.end&&a.conf.end!==a.conf.start?' to '+fmtD(a.conf.end):''),summary:''},p.article||{});
   body.innerHTML='<div class="screen"><div class="screen-bar"><b>Post-activity report</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body">'+
    (open.length>1?'<div class="field"><label for="p_app">Application</label><select id="p_app">'+open.map(x=>opt(x.id,x.ref+' · '+x.conf.title,x.id===a.id)).join('')+'</select></div>':'')+
    '<div class="grid g2"><dl class="who"><dt>Conference</dt><dd>'+esc(a.conf.title)+'</dd><dt>Dates</dt><dd>'+fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+'</dd><dt>Due</dt><dd><b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after the end date)'+(C.manilaToday()>=a.conf.end?(left<0?' · <b style="color:var(--bad)">overdue by '+(-left)+' day'+(left===-1?'':'s')+'</b>':' · '+left+' day'+(left===1?'':'s')+' left'):'')+'</dd><dt>Approved grant</dt><dd><b>₱'+money(a.grant.total)+'</b></dd></dl>'+
-   '<div class="callout info"><b>Reminder: put all post-conference documents in ONE consolidated PDF:</b><ol>'+C.REQ_POST.map(r=>'<li>'+r[1]+'</li>').join('')+'</ol></div></div>'+
-   (a.post.status==='returned'?'<div class="callout"><b>Returned by the Administrative Assistant:</b> '+esc(v&&v.overall||'see the remarks below')+(flagged.length?'<br><b>Requirements to clarify or resubmit:</b>':'')+(v?'<ul>'+flagged.map(r=>'<li>'+r[1]+(v.remarks[r[0]]?': '+esc(v.remarks[r[0]]):'')+'</li>').join('')+C.REQ_POST.filter(r=>!v.returns[r[0]]&&v.remarks[r[0]]).map(r=>'<li>'+r[1]+': '+esc(v.remarks[r[0]])+'</li>').join('')+'</ul>':'')+'<span class="muted">Upload the corrected PDF. It is saved as a new version (for example '+esc(a.ref)+'-PAR-v'+(p.cycle+1)+') and the original stays on record.</span></div>':'')+
-   '<h3>Receipts and amounts to be reimbursed</h3><p class="muted">List each receipt or invoice. Amounts are in pesos. The total cannot be more than your approved grant of ₱'+money(a.grant.total)+'.</p>'+
+   '<div class="callout info"><b>Three uploads:</b><ol><li>One consolidated PDF of your documents, in the order listed below.</li><li>Your Post-Conference Report (PDF).</li><li>An article of '+C.ARTICLE_WORDS[0]+' to '+C.ARTICLE_WORDS[1]+' words, typed below, with a high-resolution poster or social media graphic following the CCS brand guidelines.</li></ol></div></div>'+
+   (a.post.status==='returned'?'<div class="callout"><b>Returned by the Administrative Assistant:</b> '+esc(v&&v.overall||'see the remarks below')+(flagged.length?'<br><b>Requirements to clarify or resubmit:</b>':'')+(v?'<ul>'+flagged.map(r=>'<li>'+r[1]+(v.remarks[r[0]]?': '+esc(v.remarks[r[0]]):'')+'</li>').join('')+C.REQ_CHECK.filter(r=>!v.returns[r[0]]&&v.remarks[r[0]]).map(r=>'<li>'+r[1]+': '+esc(v.remarks[r[0]])+'</li>').join('')+'</ul>':'')+'<span class="muted">Upload only what needs correcting. A new upload is saved as a new version (for example '+esc(a.ref)+'-PAR-v'+(p.cycle+1)+'.pdf); an upload you leave empty keeps the earlier version. Earlier versions stay on record.</span></div>':'')+
+   '<h3>Expenses to be reimbursed</h3><p class="muted">List each expense with its official receipt or invoice. Amounts are in pesos. The total cannot be more than your approved grant of ₱'+money(a.grant.total)+'.</p>'+
    '<div class="tbl"><table><thead><tr><th>Expense</th><th>OR or invoice no.</th><th>Merchant name</th><th class="r">Amount (₱)</th><th></th></tr></thead><tbody id="parRows"></tbody><tfoot><tr><th colspan="3">Total to be reimbursed</th><th class="r num" id="pl_total">0</th><th></th></tr></tfoot></table></div>'+
-   '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px"><button type="button" class="btn sec sm" data-act="paradd">Add a receipt</button><span id="pl_note" class="muted" data-grant="'+a.grant.total+'"></span></div><div class="msg" id="p_msg_lines" style="color:var(--bad);font-size:12px"></div>'+
-   '<h3 style="margin-top:16px">Documents included in the PDF</h3><div class="chk-grid">'+C.REQ_POST.map(r=>'<label class="chk"><input type="checkbox" class="pl-doc" data-k="'+r[0]+'"'+((p.docs||{})[r[0]]?' checked':'')+'><span>'+r[1]+'</span></label>').join('')+'</div>'+
-   '<div class="field" style="margin-top:8px"><label for="p_missing">If something is not included, say why</label><textarea id="p_missing" rows="2">'+esc(p.missingNote||'')+'</textarea></div>'+
-   '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px"><input id="p_file" type="file" accept="application/pdf,.pdf" hidden><button type="button" class="btn sec" data-act="parpick">Choose the consolidated PDF</button><span id="p_attname" class="muted">No file chosen.</span><button type="button" class="btn sm sec" id="p_prev" data-act="preview" data-id="" hidden>Preview</button></div>'+
-   '<p class="muted" style="margin-top:6px">Saved as <b class="mono">'+esc(a.ref)+'-PAR'+(p.cycle?'-v'+(p.cycle+1):'')+'.pdf</b>, in the designated Google Drive folder.</p>'+viewerHTML()+
+   '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px"><button type="button" class="btn sec sm" data-act="paradd">Add an expense</button><span id="pl_note" class="muted" data-grant="'+a.grant.total+'"></span></div><div class="msg" id="p_msg_lines" style="color:var(--bad);font-size:12px"></div>'+
+   '<h3 style="margin-top:20px">1. Consolidated PDF</h3><p class="muted">Put these documents in ONE PDF, in this order, and tick each one you included. You can submit even if a document is missing: explain why below.</p>'+
+   '<ol class="chk-list">'+C.REQ_POST.map(r=>'<li><label class="chk"><input type="checkbox" class="pl-doc" data-k="'+r[0]+'"'+((p.docs||{})[r[0]]?' checked':'')+'><span>'+r[1]+'</span></label></li>').join('')+'</ol>'+
+   '<div class="field" style="margin-top:8px"><label for="p_missing">If a document is not included, explain why</label><textarea id="p_missing" rows="2">'+esc(p.missingNote||'')+'</textarea></div>'+
+   upRow('file','Choose the consolidated PDF','application/pdf,.pdf',p.fileId)+
+   '<p class="muted" style="margin-top:6px">Saved as <b class="mono">'+esc(a.ref)+'-PAR'+(p.cycle?'-v'+(p.cycle+1):'')+'.pdf</b> in the designated Google Drive folder.</p>'+
+   '<h3 style="margin-top:20px">2. Post-Conference Report</h3><p class="muted">Your report on the conference, as one PDF.</p>'+
+   upRow('report','Choose the Post-Conference Report (PDF)','application/pdf,.pdf',p.reportId)+
+   '<h3 style="margin-top:20px">3. Article write-up</h3><p class="muted">For the CCS website or newsletter, and for CCS News and Events: event details, a summary of your work, key learnings and an acknowledgment.</p>'+
+   '<div class="row"><div class="field"><label for="p_atitle">Conference title</label><input id="p_atitle" maxlength="200" value="'+esc(ar.title)+'"></div><div class="field"><label for="p_adate">Conference date</label><input id="p_adate" maxlength="80" value="'+esc(ar.date)+'"></div></div>'+
+   '<div class="field"><label for="p_aloc">Conference location</label><input id="p_aloc" value="'+esc(a.conf.venue+(a.conf.scope?' ('+C.regionLabel(a.conf.scope)+')':''))+'" readonly><small>Filled in from your application.</small></div>'+
+   '<div class="field"><label for="p_asum">Summary of the work and key learnings ('+C.ARTICLE_WORDS[0]+' to '+C.ARTICLE_WORDS[1]+' words)</label><textarea id="p_asum" rows="10">'+esc(ar.summary)+'</textarea><small id="p_awords" aria-live="polite"></small></div>'+
+   '<p class="muted" style="margin-top:8px"><b>Poster or social media graphic:</b> high resolution, following the CCS brand guidelines. PNG, JPG or PDF, up to 20 MB.</p>'+
+   upRow('poster','Choose the poster or graphic','image/png,image/jpeg,application/pdf,.png,.jpg,.jpeg,.pdf',p.posterId)+viewerHTML()+
    '<div id="p_err" class="callout bad" hidden style="margin-top:10px"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn" id="parSubmit" data-act="parsubmit">Submit post-activity report</button></div></div></div>';
-  PS.file=null;renderRows();
+  PS.file=null;PS.report=null;PS.poster=null;renderRows();words();
 };
 function parCalc(){
   const note=$('#pl_note');if(!note)return;
@@ -631,18 +649,27 @@ function parCalc(){
 document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('pr-amt'))parCalc()});
 document.addEventListener('change',e=>{
   if(e.target.id==='p_app'){PS.appId=e.target.value;PS.rows=[];R.par()}
-  if(e.target.id==='p_file'){const f=e.target.files[0];if(!f)return;if(!/\.pdf$/i.test(f.name)||f.size>10*1048576){toast('The report must be a single PDF under 10 MB.');e.target.value='';return}
-    C.uploadFile(f).then(m=>{PS.file={id:m.id,orig:m.orig,size:m.size};parFile()}).catch(err=>toast(err.message))}
+  if(e.target.classList&&e.target.classList.contains('p-up')){const k=e.target.dataset.k,f=e.target.files[0];if(!f)return;
+    const img=k==='poster',okType=img?/\.(pdf|png|jpe?g)$/i.test(f.name):/\.pdf$/i.test(f.name),max=(img?20:10)*1048576;
+    if(!okType||f.size>max){toast(img?'The graphic must be a PNG, JPG or PDF up to 20 MB.':'This upload must be a single PDF up to 10 MB.');e.target.value='';return}
+    C.uploadFile(f).then(m=>{PS[k]={id:m.id,orig:m.orig,size:m.size};parFile(k)}).catch(err=>toast(err.message))}
 });
-function parFile(){const f=PS.file;$('#p_attname').textContent=f?f.orig+' ('+fmtSize(f.size)+')':'No file chosen.';$('#p_prev').hidden=!f;$('#p_prev').dataset.id=f?f.id:''}
-ACT.parpick=()=>$('#p_file').click();
+/* one upload control: k is file | report | poster; prevId is the version already on record */
+function upRow(k,label,accept,prevId){
+  const prev=prevId&&D().files[prevId];
+  return '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px"><input id="p_up_'+k+'" class="p-up" data-k="'+k+'" type="file" accept="'+accept+'" hidden><button type="button" class="btn sec" data-act="parpick" data-k="'+k+'">'+label+'</button><span id="p_name_'+k+'" class="muted">'+(prev?'No new file. Leave empty to keep '+esc(prev.name)+'.':'No file chosen.')+'</span><button type="button" class="btn sm sec" id="p_prev_'+k+'" data-act="preview" data-id="" hidden>Preview</button></div>';
+}
+function parFile(k){const f=PS[k],el=$('#p_name_'+k);if(!el)return;if(f)el.textContent=f.orig+' ('+fmtSize(f.size)+')';$('#p_prev_'+k).hidden=!f;$('#p_prev_'+k).dataset.id=f?f.id:''}
+function words(){const t=$('#p_asum'),o=$('#p_awords');if(!t||!o)return;const n=C.wordCount(t.value),lo=C.ARTICLE_WORDS[0],hi=C.ARTICLE_WORDS[1];o.textContent=n+' words'+(n<lo?' · '+(lo-n)+' more needed':n>hi?' · '+(n-hi)+' over the limit':' · within '+lo+' to '+hi);o.style.color=n<lo||n>hi?'var(--bad)':''}
+document.addEventListener('input',e=>{if(e.target.id==='p_asum')words()});
+ACT.parpick=t=>$('#p_up_'+t.dataset.k).click();
 ACT.parsubmit=async function(){
   const a=D().apps.find(x=>x.id===PS.appId),docs={};$$('.pl-doc').forEach(c=>docs[c.dataset.k]=c.checked);
-  const res=await E.submitPost(u(),a,{file:PS.file,items:readRows(),docs,missingNote:$('#p_missing').value});
+  const res=await E.submitPost(u(),a,{file:PS.file,report:PS.report,poster:PS.poster,article:{title:$('#p_atitle').value,date:$('#p_adate').value,summary:$('#p_asum').value},items:readRows(),docs,missingNote:$('#p_missing').value});
   const a2=D().apps.find(x=>x.id===a.id);
   if(res.err){const b=$('#p_err');b.hidden=false;b.textContent=res.err;b.scrollIntoView({block:'center'});return}
-  PS.done='<div class="screen"><div class="screen-bar"><b>Report submitted</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body"><div class="callout ok"><b>Submitted.</b> Saved as <span class="mono">'+esc(D().files[a2.post.fileId].name)+'</span>. The Administrative Assistant was notified and will verify your documents.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-open="'+a.id+'">Open the application</button><button class="btn sec" data-act="parnew">Back</button></div></div></div>';
-  PS.file=null;PS.rows=[];R.par();
+  PS.done='<div class="screen"><div class="screen-bar"><b>Report submitted</b><span class="mono">'+esc(a.ref)+'</span></div><div class="screen-body"><div class="callout ok"><b>Submitted.</b> Saved as <span class="mono">'+[a2.post.fileId,a2.post.reportId,a2.post.posterId].filter(id=>id&&D().files[id]).map(id=>esc(D().files[id].name)).join(', ')+'</span>. The Administrative Assistant was notified and will verify your documents.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-open="'+a.id+'">Open the application</button><button class="btn sec" data-act="parnew">Back</button></div></div></div>';
+  PS.file=null;PS.report=null;PS.poster=null;PS.rows=[];R.par();
 };
 ACT.parnew=()=>{PS.done=null;R.par()};
 

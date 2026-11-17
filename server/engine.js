@@ -6,7 +6,7 @@
 const crypto = require('node:crypto');
 const R = require('../shared/rules');
 const { money, fmtT, fmtD, pad3, round2 } = R.u;
-const { PAR_DAYS, ADVISER_ROLES, EXPENSE_TYPES, REQ_POST, CHAIN, CH, ROLE_NAME, CAP, regionLabel, info, projected, dueDate, total, manilaToday, daysBetween, validateForm, nameOf } = R;
+const { PAR_DAYS, ADVISER_ROLES, EXPENSE_TYPES, REQ_POST, REQ_CHECK, ARTICLE_WORDS, wordCount, CHAIN, CH, ROLE_NAME, CAP, regionLabel, info, projected, dueDate, total, manilaToday, daysBetween, validateForm, nameOf } = R;
 
 async function createEngine({ store, gas }) {
   const now = () => Date.now();
@@ -172,7 +172,7 @@ E.approveGrant=function(actor,a,o){
   a.grant={total:tot,fund,by:actor.name,byEmail:actor.email,at:now(),signature:o.signature};
   a.decisions.dean={d:'approved',at:now(),by:actor.name,email:actor.email};a.status='approved';
   hist(a,actor,'Approved grant','Approved ₱'+money(tot)+' · funding source: '+fund+' · e-signed.'+(o.note?' "'+o.note+'"':''));
-  notify(a.studentEmail,a,'Your grant is approved','Good news: the Dean approved your conference grant of ₱'+money(tot)+' (funding source: '+fund+'). After the conference, submit the post-activity report and reimbursement requirements (one PDF) within '+PAR_DAYS+' days after '+fmtD(a.conf.end)+' (by '+fmtD(dueDate(a))+'). You will get reminders by email and in-app.','appr:'+a.id);
+  notify(a.studentEmail,a,'Your grant is approved','Good news: the Dean approved your conference grant of ₱'+money(tot)+' (funding source: '+fund+'). After the conference, submit the post-activity report within '+PAR_DAYS+' days after '+fmtD(a.conf.end)+' (by '+fmtD(dueDate(a))+'): one consolidated PDF of your documents, the Post-Conference Report (PDF), and an article of '+ARTICLE_WORDS[0]+' to '+ARTICLE_WORDS[1]+' words with a poster or social media graphic. You will get reminders by email and in-app.','appr:'+a.id);
   notify(adminsOf(),a,'Grant approved','Grant approved for '+a.studentName+': ₱'+money(tot)+' ('+fund+'). You will break it down by receipt at reimbursement. Expect a post-activity report by '+fmtD(dueDate(a))+'.','apprfyi:'+a.id);
   sync(a,'Grant approved');return OK;
 };
@@ -251,34 +251,54 @@ E.resubmit=function(actor,a,f,reply,fileIds){
   lineReq(a,s);
   sync(a,'Resubmitted');return OK;
 };
-/* d = {file, docs, missingNote, items:[{type, or, merchant, amount}]}. Amounts are in pesos. */
+/* d = {file, report, poster (uploads), article:{title, date, summary}, docs, missingNote, items:[{type, or, merchant, amount}]}. Amounts are in pesos. */
 E.submitPost=function(actor,a,d){
   if(actor.email!==a.studentEmail)return deny(a,actor,'Only the applicant can submit the post-activity report.');
   if(a.status!=='approved'||a.post.status==='submitted')return ERR('A post-activity report can only be submitted for an approved grant that is not already under review.');
-  if(!d.file)return ERR('Attach the single consolidated PDF.');
+  const p=a.post,n=p.cycle+1;
+  /* the three uploads. On a resubmission, an upload left empty keeps the earlier version. */
+  const pick=(f,prevId,label)=>{if(f&&f.id){const m=ownFile(actor,f.id);return m?{m}:{err:'The '+label+' could not be found. Upload it again.'}}return prevId&&db.files[prevId]?{keep:prevId}:{err:'Upload the '+label+'.'}};
+  const pdf=pick(d.file,p.fileId,'consolidated PDF');if(pdf.err)return ERR(pdf.err);
+  const rep=pick(d.report,p.reportId,'Post-Conference Report (PDF)');if(rep.err)return ERR(rep.err);
+  const gfx=pick(d.poster,p.posterId,'poster or social media graphic');if(gfx.err)return ERR(gfx.err);
+  if(pdf.m&&pdf.m.type!=='application/pdf')return ERR('The consolidated file must be a PDF.');
+  if(rep.m&&rep.m.type!=='application/pdf')return ERR('The Post-Conference Report must be a PDF.');
+  if(gfx.m&&['image/png','image/jpeg','application/pdf'].indexOf(gfx.m.type)<0)return ERR('The poster or social media graphic must be a PNG, JPG or PDF.');
+  if(new Set([pdf.m,rep.m,gfx.m].filter(Boolean)).size!==[pdf.m,rep.m,gfx.m].filter(Boolean).length)return ERR('Use a different file for each of the three uploads.');
+  /* the article write-up */
+  const ar=d.article||{},title=String(ar.title||'').trim(),date=String(ar.date||'').trim(),summary=String(ar.summary||'').trim(),words=wordCount(summary);
+  if(!title)return ERR('Enter the conference title for the article.');
+  if(title.length>200)return ERR('The conference title is too long.');
+  if(!date)return ERR('Enter the conference date for the article.');
+  if(date.length>80)return ERR('The conference date is too long.');
+  if(words<ARTICLE_WORDS[0]||words>ARTICLE_WORDS[1])return ERR('The article summary must be '+ARTICLE_WORDS[0]+' to '+ARTICLE_WORDS[1]+' words. It has '+words+'.');
+  if(summary.length>6000)return ERR('The article summary is too long.');
+  /* expenses */
   const items=[];
   for(const it of (d.items||[])){
     const amt=it.amount===''||it.amount==null?0:Number(it.amount),or=String(it.or||'').trim(),mer=String(it.merchant||'').trim();
     if(!amt&&!or&&!mer)continue;
     if(!(amt>=0))return ERR('Amounts cannot be negative.');
-    if(EXPENSE_TYPES.indexOf(it.type)<0)return ERR('Choose the expense type for every receipt.');
-    if(!(amt>0))return ERR('Enter the amount for receipt '+(or||mer)+'.');
-    if(!or)return ERR('Enter the OR or invoice number for the '+it.type+' receipt of ₱'+money(amt)+'.');
+    if(EXPENSE_TYPES.indexOf(it.type)<0)return ERR('Choose the expense type for every expense.');
+    if(!(amt>0))return ERR('Enter the amount for expense '+(or||mer)+'.');
+    if(!or)return ERR('Enter the OR or invoice number for the '+it.type+' expense of ₱'+money(amt)+'.');
     if(!mer)return ERR('Enter the merchant name for '+or+'.');
     items.push({type:it.type,or,merchant:mer,amount:round2(amt)});
   }
   const ct=total(items,'amount');if(!(ct>0))return ERR('Enter at least one expense taken from your receipts or invoices.');
   if(ct>a.grant.total)return ERR('The total of ₱'+money(ct)+' is above the approved grant of ₱'+money(a.grant.total)+', so it cannot be accepted. Reduce the amounts to ₱'+money(a.grant.total)+' or less.');
-  const missing=REQ_POST.filter(r=>!d.docs[r[0]]);
-  if(missing.length&&!String(d.missingNote||'').trim())return ERR('Tick every document you included, or explain what is missing: '+missing.map(m=>m[1]).join(', ')+'.');
-  const fm=ownFile(actor,d.file.id);if(!fm)return ERR('The attached file could not be found. Attach it again.');
-  const n=a.post.cycle+1;
-  fm.name=a.ref+'-PAR'+(n>1?'-v'+n:'')+'.pdf';fm.appId=a.id;fm.kind='Post-activity report'+(n>1?' (v'+n+')':'');fm.folder='Post-activity/'+a.key;fm.by=actor.name;fm.at=now();fm.version=n;
-  const prev=a.post.fileId&&db.files[a.post.fileId];if(prev)prev.superseded=true; /* a resubmission is saved as a new version; the original stays on record */
-  a.post=Object.assign({},a.post,{status:'submitted',cycle:n,fileId:fm.id,items:items.map((x,i)=>Object.assign({id:'i'+(i+1)},x)),claimedTotal:ct,docs:d.docs,missingNote:d.missingNote||'',submittedAt:now(),verify:null});
-  hist(a,actor,n>1?'Post-activity report resubmitted':'Post-activity report submitted','Total for reimbursement ₱'+money(ct)+' across '+items.length+' receipt(s). PDF saved as '+fm.name+'.');
-  notify(adminsOf(),a,'Action required: verify post-activity report',a.studentName+' submitted the post-activity report for '+a.conf.title+'. Tick the documents included, check each receipt, set the approved amount per item, and verify.','par:'+a.id+':'+n);
-  notify(a.studentEmail,a,'Post-activity report received','Your report was received (saved as '+fm.name+'). The Administrative Assistant will verify it.','parc:'+a.id+':'+n);
+  const docs=d.docs||{},missing=REQ_POST.filter(r=>!docs[r[0]]);
+  if(missing.length&&!String(d.missingNote||'').trim())return ERR('Explain why these documents are not in the consolidated PDF: '+missing.map(m=>m[1]).join(', ')+'.');
+  const v=n>1?'-v'+n:'',saved=[];
+  const take=(x,prevId,name,kind)=>{if(!x.m)return x.keep;const fm=x.m,prev=prevId&&db.files[prevId];fm.name=name;fm.appId=a.id;fm.kind=kind+(n>1?' (v'+n+')':'');fm.folder='Post-activity/'+a.key;fm.by=actor.name;fm.at=now();fm.version=n;if(prev)prev.superseded=true;saved.push(fm.name);return fm.id};
+  const fileId=take(pdf,p.fileId,a.ref+'-PAR'+v+'.pdf','Post-activity documents (consolidated PDF)');
+  const reportId=take(rep,p.reportId,a.ref+'-PCR'+v+'.pdf','Post-Conference Report');
+  const posterId=take(gfx,p.posterId,a.ref+'-GRAPHIC'+v+fileExt(gfx.m&&gfx.m.orig),'Poster or social media graphic');
+  a.post=Object.assign({},p,{status:'submitted',cycle:n,fileId,reportId,posterId,items:items.map((x,i)=>Object.assign({id:'i'+(i+1)},x)),claimedTotal:ct,docs,missingNote:String(d.missingNote||'').trim(),
+    article:{title,date,location:a.conf.venue+(a.conf.scope?' ('+regionLabel(a.conf.scope)+')':''),summary,words},submittedAt:now(),verify:null});
+  hist(a,actor,n>1?'Post-activity report resubmitted':'Post-activity report submitted','Total for reimbursement ₱'+money(ct)+' across '+items.length+' expense(s). Article of '+words+' words.'+(saved.length?' Saved: '+saved.join(', ')+'.':'')+(missing.length?' Not in the PDF: '+missing.map(m=>m[1]).join(', ')+'.':''));
+  notify(adminsOf(),a,'Action required: verify post-activity report',a.studentName+' submitted the post-activity report for '+a.conf.title+'. Check the consolidated PDF, the Post-Conference Report and the article with its graphic, check each expense, set the approved amount per item, and verify.','par:'+a.id+':'+n);
+  notify(a.studentEmail,a,'Post-activity report received','Your post-activity report was received'+(saved.length?' (saved as '+saved.join(', ')+')':'')+'. The Administrative Assistant will verify it.','parc:'+a.id+':'+n);
   sync(a,'Post-activity report submitted');return OK;
 };
 /* d = {checks, remarks, returns, overall, items:[{approved, fund, or, merchant, why}]}. mode: save | return | verify */
@@ -289,7 +309,7 @@ E.postReview=function(actor,a,d,mode){
   const v={checks:d.checks||{},remarks:d.remarks||{},returns:d.returns||{},overall:d.overall||'',by:actor.name,at:now(),
     items:p.items.map((x,i)=>{const r=rows[i]||{};return {id:x.id,type:x.type,claimed:x.amount,
       approved:r.approved===''||r.approved==null?null:Number(r.approved),or:r.or!=null?String(r.or).trim():x.or,merchant:r.merchant!=null?String(r.merchant).trim():x.merchant,fund:String(r.fund||'').trim(),why:String(r.why||'').trim()}})};
-  const flagged=REQ_POST.filter(r=>v.returns[r[0]]);
+  const flagged=REQ_CHECK.filter(r=>v.returns[r[0]]);
   if(mode==='save'){p.verify=Object.assign(v,{total:null,draft:true});hist(a,actor,'Verification saved','Progress saved; not yet verified.');sync(a,'Verification saved');return OK}
   if(mode==='return'){
     if(!flagged.length&&!String(v.overall).trim()&&!Object.keys(v.remarks).some(k=>String(v.remarks[k]).trim()))return ERR('Flag the requirements to return, or add remarks that tell the student what to correct or add.');
@@ -299,7 +319,7 @@ E.postReview=function(actor,a,d,mode){
     notify(a.studentEmail,a,'Post-activity requirements returned','The Administrative Assistant returned your report'+(list?' and asks you to clarify or resubmit: '+list+'.':'.')+' "'+(v.overall||'see the remarks per document')+'" Upload a corrected PDF: it is saved as a new version and the original stays on record. Reply by '+fmtD(dueDate(a))+' if you can.','parret:'+a.id+':'+p.cycle);
     sync(a,'Post-activity report returned');return OK}
   if(flagged.length)return ERR('You flagged '+flagged.map(r=>r[1]).join(', ')+' to return. Use Return to student, or clear the flags.');
-  const bad=REQ_POST.filter(r=>!v.checks[r[0]]&&!String(v.remarks[r[0]]||'').trim());
+  const bad=REQ_CHECK.filter(r=>!v.checks[r[0]]&&!String(v.remarks[r[0]]||'').trim());
   if(bad.length)return ERR('Tick '+bad.map(b=>b[1]).join(', ')+', or add a remark explaining why it is not included.');
   for(let i=0;i<v.items.length;i++){const l=v.items[i],nm=l.type+' ('+l.or+')';
     if(l.approved==null||!(l.approved>=0))return ERR('Enter the approved amount for '+nm+' (0 if not reimbursed).');
@@ -314,7 +334,11 @@ E.postReview=function(actor,a,d,mode){
   notify(a.studentEmail,a,'Post-activity report verified','Your documents were verified. Approved reimbursement: ₱'+money(tot)+'. The Administrative Assistant will file the reimbursement report at the FAO next.','ver:'+a.id+':'+p.cycle);
   sync(a,'Post-activity documents verified');return OK;
 };
-/* o = {rfp}. Marks the report as filed at the FAO and records the RFP number. */
+/* "Santos, Maria L." -> "Maria L. Santos" for the greeting */
+const greetName=n=>{const m=/^([^,]+),\s*(.+)$/.exec(String(n||'').trim());return m?m[2].trim()+' '+m[1].trim():String(n||'').trim()||'Student'};
+/* the email the student gets when the Administrative Assistant records the RFP (wording from the College, 18 Nov 2026) */
+const faoMail=(a,rfp)=>'Hi '+greetName(a.studentName)+',\n\nGood day!\n\nWe would like to inform you that your reimbursement request has been processed and submitted to the Finance and Accounting Office (FAO) for review and approval, with Request for Payment (reference number '+rfp+').\n\nYou may check the status of your reimbursement at Window A or B, Finance Office at St. La Salle Hall, approximately 5 to 10 business days from receipt of this email. Please be reminded that you are required to submit the original receipts or invoices (or printed copies of electronic receipts) when claiming your reimbursement.\n\nThank you.';
+/* o = {rfp}. Marks the report as filed at the FAO, records the RFP number and emails the student. */
 E.complete=function(actor,a,o){
   if(actor.role!=='admin')return deny(a,actor,'Only the Administrative Assistant files the reimbursement report.');
   if(a.status!=='verified')return ERR('Verify the post-activity documents first.');
@@ -322,8 +346,8 @@ E.complete=function(actor,a,o){
   if(!rfp)return ERR('Enter the RFP number to mark the report as filed at the FAO.');
   if(rfp.length>40)return ERR('The RFP number is too long.');
   a.report={no:'RR-'+a.ref,at:now(),by:actor.name,rfp};a.status='completed';
-  hist(a,actor,'Filed at FAO','Reimbursement report '+a.report.no+' marked and filed at the FAO. RFP '+rfp+'.');
-  notify(a.studentEmail,a,'Your reimbursement request was processed','Your reimbursement request ('+a.report.no+', ₱'+money(a.post.verify.total)+') was processed at the FAO under RFP '+rfp+'. You may check with the FAO after 5 to 10 working days for an update.','done:'+a.id);
+  hist(a,actor,'Filed at FAO','Reimbursement report '+a.report.no+' submitted to the FAO. RFP '+rfp+'. The student was emailed.');
+  notify(a.studentEmail,a,'Reimbursement request submitted to the FAO (RFP '+rfp+')',faoMail(a,rfp),'done:'+a.id);
   sync(a,'Filed at FAO');return OK;
 };
 E.remind=function(actor,a,auto){
@@ -358,7 +382,7 @@ E.autoRemind=function(){
     else{const m=REMIND_AT.filter(x=>left<=x).pop();step='d'+m;subject=left===0?'Due today: post-activity report':'Reminder: post-activity report due '+(left===1?'tomorrow':'in '+left+' days');when=left===0?'are due today ('+fmtD(dueDate(a))+')':'are due on '+fmtD(dueDate(a))+' ('+left+' day'+(left===1?'':'s')+' left)'}
     const key='parrem:'+a.id+':'+a.post.cycle+':'+step;
     if(db.keys[key+':'+a.studentEmail])return;
-    notify(a.studentEmail,a,subject,(returned?'Your returned post-activity requirements ':'Your post-activity report and reimbursement requirements for '+a.conf.title+' ')+when+'. Submit one consolidated PDF with your actual expenses on or before '+PAR_DAYS+' days after the event.',key);
+    notify(a.studentEmail,a,subject,(returned?'Your returned post-activity requirements ':'Your post-activity report and reimbursement requirements for '+a.conf.title+' ')+when+'. Submit the consolidated PDF, the Post-Conference Report and the article with its graphic, and list your actual expenses.',key);
     a.history.push({at:now(),by:'System',role:'system',action:'Automatic reminder',note:subject+' sent to '+a.studentName+' by email and in-app.',cls:''});
     n++;
   });

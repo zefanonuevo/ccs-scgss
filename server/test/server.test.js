@@ -46,6 +46,10 @@ async function boot() {
 }
 const form = (file, adv) => ({ name: 'Santos, Maria L.', ay: '2627', term: 'Term1', sid: '12145678', prog: 'BSCS-ST', year: '4', adv, conf: 'ICSC 2026', start: '2026-10-05', end: '2026-10-09', venue: 'Kyoto', org: 'Society', etype: 'Conference', scope: 'intl', cls: 'Paper presenter', ptype: 'Full paper', index: 'Scopus', title: 'A Paper', cof: '', cos: '', exp: R.EXPENSE_TYPES.map((t, i) => ({ type: t, amount: [5500, 600, 4400, 3000, 1500][i], remarks: '' })), file, attConfirm: true, privacy: true, brand: true });
 const MARIA = 'maria_santos@dlsu.edu.ph', REYES = 'paolo.reyes@dlsu.edu.ph';
+const words = (n) => Array.from({ length: n }, (_, i) => 'word' + i).join(' ');
+const allChecks = () => { const c = {}; R.REQ_CHECK.forEach((x) => { c[x[0]] = true; }); return c; };
+/* the three post-activity uploads plus a valid article */
+const postKit = async (who) => ({ file: await who.upload('post.pdf'), report: await who.upload('pcr.pdf'), poster: await who.upload('graphic.pdf'), article: { title: 'ICSC 2026', date: '5 Oct 2026 to 9 Oct 2026', summary: words(320) } });
 
 test('sign-in comes from the portal, access from the SCGSS roles table', async (t) => {
   const s = await boot(); t.after(s.close);
@@ -77,13 +81,13 @@ test('full application, every role, to filing at the FAO', async (t) => {
   assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveGrant', id, { signature: SIG, confirm: true, amount: 16000, fund: 'x' })).ok, false, 'above the cap');
   assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveGrant', id, { signature: SIG, confirm: true, amount: 13500, fund: "Dean's Office" })).ok, true);
   assert.equal((await get(MARIA)).status, 'approved');
-  const pf = await maria.upload('post.pdf'); const docs = {}; R.REQ_POST.forEach((x) => { docs[x[0]] = true; });
+  const docs = {}; R.REQ_POST.forEach((x) => { docs[x[0]] = true; });
   const items = [{ type: 'Registration fee', or: 'OR-1', merchant: 'Secretariat', amount: 5500 }, { type: 'Roundtrip airfare', or: 'OR-2', merchant: 'Airline', amount: 4400 }];
-  assert.equal((await maria.act('submitPost', id, { file: pf, items, docs, missingNote: '' })).ok, true);
+  assert.equal((await maria.act('submitPost', id, Object.assign(await postKit(maria), { items, docs, missingNote: '' }))).ok, true);
   const adm = s.as('rosa.delgado@dlsu.edu.ph');
   assert.equal((await s.as(REYES).act('postReview', id, { items: [] }, 'verify')).ok, false, 'only the Administrative Assistant verifies');
   const rows = items.map((x) => ({ approved: x.amount, fund: "Dean's Office", why: '' }));
-  assert.equal((await adm.act('postReview', id, { checks: docs, remarks: {}, items: rows, overall: 'ok' }, 'verify')).ok, true);
+  assert.equal((await adm.act('postReview', id, { checks: allChecks(), remarks: {}, items: rows, overall: 'ok' }, 'verify')).ok, true);
   assert.equal((await adm.act('complete', id, { rfp: 'RFP-1' })).ok, true);
   const done = await get(MARIA); assert.equal(done.status, 'completed'); assert.equal(done.report.rfp, 'RFP-1');
   /* a failed action leaves nothing behind */
@@ -293,4 +297,51 @@ test('a file can be attached only by the person who uploaded it, and only once',
   await s.as(REYES).act('markViewed', jid, mfile.id);
   const after = (await (await s.as(REYES).get('/api/state')).json()).state.apps.find((a) => a.id === jid).history.length;
   assert.equal(after, before, 'markViewed ignores files of other applications');
+});
+
+test('post-activity report: three uploads, article of 300 to 500 words, missing documents explained, no Per diem', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const maria = s.as(MARIA), adm = s.as('rosa.delgado@dlsu.edu.ph');
+  assert.equal(R.EXPENSE_TYPES.includes('Per diem'), false, 'Per diem is not an expense option');
+  assert.deepEqual(R.REQ_POST.map((x) => x[1]), ['Proof of acceptance or invitation', 'Official receipts or invoices', 'Billing statements', 'Itinerary receipts', 'Peso conversion rate', 'Student ID'], 'the consolidated PDF checklist, in order');
+  const sub = await maria.act('submit', '', form(await maria.upload('r.pdf'), REYES)); assert.equal(sub.ok, true); const id = sub.result.appId;
+  for (const e of [REYES, 'luis.mercado@dlsu.edu.ph', 'carla.mendoza@dlsu.edu.ph']) assert.equal((await s.as(e).act('endorse', id, 'ok')).ok, true);
+  assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveGrant', id, { signature: SIG, confirm: true, amount: 12000, fund: "Dean's Office" })).ok, true);
+  const items = [{ type: 'Registration fee', or: 'OR-1', merchant: 'Secretariat', amount: 5500 }];
+  const allDocs = {}; R.REQ_POST.forEach((x) => { allDocs[x[0]] = true; });
+  let k = await postKit(maria);
+  const tryPost = (extra) => maria.act('submitPost', id, Object.assign({}, k, { items, docs: allDocs, missingNote: '' }, extra));
+  assert.equal((await tryPost({ items: [{ type: 'Per diem', or: 'OR-9', merchant: 'Hotel', amount: 100 }] })).ok, false, 'Per diem refused');
+  assert.equal((await tryPost({ report: null })).ok, false, 'the Post-Conference Report is required');
+  assert.equal((await tryPost({ poster: null })).ok, false, 'the graphic is required');
+  assert.equal((await tryPost({ report: k.file })).ok, false, 'one file cannot be two uploads');
+  assert.equal((await tryPost({ article: Object.assign({}, k.article, { summary: words(299) }) })).ok, false, 'under 300 words refused');
+  assert.equal((await tryPost({ article: Object.assign({}, k.article, { summary: words(501) }) })).ok, false, 'over 500 words refused');
+  assert.equal((await tryPost({ docs: { accept: true } })).ok, false, 'missing documents need an explanation');
+  const ok = await tryPost({ docs: { accept: true, receipts: true }, missingNote: 'The billing statement has not arrived yet.' });
+  assert.equal(ok.ok, true, 'a missing document is allowed with an explanation: ' + JSON.stringify(ok.result));
+  const get = async () => (await (await maria.get('/api/state')).json()).state;
+  let st = await get(), a = st.apps.find((x) => x.id === id);
+  assert.equal(a.post.article.location, 'Kyoto (International)', 'location filled in from the application');
+  assert.equal(a.post.article.words, 320);
+  const names = [a.post.fileId, a.post.reportId, a.post.posterId].map((f) => st.files[f].name);
+  assert.deepEqual(names, ['2627-Term1-001-PAR.pdf', '2627-Term1-001-PCR.pdf', '2627-Term1-001-GRAPHIC.pdf']);
+  /* the Administrative Assistant must account for the report and the article too */
+  const rows = [{ approved: 5500, fund: "Dean's Office", why: '' }];
+  const sixOnly = {}; R.REQ_POST.forEach((x) => { sixOnly[x[0]] = true; });
+  assert.equal((await adm.act('postReview', id, { checks: sixOnly, remarks: {}, items: rows, overall: '' }, 'verify')).ok, false, 'report and article must be checked');
+  /* returned for the article only: the student resubmits without new PDFs and the earlier ones are kept */
+  assert.equal((await adm.act('postReview', id, { checks: {}, remarks: { article: 'Add an acknowledgment.' }, returns: { article: true }, items: rows, overall: 'Fix the article.' }, 'return')).ok, true);
+  const again = await maria.act('submitPost', id, { items, docs: allDocs, missingNote: '', article: Object.assign({}, k.article, { summary: words(350) }) });
+  assert.equal(again.ok, true, JSON.stringify(again.result));
+  st = await get(); const b = st.apps.find((x) => x.id === id);
+  assert.equal(b.post.reportId, a.post.reportId, 'the earlier report is kept'); assert.equal(b.post.cycle, 2); assert.equal(b.post.article.words, 350);
+  /* verify, then record the RFP: the student gets the College's email */
+  assert.equal((await adm.act('postReview', id, { checks: allChecks(), remarks: {}, items: rows, overall: '' }, 'verify')).ok, true);
+  assert.equal((await adm.act('complete', id, { rfp: 'RFP-2026-0141' })).ok, true);
+  const mail = (await get()).outbox.find((m) => /RFP-2026-0141/.test(m.subject));
+  assert.ok(mail, 'the student is emailed');
+  assert.ok(mail.body.startsWith('Hi Maria L. Santos,\n\nGood day!\n\nWe would like to inform you that your reimbursement request has been processed and submitted to the Finance and Accounting Office (FAO) for review and approval, with Request for Payment (reference number RFP-2026-0141).'), mail.body);
+  assert.ok(mail.body.includes('Window A or B, Finance Office at St. La Salle Hall, approximately 5 to 10 business days'));
+  assert.ok(mail.body.includes('original receipts or invoices (or printed copies of electronic receipts)'));
 });
