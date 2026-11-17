@@ -2,7 +2,7 @@
 
 **System:** CCS Student Conference Grant Support System (SCGSS), version 1.0.0-rc.5
 **Controller:** De La Salle University, College of Computer Studies (CCS)
-**Prepared:** 5 November 2026, from a review of the system's code and setup
+**Prepared:** 5 November 2026, from a review of the system's code and setup. **Updated:** 18 November 2026 for 1.0.0-rc.4 (file access fix) and 1.0.0-rc.5 (Post-Conference Report and article write-up).
 **Status:** Draft for the University Data Protection Officer (DPO) to review and approve. It is a working assessment, not legal advice. Items marked **[confirm]** are my reading of a rule or a fact about the University that someone with authority must check before go-live.
 
 ## 1. Purpose and scope
@@ -17,6 +17,8 @@ This paper does three things for SCGSS: it lists the personal data the system ho
 | Student ID, degree program, year level | Applicant | Evaluate the grant, route to the right Chair | `apps`, Google Sheet | Handling approvers, Administrative Assistant |
 | Conference, paper and expense details | Applicant | Evaluate and reimburse | `apps`, Google Sheet | Same |
 | Uploaded PDFs, receipts | Applicant | Evidence for approval and reimbursement | Disk `/srv/apps/scgss/data`, copy in Google Drive | Same |
+| Post-Conference Report (PDF) | Applicant | Report on the activity the grant paid for | Disk, copy in Google Drive | Same |
+| Article write-up (conference title, date, location, 300 to 500 word summary) and poster or social media graphic | Applicant | Report on the activity, **and possible publication on the CCS website, newsletter and News and Events** | `apps`, disk, Google Sheet and Drive | Same, then the public if published |
 | Digital signature image | Approvers, optionally students | Sign grant approvals and reports | PostgreSQL `sigs`, embedded in PDF reports | Owner, report readers |
 | Comments, decisions, history | Everyone involved | Record of who decided what | `apps` | Participants on that application |
 | Access log: email, action, network address | Everyone | Security and accountability | PostgreSQL `audit` | System Administrator |
@@ -68,6 +70,19 @@ The Act is the binding law. The standards below are used as a yardstick. GDPR ap
 Technical: sign-in only through the CCS portal; every action checked against the person's role and turn; requests that change data accepted only from the portal's address; file access only for people allowed to view that application; uploads limited to six types, 20 MB, and the first bytes must match the type; stored files never run; security headers including a ban on camera, microphone and location; every file view and download logged with who, which application and network address; access logs deleted after `AUDIT_KEEP_DAYS` (365 by default); nightly encrypted backups with the key kept off the server; emails carry a confidentiality line.
 
 Organizational: one System Administrator controls roles; the last administrator cannot be removed; the Dean, Associate Dean and each Chair are single-holder roles; every role change is logged.
+
+### 5a. New in 1.0.0-rc.5: the article may be published **[DPO decision needed]**
+
+The article write-up and graphic are collected so the College can use them for CCS News and Events. Publishing a student's name, photo or work to the public is a different purpose from evaluating and paying a grant, and the current notice (version `2026-11-05`) does not mention it. Before articles are published:
+
+1. Add a sentence to the notice in `shared/rules.js` (`PRIVACY`) and change `PRIVACY_VERSION`. Proposed wording: *"The article write-up and graphic you submit after the event may be edited and published on the College's website, newsletter and social media, with your name, degree program and conference. Tell the College if you do not want them published."*
+2. Decide with the DPO whether that is covered by the grant consent or needs a separate opt-in tick box. A separate box is the safer choice, because publication is not needed to pay the grant.
+3. Graphics that show other people (co-authors, audience) need their agreement too.
+4. Until then, treat the articles as internal: used to report on the grant, not published.
+
+### 5b. Fixed in 1.0.0-rc.4: one student could take another's file
+
+Before rc.4, a signed-in student could attach another person's uploaded file to their own application by naming its file id, and then open it. The fix limits attaching to the uploader and makes file ids random. If the live system held real applications before the fix, run the check in `docs/DATABASE.md` ("files attached by someone who is not the student..."). Any row it returns is a possible breach: follow section 8.
 
 ## 6. Retention
 

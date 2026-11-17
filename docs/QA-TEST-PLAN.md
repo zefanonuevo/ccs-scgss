@@ -2,7 +2,7 @@
 
 Run this after every install or update, on the live VM or a test copy, with test accounts only. Record pass or fail and the date. A failed line blocks go-live.
 
-**You need:** one student account, one Thesis Adviser, the Chair of that student's department, the Associate Dean, the Dean, the Administrative Assistant and the System Administrator. A small PDF, and one text file renamed to `fake.pdf`.
+**You need:** two student accounts, one Thesis Adviser, the Chair of that student's department, the Associate Dean, the Dean, the Administrative Assistant and the System Administrator. Three small PDFs, one PNG or JPG graphic, a text of about 350 words, and one text file renamed to `fake.pdf`.
 
 ## A. Install and access
 | # | Step | Expected |
@@ -25,16 +25,25 @@ Run this after every install or update, on the live VM or a test copy, with test
 | B6 | Chair as the adviser | Chair step skipped, Associate Dean next |
 | B7 | Return with remarks, student resubmits | Earlier decisions kept, cycle goes up |
 | B8 | Reject | Application closed, student told the reason |
-| B9 | Student uploads the post-activity report PDF | Administrative Assistant notified |
-| B10 | Administrative Assistant verifies, sets approved amount per item | Total shown, student notified |
+| B9 | Application form, Expenses step | Four expense rows: Registration fee, Pre-departure fees, Roundtrip airfare, Accommodation. No Per diem |
+| B9a | Post-activity report page | Expense button reads **Add an expense**; no Per diem in the list; checklist shows the six documents numbered in order: proof of acceptance or invitation, official receipts or invoices, billing statements, itinerary receipts, peso conversion rate, Student ID |
+| B9b | Untick one document and leave the explanation empty, submit | Refused: asks for the explanation. With an explanation: accepted |
+| B9c | Submit without the Post-Conference Report, or without the graphic | Refused |
+| B9d | Article summary of 299 words, then 501 words | Refused both times; the counter shows how many words to add or remove. 300 to 500: accepted |
+| B9e | Article location | Filled in from the application and cannot be edited |
+| B9f | Submit all three uploads | Saved as `<ref>-PAR.pdf`, `<ref>-PCR.pdf`, `<ref>-GRAPHIC.<ext>`; Administrative Assistant notified |
+| B9g | Administrative Assistant returns it for the article only; student fixes the article and resubmits without new files | Accepted; earlier PDFs kept; version 2 |
+| B9h | Application page and verification screen | Article text and graphic shown, with Preview and Download |
+| B10 | Administrative Assistant verifies, sets approved amount per item | Checklist has eight rows (six documents, Post-Conference Report, article and graphic); each needs a tick or a remark. Total shown, student notified |
 | B11 | "Clarify with the Dean" | Dean receives the question and can reply |
 | B12 | Download Reimbursement Report | One PDF, complete borders, signature, correct totals |
-| B13 | File at FAO with an RFP number | Status "Filed at FAO" |
+| B13 | File at FAO with an RFP number | Status "Filed at FAO". The student's email starts "Hi <first name MI surname>, Good day!", gives the RFP reference number, Window A or B, Finance Office at St. La Salle Hall, 5 to 10 business days, and the reminder about original receipts or invoices |
 
 ## C. Google link
 | # | Step | Expected |
 |---|---|---|
 | C1 | After B2, within a minute | Row in the `Applications` tab; PDF in Drive under `Applications/<year-term>` |
+| C1a | After B9f | The three post-activity files in Drive under `Post-activity/<year-term>`; the row has the Article columns (title, date, location, summary, words) |
 | C2 | After each stage change | Same row updates, no duplicate row |
 | C3 | Server log | No `[gas] rejected` or `[gas] failed` lines |
 | C4 | Email to the adviser | From "CCS Student Grants (SCGSS)"; ends with applicant, reference, event, location, dates, status, confidentiality line; no amounts |
@@ -46,6 +55,8 @@ Run this after every install or update, on the live VM or a test copy, with test
 | D2 | Look in the application record | Consent time and notice version stored |
 | D3 | A second student opens the first student's file address | 404 |
 | D4 | An approver who is not on that application opens the file | 404 |
+| D4a | The second student submits an application naming the first student's file id (developer tools, edit the request) | Refused; the first student can still open the file (fixed in 1.0.0-rc.4) |
+| D4b | New uploads | File ids are long random strings, not `f1`, `f2` |
 | D5 | Upload `fake.pdf` (text renamed) | Refused: content does not match |
 | D6 | Upload a `.exe` | Refused: type not accepted |
 | D7 | Upload a file over 20 MB | Refused |
@@ -69,4 +80,4 @@ Run this after every install or update, on the live VM or a test copy, with test
 | F2 | Run the backup script, restore it into a throwaway database | Counts match |
 
 ## Automated tests
-`cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` needs a PostgreSQL test database. It covers sign-in and roles, a whole application to filing, restart persistence, file access, the origin check, roles screen safeguards, signer overlaps and the public file list. It does not cover the Google link, the new privacy checks (D5, D8 to D10) or the layout.
+`cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` needs a PostgreSQL test database. 18 tests (1.0.0-rc.5). They cover sign-in and roles, a whole application to filing, restart persistence, file access, the origin check, roles screen safeguards, signer overlaps, the public file list, the access list CSV, file ownership (a file can be attached only by its uploader, once), and the post-activity report (three uploads, article word limits, missing documents with an explanation, no Per diem, resubmission keeping earlier files, and the RFP email text). They do not cover the Google link, the privacy checks D5 and D8 to D10, or the layout.

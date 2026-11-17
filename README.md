@@ -1,6 +1,6 @@
 # CCS Student Conference Grant Support System (SCGSS)
 
-Student conference grants for the College of Computer Studies: application form, automatic routing (Thesis Adviser, Department Chair, Associate Dean, Dean), post-activity report with itemised receipts, document verification, the reimbursement report, and filing at the FAO with an RFP number.
+Student conference grants for the College of Computer Studies: application form, automatic routing (Thesis Adviser, Department Chair, Associate Dean, Dean), post-activity report (itemised expenses, one consolidated PDF, the Post-Conference Report, and an article write-up with a poster or social media graphic for CCS News and Events), document verification, the reimbursement report, and filing at the FAO with an RFP number.
 
 **Version 1.0 (release candidate) is a real system**, not the browser simulation of 3.x. The rules, records and files live on a server on the CCS apps VM. Sign-in is the CCS portal's Google sign-in; what a person may do comes from this system's own Roles table.
 

@@ -87,6 +87,8 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 3. `sudo systemctl restart app@scgss`, then `sudo systemctl status app@scgss --no-pager` must say `active (running)`.
 4. `curl http://<apps-vm-private-ip>:3001/healthz` must print `ok`. Use the private address from `HOST` in `/etc/apps/scgss.env`: the service does not listen on `localhost`, so `curl http://localhost:3001/healthz` is expected to fail.
 5. Open https://ccs.dlsu.edu.ph/scgss/ and press Ctrl+F5. The version tag in the header must match `CHANGELOG.md`.
+6. Read the release's "Check after updating" note in `CHANGELOG.md`, if it has one, and run the QA lines for what changed (`docs/QA-TEST-PLAN.md`). For 1.0.0-rc.4 run the file check in `docs/DATABASE.md`; for 1.0.0-rc.5 run B9 to B9h, B10, B13 and C1a.
+7. Delete the copy from step 1 once the update is confirmed: `sudo rm /var/backups/app_scgss-before-update.dump`.
 
 **Going back** if an update misbehaves: `git log --oneline -5` on the VM, `sudo git checkout <previous commit>`, `sudo systemctl restart app@scgss`. New releases only add tables or columns, so older code still starts. If data was damaged, restore the nightly backup (see step 8) after one restore test.
 
@@ -104,4 +106,4 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 | 403 "Your account is not set up" | The email is not in the Roles tab. Staff emails with a dot must be added by the System Administrator. |
 
 ## What was and was not tested
-Tested: `cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` against a throwaway PostgreSQL 16 (each test uses its own schema; 9 tests over real HTTP with a stubbed portal sign-in: sign-in and role gating, a whole application to filing, restart persistence (reloaded from PostgreSQL), file access, origin check, roles screen safeguards, signer overlaps, public file list) and a simulated-browser load of the page for each role. **Not tested by me:** the Apps Script link on the live account, the firewall, the backup script, real PDFs from a browser upload, and any phone or desktop layout check.
+Tested (1.0.0-rc.5, 18 Nov 2026): 18 tests, all passing; the page checked in a browser for the student post-activity screen and the verification screen with sample data. Earlier: `cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` against a throwaway PostgreSQL 16 (each test uses its own schema; 9 tests over real HTTP with a stubbed portal sign-in: sign-in and role gating, a whole application to filing, restart persistence (reloaded from PostgreSQL), file access, origin check, roles screen safeguards, signer overlaps, public file list) and a simulated-browser load of the page for each role. **Not tested by me:** the Apps Script link on the live account, the firewall, the backup script, real PDFs from a browser upload, and any phone or desktop layout check.
