@@ -20,7 +20,7 @@ Run this after every install or update, on the live VM or a test copy, with test
 | B1 | Student submits without the privacy box ticked | Refused with a message |
 | B2 | Student submits with a PDF, adviser chosen | Reference like `2627-Term1-001`; adviser notified |
 | B3 | Adviser, Chair, Associate Dean endorse | Each step moves forward and is recorded in history |
-| B4 | Dean enters one amount above the location limit | Refused. At or below the limit: approved with e-signature |
+| B4 | Dean enters one amount above the location limit | Refused. At or below the limit: approved, with no signature asked |
 | B5 | Dean as the student's adviser | Associate Dean approves in the Dean's place, no endorsement step |
 | B6 | Chair as the adviser | Chair step skipped, Associate Dean next |
 | B7 | Return with remarks, student resubmits | Earlier decisions kept, cycle goes up |
@@ -34,9 +34,13 @@ Run this after every install or update, on the live VM or a test copy, with test
 | B9f | Submit all three uploads | Saved as `<ref>-PAR.pdf`, `<ref>-PCR.pdf`, `<ref>-GRAPHIC.<ext>`; Administrative Assistant notified |
 | B9g | Administrative Assistant returns it for the article only; student fixes the article and resubmits without new files | Accepted; earlier PDFs kept; version 2 |
 | B9h | Application page and verification screen | Article text and graphic shown, with Preview and Download |
-| B10 | Administrative Assistant verifies, sets approved amount per item | Checklist has eight rows (six documents, Post-Conference Report, article and graphic); each needs a tick or a remark. Total shown, student notified |
+| B10 | Administrative Assistant verifies, sets approved amount per item, sends the summary to the Dean | Checklist has eight rows (six documents, Post-Conference Report, article and graphic); each needs a tick or a remark. Total shown, student notified |
 | B11 | "Clarify with the Dean" | Dean receives the question and can reply |
-| B12 | Download Reimbursement Report | One PDF, complete borders, signature, correct totals |
+| B11a | Before the Dean approves | Summary of Expenses tab: not listed, no Download or Print; Mark filed at FAO refused |
+| B11b | Dean opens the application from Pending, reads the full summary, approves without a signature | Refused: asks for the signature |
+| B11c | Dean returns it with remarks | Back on the Verification screen with the Dean's remarks; Administrative Assistant notified |
+| B11d | Dean signs (draw, upload, or saved) and confirms | Status "Summary of Expenses approved"; Administrative Assistant and student notified |
+| B12 | Download and Print the Summary of Expenses | One PDF titled "Student Conference Grant / Summary of Expenses", laid out as the College's form: details, Total Approved Grant and Funding Source, Endorsements and Approval, the expense table with Total Approved Amount for Reimbursement, Prepared by (Administrative Assistant) and Verified and Approved by (Dean's signature, name, title, date) |
 | B13 | File at FAO with an RFP number | Status "Filed at FAO". The student's email starts "Hi <first name MI surname>, Good day!", gives the RFP reference number, Window A or B, Finance Office at St. La Salle Hall, 5 to 10 business days, and the reminder about original receipts or invoices |
 
 ## C. Google link
@@ -80,4 +84,4 @@ Run this after every install or update, on the live VM or a test copy, with test
 | F2 | Run the backup script, restore it into a throwaway database | Counts match |
 
 ## Automated tests
-`cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` needs a PostgreSQL test database. 18 tests (1.0.0-rc.5). They cover sign-in and roles, a whole application to filing, restart persistence, file access, the origin check, roles screen safeguards, signer overlaps, the public file list, the access list CSV, file ownership (a file can be attached only by its uploader, once), and the post-activity report (three uploads, article word limits, missing documents with an explanation, no Per diem, resubmission keeping earlier files, and the RFP email text). They do not cover the Google link, the privacy checks D5 and D8 to D10, or the layout.
+`cd server && TEST_DATABASE_URL=postgres://user@127.0.0.1:5432/postgres npm test` needs a PostgreSQL test database. 19 tests (1.0.0-rc.6). They cover sign-in and roles, a whole application to filing, restart persistence, file access, the origin check, roles screen safeguards, signer overlaps, the public file list, the access list CSV, file ownership (a file can be attached only by its uploader, once), and the post-activity report (three uploads, article word limits, missing documents with an explanation, no Per diem, resubmission keeping earlier files, and the RFP email text), and the Dean's approval of the Summary of Expenses (no signature on the grant, approval only by the Dean with a PNG signature, return with remarks, no filing before approval). They do not cover the Google link, the privacy checks D5 and D8 to D10, or the layout.

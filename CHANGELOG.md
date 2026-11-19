@@ -24,7 +24,25 @@ Numbering: **Major** (2.0) means how people work changes; **Minor** (1.1) means 
 
 # Versions
 
-## 1.0.0-rc.5 (18 Nov 2026 · Release candidate · current)
+## 1.0.0-rc.6 (19 Nov 2026 · Release candidate · current)
+
+Dean's approval of the Summary of Expenses, requested by the College.
+
+### Changed
+
+- **Grant approval without a signature.** The Dean (or the approver in the Dean's place) enters the total grant and funding source and approves. The signature pad is gone from this step.
+- **Summary of Expenses goes to the Dean.** After verifying the three post-activity requirements (consolidated PDF, Post-Conference Report, article and graphic), the Administrative Assistant chooses **Verify and send the summary to the Dean**. The application shows "Summary of Expenses: with the Dean for approval" and is in the Dean's Pending list. The Dean is emailed.
+- **The Dean signs and approves.** On the application page the Dean reads the full summary, adds a digital signature (draw, upload or saved; PNG, checked on the server), and confirms. Or returns it to the Administrative Assistant with remarks, which show on the Verification screen.
+- **Download and print only after the Dean's approval.** The Summary of Expenses tab (formerly Reimbursement report) lists only approved summaries, with **Download** and **Print**. Filing at the FAO is refused before approval.
+- **New form:** "Student Conference Grant · Summary of Expenses" laid out as the College's template: application details, Total Approved Grant and Funding Source, Endorsements and Approval, the expense table (amounts with centavos) and Total Approved Amount for Reimbursement, Prepared by (Administrative Assistant) and Verified and Approved by (the Dean's signature, name, title and date). Numbered `SOE-<ref>`, saved as `SOE-<ref>.pdf`. The FAO "Received by" box and per-item remarks are no longer on the form.
+- Workflow diagram, guidelines, permissions table, user manual, workflow, database, QA plan and privacy paper updated.
+
+### Check after updating
+
+- Reports already verified under rc.5 or earlier have no Dean approval. They show under **For verification** with a note: open each and choose **Verify and send the summary to the Dean**.
+- Reports already filed at the FAO keep their `RR-` number and print with the signature given at grant approval.
+
+## 1.0.0-rc.5 (18 Nov 2026 · Release candidate)
 
 Post-activity report changes requested by the College.
 

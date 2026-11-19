@@ -58,8 +58,9 @@ function info(a){
     case 'approved':
       if(a.post.status==='submitted')return {label:'Post-activity report: for verification',cls:'p-wait',by:'Administrative Assistant',who:'',group:'post'};
       if(a.post.status==='returned')return {label:'Post-activity report returned',cls:'p-warn',by:'Student',who:a.studentName,group:'post'};
+      if(a.post.status==='dean')return {label:'Summary of Expenses: with the Dean for approval',cls:'p-wait',by:'Dean',who:nameOf(a.route.dean),group:'post'};
       return {label:'Approved: report due',cls:'p-ok',by:'Student',who:a.studentName,group:'approved'};
-    case 'verified':return {label:'Verified: reimbursement report ready',cls:'p-ok',by:'Administrative Assistant',who:'',group:'post'};
+    case 'verified':return {label:a.post.summary?'Summary of Expenses approved: RFP to record':'Verified: send the Summary of Expenses to the Dean',cls:'p-ok',by:'Administrative Assistant',who:'',group:'post'};
     case 'completed':return {label:'Filed at FAO'+(a.report&&a.report.rfp?' · RFP '+a.report.rfp:''),cls:'p-ok',by:'None',who:'',group:'completed'};
   }
   return {label:a.status,cls:'p-idle',by:'',who:'',group:''};

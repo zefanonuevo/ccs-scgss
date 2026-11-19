@@ -1,6 +1,6 @@
 # SCGSS Data Privacy Paper
 
-**System:** CCS Student Conference Grant Support System (SCGSS), version 1.0.0-rc.5
+**System:** CCS Student Conference Grant Support System (SCGSS), version 1.0.0-rc.6
 **Controller:** De La Salle University, College of Computer Studies (CCS)
 **Prepared:** 5 November 2026, from a review of the system's code and setup. **Updated:** 18 November 2026 for 1.0.0-rc.4 (file access fix) and 1.0.0-rc.5 (Post-Conference Report and article write-up).
 **Status:** Draft for the University Data Protection Officer (DPO) to review and approve. It is a working assessment, not legal advice. Items marked **[confirm]** are my reading of a rule or a fact about the University that someone with authority must check before go-live.
@@ -19,7 +19,7 @@ This paper does three things for SCGSS: it lists the personal data the system ho
 | Uploaded PDFs, receipts | Applicant | Evidence for approval and reimbursement | Disk `/srv/apps/scgss/data`, copy in Google Drive | Same |
 | Post-Conference Report (PDF) | Applicant | Report on the activity the grant paid for | Disk, copy in Google Drive | Same |
 | Article write-up (conference title, date, location, 300 to 500 word summary) and poster or social media graphic | Applicant | Report on the activity, **and possible publication on the CCS website, newsletter and News and Events** | `apps`, disk, Google Sheet and Drive | Same, then the public if published |
-| Digital signature image | Approvers, optionally students | Sign grant approvals and reports | PostgreSQL `sigs`, embedded in PDF reports | Owner, report readers |
+| Digital signature image | The Dean (or the approver in the Dean's place) | Sign the Summary of Expenses (since 1.0.0-rc.6; earlier grants were signed at approval) | `apps` (`post.summary`), PostgreSQL `sigs` if saved, embedded in the downloaded summary | Owner, people who can view the application, FAO |
 | Comments, decisions, history | Everyone involved | Record of who decided what | `apps` | Participants on that application |
 | Access log: email, action, network address | Everyone | Security and accountability | PostgreSQL `audit` | System Administrator |
 | Notification emails | Everyone | Tell people action is needed | Gmail account computerstudies@dlsu.edu.ph, `outbox` | Mailbox owners, recipients |

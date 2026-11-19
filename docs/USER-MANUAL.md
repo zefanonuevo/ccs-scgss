@@ -32,22 +32,25 @@ Your role decides what you see. If you get "Your account is not set up", ask the
 
 You get reminders by email and in the app. The Administrative Assistant may return it with questions: upload only what needs correcting. A new upload is saved as a new version; an upload you leave empty keeps the earlier one.
 
-**Reimbursement.** When verified, you see the approved amount. When the Administrative Assistant submits your request to the FAO and records the Request for Payment (RFP) number, you get an email. Check the status at Window A or B, Finance Office, St. La Salle Hall, about 5 to 10 business days later, and bring the original receipts or invoices (or printed copies of electronic receipts).
+**Reimbursement.** The Administrative Assistant verifies your three requirements and prepares the Summary of Expenses, and the Dean approves it. You are notified at each step and see the approved amount. When the Administrative Assistant submits your request to the FAO and records the Request for Payment (RFP) number, you get an email. Check the status at Window A or B, Finance Office, St. La Salle Hall, about 5 to 10 business days later, and bring the original receipts or invoices (or printed copies of electronic receipts).
 
 ## Thesis Advisers, Chairs, Associate Dean, Dean
 1. You get an email and an in-app notice when it is your turn. Open the application, read the details and documents (open the PDF in the preview).
 2. Choose **Endorse** (Adviser, Chair, Associate Dean), **Return with remarks**, or **Reject** with a reason.
-3. **Dean:** to approve, enter **one grant amount and one funding source**, within the limit for the event location, and sign. The Administrative Assistant breaks the amount down later, per receipt.
-4. If the Dean is the Thesis Adviser, the Associate Dean approves the grant in the Dean's place. If the Chair is the adviser, the Chair step is skipped. If the Associate Dean is the adviser, the Dean is next.
-5. You can only act when it is your turn. Use **Messages** to write to the student or another approver. Open only applications you handle: every file you open is logged.
-6. The Dean's dashboard can be filtered by academic year and term.
+3. **Dean:** to approve, enter **one grant amount and one funding source**, within the limit for the event location, then **Review and approve** and **Confirm approval**. No signature is needed at this step. The Administrative Assistant breaks the amount down later, per receipt.
+4. **Dean, after the event:** when the Administrative Assistant sends the **Summary of Expenses**, you get an email and an in-app notice, and it shows under Pending on your dashboard. Open the application, read the full summary, add your **digital signature** (draw it, upload an image, or use your saved one), then **Review and approve** and **Confirm approval**. To change an amount or a funding source, use **Return to the Administrative Assistant** with remarks. The summary can be downloaded or printed only after you approve it.
+5. If the Dean is the Thesis Adviser, the Associate Dean approves the grant, and later the Summary of Expenses, in the Dean's place. If the Chair is the adviser, the Chair step is skipped. If the Associate Dean is the adviser, the Dean is next.
+6. You can only act when it is your turn. Use **Messages** to write to the student or another approver. Open only applications you handle: every file you open is logged.
+7. The Dean's dashboard can be filtered by academic year and term.
 
 ## Administrative Assistant
 1. After approval, wait for the student's post-activity report. You are notified.
-2. Open **Verify documents**. Tick each document found in the PDF, or flag one to return. Set the **approved amount per expense item**. The total is checked against the Dean's grant.
+2. Open **Verification**. Check the three requirements: the consolidated PDF (six documents), the Post-Conference Report, and the article with its graphic. Tick each one, or flag it to return to the student. Set the **approved amount and funding source per expense**. The total is checked against the Dean's grant.
 3. Need the Dean's view on a funding source or an amount? Use **Clarify with the Dean**. The answer comes back to you.
-4. Verify, then **Download Reimbursement Report**: one PDF with the final approved amounts and signatures. Submit it to the FAO, record the RFP number, and mark it filed.
-5. If you correct someone's data, say why in a comment. It is logged.
+4. Choose **Verify and send the summary to the Dean**. The validated Summary of Expenses goes to the Dean for approval and signature. If the Dean returns it, the remarks show on the Verification screen: correct it and send it again.
+5. After the Dean approves, open **Summary of Expenses**: **Download** or **Print** the Student Conference Grant Summary of Expenses (with the Dean's signature), submit it to the FAO, then record the RFP number. The student is emailed.
+6. Reports verified before 1.0.0-rc.6 have no Dean approval yet: open them on the Verification screen and send them to the Dean.
+7. If you correct someone's data, say why in a comment. It is logged.
 
 ## System Administrator
 - **Roles tab:** add, switch off or delete people; upload a CSV with a preview first. There must always be one active System Administrator, one Dean, one Associate Dean, and one Chair per department.

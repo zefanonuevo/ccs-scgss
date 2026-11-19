@@ -29,7 +29,7 @@ C.counterparts=function(a,actor){
   if(actor.email===a.studentEmail){
     if(a.status==='pending')return [a.route[CHAIN[a.stage]]];
     if(a.status==='returned')return [a.route[a.returned.role]];
-    if(a.post.status==='submitted'||a.post.status==='returned'||a.status==='verified')return adminsOf();
+    if(a.post.status==='submitted'||a.post.status==='returned'||a.post.status==='dean'||a.status==='verified')return adminsOf();
     return [a.route.adviser];
   }
   return [last?last.email:a.studentEmail];
@@ -76,6 +76,8 @@ const E=C.E={
   resubmit:(actor,a,f,reply,fileIds)=>C.api.act('resubmit',a.id,f||null,reply,fileIds||[]),
   submitPost:(actor,a,d)=>C.api.act('submitPost',a.id,d),
   postReview:(actor,a,d,mode)=>C.api.act('postReview',a.id,d,mode),
+  approveSummary:(actor,a,o)=>C.api.act('approveSummary',a.id,o),
+  returnSummary:(actor,a,note)=>C.api.act('returnSummary',a.id,note),
   complete:(actor,a,o)=>C.api.act('complete',a.id,o),
   remind:(actor,a)=>C.api.act('remind',a.id),
   markRead:(email,id)=>C.api.act('markRead','',id||null),

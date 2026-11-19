@@ -1,9 +1,9 @@
-/* CCS SCGSS: a small PDF writer for the reimbursement report.
+/* CCS SCGSS: a small PDF writer for the Summary of Expenses.
    Draws real text, complete table borders and the Dean's signature image on A4 pages, so the downloaded file looks like the report on screen. */
 (function(C){
 "use strict";
 const W=595.28,H=841.89,M=40,PAD=4,LW=0.6;
-const latin=s=>String(s==null?'':s).replace(/₱/g,'PHP ').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/…/g,'...').replace(/[–—]/g,'-').replace(/✓/g,'Yes').replace(/[^\x20-\x7e\xa0-\xff]/g,'?');
+const latin=s=>String(s==null?'':s).replace(/₱/g,'PHP ').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/…/g,'...').replace(/[–—]/g,'-').replace(/✓/g,'Yes').replace(/•/g,'\xb7').replace(/[^\x20-\x7e\xa0-\xff]/g,'?');
 const esc=s=>latin(s).replace(/[\\()]/g,'\\$&');
 const mc=document.createElement('canvas').getContext('2d');
 const tw=(s,size,bold)=>{mc.font=(bold?'bold ':'')+size+'px Helvetica, Arial, sans-serif';return mc.measureText(latin(s)).width};

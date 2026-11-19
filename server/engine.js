@@ -153,13 +153,13 @@ E.endorse=function(actor,a,note){
   notify(a.studentEmail,a,'Endorsed by your '+CH[s].label,'Your '+CH[s].label+' endorsed the application. It is now with the '+CH[n].label+'.'+(skipped.length?' The '+skipped.join(' and ')+' step was skipped because the same person already endorsed it.':''),'prog:'+a.id+':'+a.stage+':'+a.cycle);
   sync(a,'Endorsed by '+CH[s].label);return OK;
 };
-/* o = {signature, confirm, dry, note, amount, fund}. The Dean sets ONE approved amount and ONE funding source for the whole grant;
+/* o = {confirm, dry, note, amount, fund}. The Dean sets ONE approved amount and ONE funding source for the whole grant (no signature: since 1.0.0-rc.6
+   the Dean signs the Summary of Expenses instead);
    the Administrative Assistant breaks it down by receipt at reimbursement.
    dry runs every check and returns the total without recording anything, so the screen can show a confirmation first. */
 E.approveGrant=function(actor,a,o){
   const err=turnErr(a,actor);if(err)return deny(a,actor,err);
   if(CHAIN[a.stage]!=='dean')return ERR('Only the Dean approves the grant.');
-  if(!o.signature||String(o.signature).indexOf('data:image')!==0)return ERR('Affix your digital signature before approving.');
   const amt=Number(o.amount),fund=String(o.fund||'').trim(),cap=CAP[a.conf.scope],pt=projected(a);
   if(o.amount===''||o.amount==null||!(amt>0))return ERR('Enter the approved grant amount. Use Reject to decline the application.');
   if(!fund)return ERR('Enter the funding source for the grant.');
@@ -168,10 +168,10 @@ E.approveGrant=function(actor,a,o){
   if(amt>pt)return ERR('The approved grant of ₱'+money(amt)+' is above the ₱'+money(pt)+' the student projected.');
   const tot=round2(amt);
   if(o.dry)return {ok:true,dry:true,total:tot,fund};
-  if(!o.confirm)return ERR('Press Confirm approval to record the grant and your signature.');
-  a.grant={total:tot,fund,by:actor.name,byEmail:actor.email,at:now(),signature:o.signature};
+  if(!o.confirm)return ERR('Press Confirm approval to record the grant.');
+  a.grant={total:tot,fund,by:actor.name,byEmail:actor.email,at:now()};
   a.decisions.dean={d:'approved',at:now(),by:actor.name,email:actor.email};a.status='approved';
-  hist(a,actor,'Approved grant','Approved ₱'+money(tot)+' · funding source: '+fund+' · e-signed.'+(o.note?' "'+o.note+'"':''));
+  hist(a,actor,'Approved grant','Approved ₱'+money(tot)+' · funding source: '+fund+'.'+(o.note?' "'+o.note+'"':''));
   notify(a.studentEmail,a,'Your grant is approved','Good news: the Dean approved your conference grant of ₱'+money(tot)+' (funding source: '+fund+'). After the conference, submit the post-activity report within '+PAR_DAYS+' days after '+fmtD(a.conf.end)+' (by '+fmtD(dueDate(a))+'): one consolidated PDF of your documents, the Post-Conference Report (PDF), and an article of '+ARTICLE_WORDS[0]+' to '+ARTICLE_WORDS[1]+' words with a poster or social media graphic. You will get reminders by email and in-app.','appr:'+a.id);
   notify(adminsOf(),a,'Grant approved','Grant approved for '+a.studentName+': ₱'+money(tot)+' ('+fund+'). You will break it down by receipt at reimbursement. Expect a post-activity report by '+fmtD(dueDate(a))+'.','apprfyi:'+a.id);
   sync(a,'Grant approved');return OK;
@@ -254,7 +254,7 @@ E.resubmit=function(actor,a,f,reply,fileIds){
 /* d = {file, report, poster (uploads), article:{title, date, summary}, docs, missingNote, items:[{type, or, merchant, amount}]}. Amounts are in pesos. */
 E.submitPost=function(actor,a,d){
   if(actor.email!==a.studentEmail)return deny(a,actor,'Only the applicant can submit the post-activity report.');
-  if(a.status!=='approved'||a.post.status==='submitted')return ERR('A post-activity report can only be submitted for an approved grant that is not already under review.');
+  if(a.status!=='approved'||a.post.status==='submitted'||a.post.status==='dean')return ERR('A post-activity report can only be submitted for an approved grant that is not already under review.');
   const p=a.post,n=p.cycle+1;
   /* the three uploads. On a resubmission, an upload left empty keeps the earlier version. */
   const pick=(f,prevId,label)=>{if(f&&f.id){const m=ownFile(actor,f.id);return m?{m}:{err:'The '+label+' could not be found. Upload it again.'}}return prevId&&db.files[prevId]?{keep:prevId}:{err:'Upload the '+label+'.'}};
@@ -301,10 +301,14 @@ E.submitPost=function(actor,a,d){
   notify(a.studentEmail,a,'Post-activity report received','Your post-activity report was received'+(saved.length?' (saved as '+saved.join(', ')+')':'')+'. The Administrative Assistant will verify it.','parc:'+a.id+':'+n);
   sync(a,'Post-activity report submitted');return OK;
 };
-/* d = {checks, remarks, returns, overall, items:[{approved, fund, or, merchant, why}]}. mode: save | return | verify */
+/* d = {checks, remarks, returns, overall, items:[{approved, fund, or, merchant, why}]}. mode: save | return | verify
+   verify = the three requirements are verified and the validated Summary of Expenses goes to the Dean for approval (since 1.0.0-rc.6). */
 E.postReview=function(actor,a,d,mode){
   if(actor.role!=='admin')return deny(a,actor,'Only the Administrative Assistant verifies post-activity documents and sets reimbursement amounts.');
-  if(a.status!=='approved'||a.post.status!=='submitted')return ERR('There is no submitted report waiting for verification.');
+  /* a report verified before rc.6 has no Dean approval: the Administrative Assistant can send it to the Dean the same way */
+  const legacy=a.status==='verified'&&!a.post.summary;
+  if(!legacy&&(a.status!=='approved'||a.post.status!=='submitted'))return ERR('There is no submitted report waiting for verification.');
+  if(legacy&&mode!=='verify')return ERR('This report was verified before the Dean\'s approval step. Send the summary to the Dean instead.');
   const p=a.post,rows=d.items||[];
   const v={checks:d.checks||{},remarks:d.remarks||{},returns:d.returns||{},overall:d.overall||'',by:actor.name,at:now(),
     items:p.items.map((x,i)=>{const r=rows[i]||{};return {id:x.id,type:x.type,claimed:x.amount,
@@ -329,24 +333,53 @@ E.postReview=function(actor,a,d,mode){
   const tot=total(v.items,'approved');
   if(!(tot>0))return ERR('The approved reimbursement is zero. Return the report to the student with remarks instead.');
   if(tot>a.grant.total)return ERR('The approved reimbursement of ₱'+money(tot)+' is above the grant of ₱'+money(a.grant.total)+' approved by the Dean.');
-  v.total=tot;v.draft=false;p.verify=v;p.status='verified';a.status='verified';
-  hist(a,actor,'Post-activity documents verified','Approved reimbursement ₱'+money(tot)+' of ₱'+money(p.claimedTotal)+' listed by the student.'+(v.overall?' "'+v.overall+'"':''));
-  notify(a.studentEmail,a,'Post-activity report verified','Your documents were verified. Approved reimbursement: ₱'+money(tot)+'. The Administrative Assistant will file the reimbursement report at the FAO next.','ver:'+a.id+':'+p.cycle);
-  sync(a,'Post-activity documents verified');return OK;
+  v.total=tot;v.draft=false;p.verify=v;p.status='dean';a.status='approved';p.summary=null;p.deanReturn=null;
+  hist(a,actor,'Summary of Expenses submitted to the Dean','Requirements verified. Validated reimbursement ₱'+money(tot)+' of ₱'+money(p.claimedTotal)+' listed by the student, sent to '+nameOf(a.route.dean)+' for approval.'+(v.overall?' "'+v.overall+'"':''));
+  notify(a.route.dean,a,'Action required: approve the Summary of Expenses','The Administrative Assistant verified the post-activity requirements of '+a.studentName+' ('+a.conf.title+') and prepared the Summary of Expenses: ₱'+money(tot)+' for reimbursement. Review it, add your digital signature and approve it.','soe:'+a.id+':'+p.cycle+':'+now());
+  notify(a.studentEmail,a,'Post-activity requirements verified','Your post-activity requirements were verified. The Summary of Expenses (₱'+money(tot)+') is now with the Dean for approval.','ver:'+a.id+':'+p.cycle);
+  sync(a,'Summary of Expenses submitted to the Dean');return OK;
 };
 /* "Santos, Maria L." -> "Maria L. Santos" for the greeting */
 const greetName=n=>{const m=/^([^,]+),\s*(.+)$/.exec(String(n||'').trim());return m?m[2].trim()+' '+m[1].trim():String(n||'').trim()||'Student'};
 /* the email the student gets when the Administrative Assistant records the RFP (wording from the College, 18 Nov 2026) */
 const faoMail=(a,rfp)=>'Hi '+greetName(a.studentName)+',\n\nGood day!\n\nWe would like to inform you that your reimbursement request has been processed and submitted to the Finance and Accounting Office (FAO) for review and approval, with Request for Payment (reference number '+rfp+').\n\nYou may check the status of your reimbursement at Window A or B, Finance Office at St. La Salle Hall, approximately 5 to 10 business days from receipt of this email. Please be reminded that you are required to submit the original receipts or invoices (or printed copies of electronic receipts) when claiming your reimbursement.\n\nThank you.';
-/* o = {rfp}. Marks the report as filed at the FAO, records the RFP number and emails the student. */
+/* o = {signature, confirm, dry, note}. The Dean (or the approver in the Dean's place) reviews the validated Summary of Expenses,
+   signs it and approves it. Only then can the Summary of Expenses be generated, downloaded and printed. */
+E.approveSummary=function(actor,a,o){
+  o=o||{};
+  if(actor.email!==a.route.dean)return deny(a,actor,'Only '+nameOf(a.route.dean)+', who approved the grant, approves the Summary of Expenses.');
+  if(a.status!=='approved'||a.post.status!=='dean')return ERR('There is no Summary of Expenses waiting for your approval.');
+  const sig=String(o.signature||'');
+  if(sig.indexOf('data:image/png;base64,')!==0)return ERR('Add your digital signature before approving.');
+  if(sig.length>300000)return ERR('The signature image is too large. Draw it again or upload a smaller image.');
+  if(o.dry)return {ok:true,dry:true,total:a.post.verify.total};
+  if(!o.confirm)return ERR('Press Confirm approval to sign the Summary of Expenses.');
+  const p=a.post,note=String(o.note||'').trim().slice(0,1000);
+  p.summary={by:actor.name,byEmail:actor.email,at:now(),signature:sig,note,inPlace:a.route.dean!==signers().dean};p.status='verified';a.status='verified';
+  hist(a,actor,'Summary of Expenses approved','Approved and e-signed: reimbursement ₱'+money(p.verify.total)+'.'+(note?' "'+note+'"':''));
+  notify(adminsOf(),a,'Summary of Expenses approved','The Dean approved the Summary of Expenses for '+a.studentName+' (₱'+money(p.verify.total)+'). Download or print it, submit it to the FAO, then record the RFP number.','soeok:'+a.id+':'+p.cycle);
+  notify(a.studentEmail,a,'Reimbursement approved by the Dean','The Dean approved your reimbursement of ₱'+money(p.verify.total)+'. The Administrative Assistant will submit it to the Finance and Accounting Office next.','soeoks:'+a.id+':'+p.cycle);
+  sync(a,'Summary of Expenses approved');return OK;
+};
+/* The Dean sends the summary back to the Administrative Assistant with remarks (amounts or funding sources to change). */
+E.returnSummary=function(actor,a,note){
+  if(actor.email!==a.route.dean)return deny(a,actor,'Only '+nameOf(a.route.dean)+' can return the Summary of Expenses.');
+  if(a.status!=='approved'||a.post.status!=='dean')return ERR('There is no Summary of Expenses waiting for your approval.');
+  note=String(note||'').trim();if(!note)return ERR('Add remarks that tell the Administrative Assistant what to change.');
+  const p=a.post;p.status='submitted';p.verify=Object.assign({},p.verify,{draft:true,total:null});p.deanReturn={by:actor.name,at:now(),note:note.slice(0,2000)};
+  hist(a,actor,'Summary of Expenses returned','Returned to the Administrative Assistant: "'+p.deanReturn.note+'"');
+  notify(adminsOf(),a,'Summary of Expenses returned by the Dean','The Dean returned the Summary of Expenses for '+a.studentName+': "'+p.deanReturn.note+'" Correct it on the Verification screen and send it again.','soeret:'+a.id+':'+now());
+  sync(a,'Summary of Expenses returned');return OK;
+};
+/* o = {rfp}. Marks the Summary of Expenses as filed at the FAO, records the RFP number and emails the student. */
 E.complete=function(actor,a,o){
-  if(actor.role!=='admin')return deny(a,actor,'Only the Administrative Assistant files the reimbursement report.');
-  if(a.status!=='verified')return ERR('Verify the post-activity documents first.');
+  if(actor.role!=='admin')return deny(a,actor,'Only the Administrative Assistant files the Summary of Expenses at the FAO.');
+  if(a.status!=='verified'||!a.post.summary)return ERR('The Dean must approve the Summary of Expenses first.');
   const rfp=String(o&&o.rfp||'').trim();
   if(!rfp)return ERR('Enter the RFP number to mark the report as filed at the FAO.');
   if(rfp.length>40)return ERR('The RFP number is too long.');
-  a.report={no:'RR-'+a.ref,at:now(),by:actor.name,rfp};a.status='completed';
-  hist(a,actor,'Filed at FAO','Reimbursement report '+a.report.no+' submitted to the FAO. RFP '+rfp+'. The student was emailed.');
+  a.report={no:'SOE-'+a.ref,at:now(),by:actor.name,rfp};a.status='completed';
+  hist(a,actor,'Filed at FAO','Summary of Expenses '+a.report.no+' submitted to the FAO. RFP '+rfp+'. The student was emailed.');
   notify(a.studentEmail,a,'Reimbursement request submitted to the FAO (RFP '+rfp+')',faoMail(a,rfp),'done:'+a.id);
   sync(a,'Filed at FAO');return OK;
 };
@@ -356,6 +389,7 @@ E.remind=function(actor,a,auto){
   if(a.status==='pending'){const s=CHAIN[a.stage];to=a.route[s];what='is waiting for your decision'}
   else if(a.status==='returned'){to=a.studentEmail;what='was returned to you and is waiting for your reply'}
   else if(a.status==='approved'&&(a.post.status==='submitted')){to=adminsOf();what='has a post-activity report waiting for verification'}
+  else if(a.status==='approved'&&a.post.status==='dean'){to=a.route.dean;what='has a Summary of Expenses waiting for your approval and signature'}
   else if(a.status==='approved'&&a.post.status!=='returned'){if(manilaToday()<=a.conf.end)return ERR('The conference has not ended yet.');to=a.studentEmail;what='needs its post-activity report and reimbursement requirements (due '+fmtD(dueDate(a))+')'}
   else if(a.status==='approved'){to=a.studentEmail;what='has returned post-activity requirements waiting for your correction'}
   else if(a.status==='verified'){to=adminsOf();what='is verified and waiting to be filed at the FAO with an RFP number'}
@@ -416,7 +450,7 @@ E.markViewed=function(actor,a,fileId){
   }
 
   /* ---------- run one action on the server ---------- */
-  const ACTIONS = new Set(['submit', 'endorse', 'approveGrant', 'returnApp', 'reject', 'comment', 'resubmit', 'submitPost', 'postReview', 'complete', 'remind', 'markRead', 'markViewed']);
+  const ACTIONS = new Set(['submit', 'endorse', 'approveGrant', 'returnApp', 'reject', 'comment', 'resubmit', 'submitPost', 'postReview', 'approveSummary', 'returnSummary', 'complete', 'remind', 'markRead', 'markViewed']);
   const runNow = (actor, name, appId, args) => {
     if (!ACTIONS.has(name)) return ERR('Unknown action.');
     if (name === 'submit') return E.submit(actor, args[0]);

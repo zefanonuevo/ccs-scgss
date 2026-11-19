@@ -1,4 +1,4 @@
-/* CCS SCGSS v3.0 screens, part 2: tracking, verification, reimbursement report, Google records, notifications, settings, simulation. */
+/* CCS SCGSS v3.0 screens, part 2: tracking, verification, Summary of Expenses, Google records, notifications, settings, simulation. */
 (function(C){
 "use strict";
 const {$,$$,money,esc,fmtT,fmtD,fmtSize,round2}=C.u;
@@ -30,18 +30,18 @@ ACT.trkcsv=()=>{const all=D().apps.filter(a=>C.matches(a,TF.q)&&(!TF.g||C.info(a
 const VS={f:'submitted'};
 const postApps=()=>D().apps.filter(a=>a.post.status!=='none');
 R.verify=function(){
-  const all=postApps(),f={submitted:a=>a.post.status==='submitted',returned:a=>a.post.status==='returned',verified:a=>a.post.status==='verified',all:()=>true};
+  const all=postApps(),f={submitted:a=>a.post.status==='submitted'||a.status==='verified'&&!a.post.summary,returned:a=>a.post.status==='returned',dean:a=>a.post.status==='dean',verified:a=>a.post.status==='verified'&&!!a.post.summary,all:()=>true};
   if(C.verifySel){VS.sel=C.verifySel;C.verifySel=null}
   const list=all.filter(f[VS.f]);
-  $('#verifyBody').innerHTML='<div class="kpis chips">'+[['submitted','For verification'],['returned','Returned to student'],['verified','Verified'],['all','All reports']].map(c=>'<button type="button" class="kpi" data-act="vfilter" data-f="'+c[0]+'" aria-pressed="'+(VS.f===c[0])+'"><b>'+all.filter(f[c[0]]).length+'</b><span>'+c[1]+'</span></button>').join('')+'</div>'+
+  $('#verifyBody').innerHTML='<div class="kpis chips">'+[['submitted','For verification'],['returned','Returned to student'],['dean','With the Dean'],['verified','Approved by the Dean'],['all','All reports']].map(c=>'<button type="button" class="kpi" data-act="vfilter" data-f="'+c[0]+'" aria-pressed="'+(VS.f===c[0])+'"><b>'+all.filter(f[c[0]]).length+'</b><span>'+c[1]+'</span></button>').join('')+'</div>'+
    '<div class="card" style="margin-top:14px">'+(list.length?'<div class="tbl"><table><thead><tr><th>Reference</th><th>Student</th><th>Conference</th><th class="r">Grant (₱)</th><th class="r">Listed (₱)</th><th>Report</th><th></th></tr></thead><tbody>'+list.map(a=>'<tr'+(a.id===VS.sel?' class="sel"':'')+'><td class="mono">'+esc(a.ref)+'</td><td>'+esc(a.studentName)+'</td><td>'+esc(a.conf.title)+'</td><td class="r num">'+money(a.grant.total)+'</td><td class="r num">'+money(a.post.claimedTotal)+'</td><td>'+(C.info(a).label)+'</td><td><button class="btn sm" data-act="vopen" data-id="'+a.id+'">Open</button></td></tr>').join('')+'</tbody></table></div>':'<div class="empty-note">No reports in this list.</div>')+'</div><div id="vpanel" style="margin-top:14px"></div>';
   if(VS.sel&&D().apps.some(a=>a.id===VS.sel))panel(D().apps.find(a=>a.id===VS.sel));
 };
 ACT.vfilter=t=>{VS.f=t.dataset.f;VS.sel=null;R.verify()};
 ACT.vopen=t=>{VS.sel=t.dataset.id;R.verify();$('#vpanel').scrollIntoView({behavior:'smooth'})};
 function panel(a){
-  const p=a.post,v=p.verify,edit=a.status==='approved'&&p.status==='submitted'&&u().role==='admin',ro=!edit;
-  const dis=ro?' disabled':'',done=a.status==='verified'||a.status==='completed';
+  const p=a.post,v=p.verify,legacy=a.status==='verified'&&!p.summary,edit=(a.status==='approved'&&p.status==='submitted'||legacy)&&u().role==='admin',ro=!edit;
+  const dis=ro?' disabled':'',done=(a.status==='verified'&&!!p.summary)||a.status==='completed';
   const said=k=>k==='report'?(p.reportId?'<span class="pill p-ok">Uploaded</span>':'<span class="pill p-warn">Missing</span>'):k==='article'?(p.article&&p.posterId?'<span class="pill p-ok">'+C.wordCount(p.article.summary)+' words, graphic</span>':'<span class="pill p-warn">Missing</span>'):(p.docs&&p.docs[k]?'<span class="pill p-ok">Included</span>':'<span class="pill p-warn">Not included</span>');
   const docRows=C.REQ_CHECK.map((r,i)=>'<tr><td>'+(i<C.REQ_POST.length?(i+1)+'. ':'')+r[1]+'</td><td>'+said(r[0])+'</td><td><input type="checkbox" class="vk" data-k="'+r[0]+'" aria-label="Verified: '+r[1]+'"'+(v&&v.checks[r[0]]?' checked':'')+dis+'></td><td><input type="checkbox" class="vq" data-k="'+r[0]+'" aria-label="Return to the student: '+r[1]+'"'+(v&&v.returns&&v.returns[r[0]]?' checked':'')+dis+'></td><td><input class="vr" data-k="'+r[0]+'" aria-label="Remarks for '+r[1]+'" value="'+esc(v&&v.remarks[r[0]]||'')+'" style="width:100%"'+dis+'></td></tr>').join('');
   const itemRows=p.items.map((l,i)=>{
@@ -52,14 +52,16 @@ function panel(a){
   $('#vpanel').innerHTML='<div class="screen"><div class="screen-bar"><b>'+esc(a.ref)+' · '+esc(a.studentName)+'</b><span class="mono">'+(ro?'Read only':'Role: Administrative Assistant')+'</span></div><div class="screen-body">'+
    '<div class="kpis"><div class="kpi"><b>₱'+money(a.grant.total)+'</b><span>Total amount of grant approved by the Dean</span></div><div class="kpi"><b>₱'+money(p.claimedTotal)+'</b><span>Listed by the student</span></div><div class="kpi"><b id="vs_appr">₱0</b><span>Approved for reimbursement</span></div><div class="kpi"><b id="vs_left">₱0</b><span>Left of the grant</span></div></div>'+
    '<div class="grid g2" style="margin-top:12px"><dl class="who"><dt>Conference</dt><dd>'+esc(a.conf.title)+'</dd><dt>Program</dt><dd>'+a.program+' · '+esc(a.studentName)+'</dd><dt>Report</dt><dd>Version '+p.cycle+' · submitted '+fmtT(p.submittedAt)+'</dd></dl>'+
-   '<div>'+(p.missingNote?'<div class="callout">Student\'s explanation for documents not in the PDF: '+esc(p.missingNote)+'</div>':'')+(v&&p.status==='returned'?'<div class="callout">Returned: '+esc(v.overall)+'</div>':'')+'</div></div>'+
+   '<div>'+(p.missingNote?'<div class="callout">Student\'s explanation for documents not in the PDF: '+esc(p.missingNote)+'</div>':'')+(v&&p.status==='returned'?'<div class="callout">Returned: '+esc(v.overall)+'</div>':'')+(p.deanReturn&&p.status==='submitted'?'<div class="callout warn"><b>Returned by the Dean</b> ('+esc(p.deanReturn.by)+', '+fmtT(p.deanReturn.at)+'): '+esc(p.deanReturn.note)+'</div>':'')+(legacy?'<div class="callout">Verified before the Dean\'s approval step was added. Send the summary to the Dean to get it approved and signed.</div>':'')+'</div></div>'+
    '<h3>Documents</h3>'+C.docsHTML(a,true)+
    '<h3>Checklist: tick each item you verified (1 to 6 are in the consolidated PDF, in order), or flag it to return to the student</h3><div class="tbl"><table><thead><tr><th>Item</th><th>Student says</th><th>Verified</th><th>Return</th><th>Remarks, changes or corrections</th></tr></thead><tbody>'+docRows+'</tbody></table></div>'+
    '<h3>Reimbursement per item</h3><p class="muted">Check each expense against its receipt or invoice in the PDF. You can correct the OR or invoice number, the merchant name, the amount and the funding source, and add a remark for each item.</p><div class="tbl"><table><thead><tr><th>Expense</th><th>OR or invoice no.</th><th>Merchant</th><th class="r">Listed (₱)</th><th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th></tr></thead><tbody>'+itemRows+'</tbody><tfoot><tr><th colspan="3">Total · grant ₱'+money(a.grant.total)+'</th><th class="r num">'+money(p.claimedTotal)+'</th><th class="r num" id="va_total">0</th><th colspan="2" id="va_note" class="muted" style="text-transform:none;letter-spacing:0;font-weight:400"></th></tr></tfoot></table></div>'+
    (p.article?'<div class="card" style="margin-top:12px">'+C.articleHTML(a)+'</div>':'')+clarifyHTML(a)+
    '<div class="field"><label for="v_overall">Overall remarks</label><textarea id="v_overall" rows="2"'+dis+'>'+esc(v&&v.overall||'')+'</textarea></div><div class="msg" id="v_msg" style="color:var(--bad);font-size:12px"></div>'+
-   (edit?'<div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-act="vverify">Verify and approve amounts</button><button class="btn warn" data-act="vreturn">Return to student</button><button class="btn sec" data-act="vsave">Save progress</button></div>'
-     :done?'<div class="callout ok">Verified by '+esc(v.by)+' on '+fmtT(v.at)+'. Approved reimbursement ₱'+money(v.total)+'.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button class="btn" data-act="rdl" data-id="'+a.id+'">Download Reimbursement Report</button><button class="btn sec" data-act="rptopen" data-id="'+a.id+'">Open the report'+(a.status==='verified'&&u().role==='admin'?' and record the RFP':'')+'</button></div>':'<div class="callout">Waiting for the student.</div>')+
+   (edit?'<p class="muted">When all three requirements are verified and the amounts are final, send the validated Summary of Expenses to the Dean. It can be downloaded or printed only after the Dean approves and signs it.</p><div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-act="vverify">Verify and send the summary to the Dean</button>'+(legacy?'':'<button class="btn warn" data-act="vreturn">Return to student</button><button class="btn sec" data-act="vsave">Save progress</button>')+'</div>'
+     :p.status==='dean'?'<div class="callout">Verified by '+esc(v.by)+' on '+fmtT(v.at)+'. The Summary of Expenses (₱'+money(v.total)+') is with <b>'+esc(C.nameOf(a.route.dean))+'</b> for approval and signature.</div>'
+     :done&&p.summary?'<div class="callout ok">Approved and signed by '+esc(p.summary.by)+' on '+fmtT(p.summary.at)+'. Reimbursement ₱'+money(v.total)+'.</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button class="btn" data-act="rdl" data-id="'+a.id+'">Download the Summary of Expenses</button><button class="btn sec" data-act="rptopen" data-id="'+a.id+'">Open it'+(a.status==='verified'&&u().role==='admin'?' and record the RFP':'')+'</button></div>'
+     :done?'<div class="callout ok">Filed at the FAO before the Dean\'s approval step was added.</div>':'<div class="callout">Waiting for the student.</div>')+
    '</div></div>';
   vTotals();
 }
@@ -92,11 +94,11 @@ document.addEventListener('change',e=>{const c=e.target;if(!c.classList)return;
 function vCollect(){return {checks:Object.fromEntries($$('.vk').map(c=>[c.dataset.k,c.checked])),returns:Object.fromEntries($$('.vq').map(c=>[c.dataset.k,c.checked])),remarks:Object.fromEntries($$('.vr').map(i=>[i.dataset.k,i.value])),
   items:$$('.va').map((i,n)=>({approved:i.value,fund:$$('.vf')[n].value,or:$$('.vo')[n].value,merchant:$$('.vm')[n].value,why:$$('.vw')[n].value})),overall:$('#v_overall').value}}
 async function vDo(mode,okMsg){const a=D().apps.find(x=>x.id===VS.sel),r=await E.postReview(u(),a,vCollect(),mode);if(r.err){$('#v_msg').textContent=r.err;toast(r.err);return}toast(okMsg);R.verify()}
-ACT.vverify=()=>vDo('verify','Verified. The student was notified. You can now download the reimbursement report.');
+ACT.vverify=()=>vDo('verify','Verified and sent to the Dean for approval. The student was notified.');
 ACT.vreturn=()=>vDo('return','Returned to the student with the requirements to clarify.');
 ACT.vsave=()=>vDo('save','Progress saved.');
 
-/* ---------- reimbursement report ---------- */
+/* ---------- Student Conference Grant Summary of Expenses ---------- */
 const FAO='FAO';
 const dShort=ts=>fmtD(fmtT(ts).slice(0,10));
 /* an endorser appears with the date they endorsed. If the same person already endorsed as the Thesis Adviser, the repeated step shows that date and says so. */
@@ -107,77 +109,99 @@ function signInfo(a,r){
   return 'Endorsed on '+dShort(d.at);
 }
 const apprLabel=a=>a.route.dean!==D().settings.dean?'Associate Dean, approving in the Dean\'s place':'Dean';
-const rptItems=a=>a.post.verify.items.filter(x=>x.approved>0); /* the report carries the final approved amounts only */
-function reportHTML(a){
-  const p=a.post,v=p.verify,dl=a.grant,sig=dl.signature,items=rptItems(a);
-  const endorsed=['adviser','chair','assoc'].map(r=>'<td>'+CH[r].label+'<br><b>'+esc(C.nameOf(a.route[r]))+'</b><br><span class="muted2">'+esc(signInfo(a,r))+'</span></td>').join('');
-  return '<div class="paper" id="rptPaper">'+
-   '<div class="rp-head"><div><p class="rp-org">De La Salle University · College of Computer Studies</p><h3>Student Conference Grant · Reimbursement Report</h3></div><div class="rp-no"><span>Report no.</span><b class="mono">RR-'+esc(a.ref)+'</b>'+(a.report?'<span>Filed at FAO '+dShort(a.report.at)+'</span><span>RFP '+esc(a.report.rfp)+'</span>':'<span>Not yet filed at FAO</span>')+'</div></div>'+
-   '<table class="rp"><tr><th>Application reference</th><td class="mono">'+esc(a.ref)+'</td><th>Academic year · term</th><td>'+C.ayLabel(a.ay)+' · '+a.term.replace('Term','Term ')+'</td></tr>'+
-   '<tr><th>Student</th><td>'+esc(a.studentName)+'</td><th>ID number · program</th><td>'+esc(a.sid)+' · '+a.program+' · year '+a.year+'</td></tr>'+
-   '<tr><th>Thesis Adviser</th><td>'+esc(C.nameOf(a.route.adviser))+'</td><th>Event location</th><td>'+esc(C.regionLabel(a.conf.scope))+'</td></tr>'+
-   '<tr><th>Conference</th><td colspan="3">'+esc(a.conf.title)+' · '+esc(a.conf.org)+'</td></tr>'+
-   '<tr><th>Dates · venue</th><td colspan="3">'+fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+' · '+esc(a.conf.venue)+'</td></tr>'+
-   '<tr><th>Paper</th><td colspan="3">'+esc(a.paper.title)+' ('+esc(a.paper.ptype)+', '+esc(a.paper.index)+')</td></tr></table>'+
-   '<p class="rp-h">Grant approved by the '+esc(apprLabel(a))+'</p><table class="rp"><tr><th>Total amount of grant</th><td class="r">₱'+money(dl.total)+'</td><th>Funding source</th><td>'+esc(dl.fund)+'</td></tr><tr><th>Approved by</th><td>'+esc(dl.by)+'<br><span class="muted2">Approved '+dShort(dl.at)+'</span></td><th>Digital signature</th><td><img class="sigimg" src="'+sig+'" alt="Signature of '+esc(dl.by)+'"></td></tr></table>'+
-   '<p class="rp-h">Itemised reimbursement (final approved amounts)</p><table class="rp"><tr><th>#</th><th>Expense</th><th>OR or invoice no.</th><th>Merchant</th><th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th></tr>'+
-   items.map((l,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(l.type)+'</td><td class="mono">'+esc(l.or)+'</td><td>'+esc(l.merchant)+'</td><td class="r">'+money(l.approved)+'</td><td>'+esc(l.fund)+'</td><td>'+esc(l.why)+'</td></tr>').join('')+
-   '<tr><th colspan="4">Total reimbursement approved</th><th class="r">'+money(v.total)+'</th><th colspan="2"></th></tr></table>'+(v.overall?'<p class="rp-note">Remarks: '+esc(v.overall)+'</p>':'')+
-   '<p class="rp-h">Endorsements and approval</p><table class="rp rp-sign"><tr>'+endorsed+'<td>'+esc(apprLabel(a))+'<br><b>'+esc(dl.by)+'</b><br><span class="muted2">Approved '+dShort(dl.at)+'</span></td></tr></table>'+
-   '<table class="rp rp-sign" style="margin-top:10px"><tr><td>Prepared and verified by<br><br><b>'+esc(v.by)+'</b><br>Administrative Assistant<br><span class="muted2">'+dShort(v.at)+'</span></td><td>Received by the '+FAO+'<br><br>RFP no.: '+(a.report?'<b>'+esc(a.report.rfp)+'</b>':'_______________')+'<br>Name and signature: _______________<br>Date: ______________</td></tr></table>'+
-   '<p class="rp-foot">Generated '+fmtT(Date.now())+' from the CCS Student Conference Grant Support System · template v1, under review by the College.</p></div>';
+const rptItems=a=>a.post.verify.items.filter(x=>x.approved>0); /* the summary carries the final approved amounts only */
+C.rptItems=rptItems;
+const m2=n=>Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const PHP=n=>'PHP '+m2(n);
+const dLong=ts=>dShort(ts);
+/* who signs the summary: the Dean's approval since 1.0.0-rc.6; for a report filed before that, the grant approval and its signature */
+function soeSigner(a){
+  const s=a.post.summary;
+  if(s)return {name:s.by,title:s.inPlace?'Associate Dean, for the Dean, College of Computer Studies':'Dean, College of Computer Studies',at:s.at,sig:s.signature};
+  return {name:a.grant.by,title:'Dean, College of Computer Studies',at:a.grant.at,sig:a.grant.signature||null};
 }
-/* The downloaded report: real text, complete borders and the Dean's signature image */
+/* endorsers in order; a skipped step shows why */
+function endorseCells(a){
+  return ['adviser','chair','assoc'].map(r=>({label:CH[r].label,name:C.nameOf(a.route[r]),when:signInfo(a,r)||'–'})).concat([{label:apprLabel(a),name:a.grant.by,when:'Approved on '+dShort(a.grant.at)}]);
+}
+/* The Student Conference Grant Summary of Expenses, laid out as the College's form (template received 19 Nov 2026) */
+function reportHTML(a){
+  const p=a.post,v=p.verify,g=a.grant,items=rptItems(a),sg=soeSigner(a),ec=endorseCells(a);
+  return '<div class="paper" id="rptPaper">'+
+   '<div class="rp-head"><div><p class="rp-org">De La Salle University · College of Computer Studies</p><h3>Student Conference Grant</h3><p class="rp-sub">Summary of Expenses</p></div><div class="rp-no"><span>No.</span><b class="mono">SOE-'+esc(a.ref)+'</b>'+(a.report?'<span>Filed at FAO '+dShort(a.report.at)+'</span><span>RFP '+esc(a.report.rfp)+'</span>':'')+'</div></div>'+
+   '<table class="rp"><tr><th>Application Reference<br><span class="muted2">(for CCS use)</span></th><td class="mono">'+esc(a.ref)+'</td><th>Academic Year, Term</th><td>'+C.ayLabel(a.ay).replace('–','-')+', '+a.term.replace('Term','Term ')+'</td></tr>'+
+   '<tr><th>Student</th><td>'+esc(a.studentName)+'</td><th>ID Number • Program</th><td>'+esc(a.sid)+' • '+a.program+'</td></tr>'+
+   '<tr><th>Thesis Adviser</th><td>'+esc(C.nameOf(a.route.adviser))+'</td><th>Location Category</th><td>'+esc(C.regionLabel(a.conf.scope))+'</td></tr>'+
+   '<tr><th>Conference Title</th><td>'+esc(a.conf.title)+'</td><th>Conference Organizer</th><td>'+esc(a.conf.org)+'</td></tr>'+
+   '<tr><th>Dates</th><td>'+fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+'</td><th>Venue</th><td>'+esc(a.conf.venue)+'</td></tr>'+
+   '<tr><th>Paper</th><td colspan="3">'+esc(a.paper.title)+' ('+esc(a.paper.ptype)+', '+esc(a.paper.index)+')</td></tr></table>'+
+   '<table class="rp" style="margin-top:10px"><tr><th>Total Approved Grant</th><td class="r"><b>'+PHP(g.total)+'</b></td><th>Funding Source</th><td>'+esc(g.fund)+'</td></tr></table>'+
+   '<p class="rp-h">Endorsements and Approval</p><table class="rp rp-sign"><tr>'+ec.map(c=>'<th>'+esc(c.label)+'</th>').join('')+'</tr><tr>'+ec.map(c=>'<td><b>'+esc(c.name)+'</b><br><span class="muted2">'+esc(c.when)+'</span></td>').join('')+'</tr></table>'+
+   '<p class="rp-h">Summary of Expenses</p><table class="rp"><tr><th>#</th><th>Expense</th><th>OR or Invoice No.</th><th>Merchant</th><th class="r">Approved Amount (PHP)</th><th>Funding Source</th></tr>'+
+   items.map((l,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(l.type)+'</td><td class="mono">'+esc(l.or)+'</td><td>'+esc(l.merchant)+'</td><td class="r">'+m2(l.approved)+'</td><td>'+esc(l.fund)+'</td></tr>').join('')+
+   '<tr><th colspan="4">Total Approved Amount for Reimbursement</th><th class="r">'+PHP(v.total)+'</th><th></th></tr></table>'+
+   '<table class="rp rp-sign" style="margin-top:14px"><tr><td><b>Prepared by:</b><div class="sigspace"></div><b>'+esc(v.by)+'</b><br>Administrative Assistant<br><span class="muted2">'+dShort(v.at)+'</span></td>'+
+   '<td><b>Verified and Approved by:</b><div class="sigspace">'+(p.status==='dean'?'<span class="muted2">Awaiting the Dean\'s signature</span>':sg.sig?'<img class="sigimg" src="'+sg.sig+'" alt="Signature of '+esc(sg.name)+'">':'')+'</div><b>'+esc(sg.name)+'</b><br>'+esc(sg.title)+'<br><span class="muted2">'+(p.status==='dean'?'Not yet approved':dShort(sg.at))+'</span></td></tr></table>'+
+   '<p class="rp-foot">Generated '+fmtT(Date.now())+' from the CCS Student Conference Grant Support System.</p></div>';
+}
+C.reportHTML=reportHTML;
+/* The downloaded Summary of Expenses: real text, complete borders and the Dean's signature image */
 const GREEN=[0.04,0.36,0.27],GREY=[0.93,0.94,0.93];
 async function reportPdf(a){
-  const p=a.post,v=p.verify,dl=a.grant,items=rptItems(a),P=C.PDF,doc=new P.Doc(),CW=P.W-2*P.M;
-  const sig=await P.jpegOf(dl.signature,150,50),simg=sig?{jpeg:sig,w:sig.w,h:sig.h}:null;
-  const right=(t,y,sz,b)=>doc.text(t,P.W-P.M-P.tw(t,sz,b),y,sz,b);
-  doc.text('DE LA SALLE UNIVERSITY · COLLEGE OF COMPUTER STUDIES',P.M,40,8,true,GREEN);
-  doc.text('Student Conference Grant · Reimbursement Report',P.M,53,15,true);
-  right('Report no. RR-'+a.ref,41,9,true);right(a.report?'Filed at the '+FAO+' on '+dShort(a.report.at)+' · RFP '+a.report.rfp:'Not yet filed at the '+FAO,54,8,false);
-  doc.y=82;
-  const T=(t,o)=>Object.assign({t,b:true,fill:GREY},o||{}),c4=[104,153.5,104,153.5];
+  const p=a.post,v=p.verify,g=a.grant,items=rptItems(a),sg=soeSigner(a),ec=endorseCells(a),P=C.PDF,doc=new P.Doc(),CW=P.W-2*P.M;
+  const sig=await P.jpegOf(sg.sig,160,52);
+  const center=(t,y,sz,b,rgb)=>doc.text(t,(P.W-P.tw(t,sz,b))/2,y,sz,b,rgb);
+  center('DE LA SALLE UNIVERSITY · COLLEGE OF COMPUTER STUDIES',38,8,true,GREEN);
+  center('Student Conference Grant',52,15,true);
+  center('Summary of Expenses',71,12,false);
+  doc.text('SOE-'+a.ref+(a.report?'  ·  RFP '+a.report.rfp:''),P.W-P.M-P.tw('SOE-'+a.ref+(a.report?'  ·  RFP '+a.report.rfp:''),7.5,false),38,7.5,false,[0.4,0.4,0.4]);
+  doc.y=92;
+  const T=(t,o)=>Object.assign({t,b:true,fill:GREY},o||{}),c4=[110,152,100,153.3];
   doc.table(c4,[
-    [T('Application reference'),a.ref,T('Academic year · term'),C.ayLabel(a.ay)+' · '+a.term.replace('Term','Term ')],
-    [T('Student'),a.studentName,T('ID number · program'),a.sid+' · '+a.program+' · year '+a.year],
-    [T('Thesis Adviser'),C.nameOf(a.route.adviser),T('Event location'),C.regionLabel(a.conf.scope)],
-    [T('Conference'),{t:a.conf.title+' · '+a.conf.org,span:3}],
-    [T('Dates · venue'),{t:fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+' · '+a.conf.venue,span:3}],
+    [T('Application Reference\n(for CCS use)'),a.ref,T('Academic Year, Term'),C.ayLabel(a.ay)+', '+a.term.replace('Term','Term ')],
+    [T('Student'),a.studentName,T('ID Number • Program'),a.sid+' • '+a.program],
+    [T('Thesis Adviser'),C.nameOf(a.route.adviser),T('Location Category'),C.regionLabel(a.conf.scope)],
+    [T('Conference Title'),a.conf.title,T('Conference Organizer'),a.conf.org],
+    [T('Dates'),fmtD(a.conf.start)+' to '+fmtD(a.conf.end),T('Venue'),a.conf.venue],
     [T('Paper'),{t:a.paper.title+' ('+a.paper.ptype+', '+a.paper.index+')',span:3}]]);
-  doc.gap(10);doc.block('Grant approved by the '+apprLabel(a),10,true);doc.gap(2);
-  doc.table(c4,[
-    [T('Total amount of grant'),{t:'₱ '+money(dl.total),a:'r',b:true},T('Funding source'),dl.fund],
-    [T('Approved by'),dl.by+'\nApproved '+dShort(dl.at),T('Digital signature'),simg?{img:simg}:'(signature on file)']]);
-  doc.gap(10);doc.block('Itemised reimbursement (final approved amounts)',10,true);doc.gap(2);
-  const ic=[22,86,78,100,72,87,70];
-  doc.table(ic,[[T('#'),T('Expense'),T('OR or invoice no.'),T('Merchant'),T('Approved (PHP)',{a:'r'}),T('Funding source'),T('Remarks')]].concat(
-    items.map((l,i)=>[String(i+1),l.type,l.or,l.merchant,{t:money(l.approved),a:'r'},l.fund,l.why||'']),
-    [[T('Total reimbursement approved',{span:4}),T(money(v.total),{a:'r'}),T('',{span:2})]]),{size:8.5});
-  doc.gap(6);
-  doc.table([90,65,110,80,100,70],[[T('Grant approved'),{t:'₱ '+money(dl.total),a:'r'},T('Reimbursement approved'),{t:'₱ '+money(v.total),a:'r',b:true},T('Unused balance of grant'),{t:'₱ '+money(C.u.round2(dl.total-v.total)),a:'r'}]],{size:8.5});
-  if(v.overall){doc.gap(6);doc.block('Remarks: '+v.overall,9,false)}
-  doc.gap(10);doc.block('Endorsements and approval',10,true);doc.gap(2);
-  const q=CW/4,sg=r=>({t:CH[r].label+'\n'+C.nameOf(a.route[r])+'\n'+signInfo(a,r)});
-  doc.table([q,q,q,q],[[sg('adviser'),sg('chair'),sg('assoc'),{t:apprLabel(a)+'\n'+dl.by+'\nApproved '+dShort(dl.at),img:simg?{jpeg:sig,w:Math.min(sig.w,q-2*P.M/5-2),h:sig.h*Math.min(sig.w,q-2*P.M/5-2)/sig.w}:undefined}]],{size:8.5});
   doc.gap(8);
-  const h2=CW/2;
-  doc.table([h2,h2],[[{t:'Prepared and verified by\n\n'+v.by+'\nAdministrative Assistant\n'+dShort(v.at)},{t:'Received by the '+FAO+'\n\nRFP no.: '+(a.report?a.report.rfp:'____________________')+'\nName and signature: ______________________\nDate: ______________'}]],{size:8.5});
-  doc.gap(8);doc.block('Generated '+fmtT(Date.now())+' from the CCS Student Conference Grant Support System · template v1, under review by the College.',7.5,false,[0.4,0.4,0.4]);
+  doc.table(c4,[[T('Total Approved Grant'),{t:PHP(g.total),b:true},T('Funding Source'),g.fund]]);
+  doc.gap(12);doc.block('Endorsements and Approval',10.5,true);doc.gap(2);
+  const q=CW/4;
+  doc.table([q,q,q,q],[ec.map(c=>T(c.label)),ec.map(c=>({t:c.name,b:true})),ec.map(c=>c.when)],{size:8.5});
+  doc.gap(12);doc.block('Summary of Expenses',10.5,true);doc.gap(2);
+  const ic=[22,104,86,112,86,105.3];
+  doc.table(ic,[[T('#'),T('Expense'),T('OR or Invoice No.'),T('Merchant'),T('Approved Amount (PHP)',{a:'r'}),T('Funding Source')]].concat(
+    items.map((l,i)=>[String(i+1),l.type,l.or,l.merchant,{t:m2(l.approved),a:'r'},l.fund]),
+    [[T('Total Approved Amount for Reimbursement',{span:4}),T(PHP(v.total),{a:'r'}),T('')]]),{size:8.5});
+  doc.gap(16);
+  const h2=CW/2,blank={t:''};
+  doc.table([h2,h2],[
+    [{t:'Prepared by:',b:true},{t:'Verified and Approved by:',b:true}],
+    [{t:'\n\n'},sig?{t:'',img:{jpeg:sig,w:sig.w,h:sig.h}}:{t:'\n\n'}],
+    [{t:v.by,b:true},{t:sg.name,b:true}],
+    ['Administrative Assistant',sg.title],
+    [dShort(v.at),dShort(sg.at)]],{size:9});
+  doc.gap(8);doc.block('Generated '+fmtT(Date.now())+' from the CCS Student Conference Grant Support System.',7.5,false,[0.4,0.4,0.4]);
   return doc.finish();
 }
+/* the summary can be generated only after the Dean approves it (or, for a report filed before rc.6, once filed) */
+const soeReady=a=>(a.status==='verified'&&!!a.post.summary)||a.status==='completed';
 function downloadBlob(name,blob){const x=document.createElement('a');x.href=URL.createObjectURL(blob);x.download=name;document.body.appendChild(x);x.click();x.remove();setTimeout(()=>URL.revokeObjectURL(x.href),2000)}
-ACT.rdl=t=>{const a=D().apps.find(x=>x.id===(t.dataset.id||state.rpt));if(!a||!a.post.verify||a.post.verify.draft)return toast('Verify the reimbursement amounts first.');reportPdf(a).then(b=>{downloadBlob('RR-'+a.ref+'.pdf',b);toast('Reimbursement report downloaded, with the Dean\'s signature.')}).catch(()=>toast('The report could not be created. Try again.'))};
+ACT.rdl=t=>{const a=D().apps.find(x=>x.id===(t.dataset.id||state.rpt));if(!a||!soeReady(a))return toast('The Summary of Expenses can be downloaded once the Dean approves it.');reportPdf(a).then(b=>{downloadBlob('SOE-'+a.ref+'.pdf',b);toast('Summary of Expenses downloaded.')}).catch(()=>toast('The summary could not be created. Try again.'))};
+ACT.rprint=t=>{const a=D().apps.find(x=>x.id===(t.dataset.id||state.rpt));if(!a||!soeReady(a))return toast('The Summary of Expenses can be printed once the Dean approves it.');
+  const w=window.open('','_blank');reportPdf(a).then(b=>{const url=URL.createObjectURL(b);if(w){w.location.href=url}else{downloadBlob('SOE-'+a.ref+'.pdf',b)}setTimeout(()=>URL.revokeObjectURL(url),60000)}).catch(()=>{if(w)w.close();toast('The summary could not be created. Try again.')})};
 R.rpt=function(){
-  const list=D().apps.filter(a=>a.status==='verified'||a.status==='completed');
+  const list=D().apps.filter(soeReady),waiting=D().apps.filter(a=>a.status==='approved'&&a.post.status==='dean');
   if(C.rptSel&&list.some(a=>a.id===C.rptSel))state.rpt=C.rptSel;C.rptSel=null;
   if(!list.some(a=>a.id===state.rpt))state.rpt=list[0]&&list[0].id;
-  if(!list.length){$('#rptBody').innerHTML='<div class="callout">No verified reimbursements yet. A report can be downloaded once the Administrative Assistant verifies the post-activity documents and the reimbursement amounts.</div>';return}
+  const wait=waiting.length?'<div class="callout" style="margin-bottom:10px">'+waiting.length+' summar'+(waiting.length===1?'y is':'ies are')+' with the Dean for approval: '+waiting.map(a=>esc(a.ref)).join(', ')+'.</div>':'';
+  if(!list.length){$('#rptBody').innerHTML=wait+'<div class="callout">No approved summaries yet. The Summary of Expenses can be downloaded or printed once the Administrative Assistant has verified the three post-activity requirements and the Dean has approved and signed the summary.</div>';return}
   const a=D().apps.find(x=>x.id===state.rpt);
-  $('#rptBody').innerHTML='<div class="row" style="max-width:640px"><div class="field"><label for="r_sel">Application</label><select id="r_sel">'+list.map(x=>opt(x.id,x.ref+' · '+x.studentName+' · ₱'+money(x.post.verify.total)+(x.report?' · RFP '+x.report.rfp:''),x.id===a.id)).join('')+'</select></div></div>'+
-   '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0"><button class="btn" data-act="rdl" data-id="'+a.id+'">Download Reimbursement Report</button></div>'+
+  $('#rptBody').innerHTML=wait+'<div class="row" style="max-width:640px"><div class="field"><label for="r_sel">Application</label><select id="r_sel">'+list.map(x=>opt(x.id,x.ref+' · '+x.studentName+' · ₱'+money(x.post.verify.total)+(x.report?' · RFP '+x.report.rfp:''),x.id===a.id)).join('')+'</select></div></div>'+
+   '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:10px 0"><button class="btn" data-act="rdl" data-id="'+a.id+'">Download the Summary of Expenses</button><button class="btn sec" data-act="rprint" data-id="'+a.id+'">Print</button></div>'+
    (a.status==='completed'?'<div class="callout ok">Filed at the '+FAO+' as '+esc(a.report.no)+' on '+fmtT(a.report.at)+' by '+esc(a.report.by)+'. <b>RFP: '+esc(a.report.rfp)+'.</b> The student was emailed to check the status at Window A or B, Finance Office, St. La Salle Hall, in about 5 to 10 business days, and to bring the original receipts or invoices.</div>':
-    u().role==='admin'?'<div class="card" style="margin:10px 0"><h4>Mark as filed at the '+FAO+'</h4><p class="muted">After the report is submitted to the '+FAO+', record the RFP number here. The student is then notified by email and in-app that the request was processed and may check with the '+FAO+' after 5 to 10 working days.</p>'+
+    u().role==='admin'?'<div class="card" style="margin:10px 0"><h4>Mark as filed at the '+FAO+'</h4><p class="muted">After the Summary of Expenses is submitted to the '+FAO+', record the RFP number here. The student is then emailed with the RFP number and where to check the status.</p>'+
       '<div class="row" style="max-width:420px;margin-top:8px"><div class="field"><label for="r_rfp">RFP number</label><input id="r_rfp" maxlength="40" autocomplete="off"></div></div><div class="msg" id="r_msg" style="color:var(--bad);font-size:12px"></div><button class="btn" style="margin-top:8px" data-act="rfile">Mark filed at '+FAO+' and notify the student</button></div>':'<div class="callout">Waiting for the Administrative Assistant to record the RFP.</div>')+reportHTML(a);
 };
 document.addEventListener('change',e=>{if(e.target.id==='r_sel'){state.rpt=e.target.value;R.rpt()}});

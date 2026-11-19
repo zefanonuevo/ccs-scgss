@@ -37,9 +37,9 @@ The whole application is one JSON document, so a change of rules rarely needs a 
 | `route` | Emails of the `adviser`, `chair`, `assoc` and `dean` for this application |
 | `stage`, `cycle` | Position in the approval chain (0 adviser, 1 chair, 2 associate dean, 3 dean); round number after returns |
 | `decisions` | One entry per step: `endorsed`, `returned`, `skipped`, `approved`, with who and when |
-| `grant` | The Dean's single `total`, `fund` (funding source), who, when, and the signature image |
-| `post` | Post-activity report: `status` (none, submitted, returned, verified), `cycle` (version), `items` (expenses: type, OR or invoice no., merchant, amount), `claimedTotal`, `docs` (which of the six documents the student ticked as in the consolidated PDF) and `missingNote` (the explanation for any not included), the three uploads `fileId` (consolidated PDF), `reportId` (Post-Conference Report) and `posterId` (poster or social media graphic), `article` (`title`, `date`, `location`, `summary`, `words`; since 1.0.0-rc.5), and `verify` (the Administrative Assistant's checks, remarks, approved amounts and total) |
-| `report` | The reimbursement report: `no` (`RR-<ref>`), who, when, `rfp` |
+| `grant` | The Dean's single `total`, `fund` (funding source), who, when. Grants approved before 1.0.0-rc.6 also hold a `signature` image |
+| `post` | Post-activity report: `status` (none, submitted, returned, verified), `cycle` (version), `items` (expenses: type, OR or invoice no., merchant, amount), `claimedTotal`, `docs` (which of the six documents the student ticked as in the consolidated PDF) and `missingNote` (the explanation for any not included), the three uploads `fileId` (consolidated PDF), `reportId` (Post-Conference Report) and `posterId` (poster or social media graphic), `article` (`title`, `date`, `location`, `summary`, `words`; since 1.0.0-rc.5), `verify` (the Administrative Assistant's checks, remarks, approved amounts and total), `summary` (the Dean's approval of the Summary of Expenses: who, when, `signature` PNG, `note`, `inPlace`; since 1.0.0-rc.6) and `deanReturn` (the Dean's remarks when the summary was sent back). `status` adds `dean` (summary with the Dean) |
+| `report` | Filing at the FAO: `no` (`SOE-<ref>`; `RR-<ref>` before 1.0.0-rc.6), who, when, `rfp` |
 | `privacy` | When the student accepted the notice and the notice version (`at`, `v`) |
 | `comments`, `history` | Messages and the approval history, in order |
 | `attach`, `viewed` | The requirements PDF and who has opened which document |

@@ -19,6 +19,8 @@ const me = async (cookie) => { const m = /as=([^;]+)/.exec(cookie || ''); return
 const ORIGIN = 'https://ccs.dlsu.edu.ph';
 const PDF = Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF');
 const SIG = 'data:image/svg+xml;utf8,%3Csvg%3E%3C/svg%3E';
+/* a 1x1 PNG: the Dean's signature on the Summary of Expenses must be a PNG */
+const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
 
 async function boot() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scgss-'));
@@ -88,6 +90,7 @@ test('full application, every role, to filing at the FAO', async (t) => {
   assert.equal((await s.as(REYES).act('postReview', id, { items: [] }, 'verify')).ok, false, 'only the Administrative Assistant verifies');
   const rows = items.map((x) => ({ approved: x.amount, fund: "Dean's Office", why: '' }));
   assert.equal((await adm.act('postReview', id, { checks: allChecks(), remarks: {}, items: rows, overall: 'ok' }, 'verify')).ok, true);
+  assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveSummary', id, { signature: PNG, confirm: true })).ok, true);
   assert.equal((await adm.act('complete', id, { rfp: 'RFP-1' })).ok, true);
   const done = await get(MARIA); assert.equal(done.status, 'completed'); assert.equal(done.report.rfp, 'RFP-1');
   /* a failed action leaves nothing behind */
@@ -338,10 +341,50 @@ test('post-activity report: three uploads, article of 300 to 500 words, missing 
   assert.equal(b.post.reportId, a.post.reportId, 'the earlier report is kept'); assert.equal(b.post.cycle, 2); assert.equal(b.post.article.words, 350);
   /* verify, then record the RFP: the student gets the College's email */
   assert.equal((await adm.act('postReview', id, { checks: allChecks(), remarks: {}, items: rows, overall: '' }, 'verify')).ok, true);
+  assert.equal((await s.as('elena.navarro@dlsu.edu.ph').act('approveSummary', id, { signature: PNG, confirm: true })).ok, true);
   assert.equal((await adm.act('complete', id, { rfp: 'RFP-2026-0141' })).ok, true);
   const mail = (await get()).outbox.find((m) => /RFP-2026-0141/.test(m.subject));
   assert.ok(mail, 'the student is emailed');
   assert.ok(mail.body.startsWith('Hi Maria L. Santos,\n\nGood day!\n\nWe would like to inform you that your reimbursement request has been processed and submitted to the Finance and Accounting Office (FAO) for review and approval, with Request for Payment (reference number RFP-2026-0141).'), mail.body);
   assert.ok(mail.body.includes('Window A or B, Finance Office at St. La Salle Hall, approximately 5 to 10 business days'));
   assert.ok(mail.body.includes('original receipts or invoices (or printed copies of electronic receipts)'));
+});
+
+test('the Dean approves the grant without a signature, then approves and signs the Summary of Expenses', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const maria = s.as(MARIA), adm = s.as('rosa.delgado@dlsu.edu.ph'), dean = s.as('elena.navarro@dlsu.edu.ph');
+  const sub = await maria.act('submit', '', form(await maria.upload('r.pdf'), REYES)); const id = sub.result.appId;
+  for (const e of [REYES, 'luis.mercado@dlsu.edu.ph', 'carla.mendoza@dlsu.edu.ph']) assert.equal((await s.as(e).act('endorse', id, 'ok')).ok, true);
+  const g = await dean.act('approveGrant', id, { confirm: true, amount: 12000, fund: "Dean's Office" });
+  assert.equal(g.ok, true, 'no signature needed to approve the grant: ' + JSON.stringify(g.result));
+  const get = async (who) => (await (await who.get('/api/state')).json()).state;
+  assert.equal((await get(maria)).apps[0].grant.signature, undefined, 'no signature stored on the grant');
+  const items = [{ type: 'Registration fee', or: 'OR-1', merchant: 'Secretariat', amount: 5500 }];
+  const docs = {}; R.REQ_POST.forEach((x) => { docs[x[0]] = true; });
+  assert.equal((await maria.act('submitPost', id, Object.assign(await postKit(maria), { items, docs, missingNote: '' }))).ok, true);
+  const rows = [{ approved: 5500, fund: "Dean's Office", why: '' }];
+  const send = () => adm.act('postReview', id, { checks: allChecks(), remarks: {}, items: rows, overall: '' }, 'verify');
+  assert.equal((await send()).ok, true, 'verified and sent to the Dean');
+  let a = (await get(adm)).apps[0];
+  assert.equal(a.status, 'approved'); assert.equal(a.post.status, 'dean');
+  assert.equal((await adm.act('complete', id, { rfp: 'RFP-9' })).ok, false, 'no filing before the Dean approves');
+  assert.equal((await maria.act('submitPost', id, Object.assign(await postKit(maria), { items, docs, missingNote: '' }))).ok, false, 'the student cannot resubmit while it is with the Dean');
+  assert.equal((await adm.act('approveSummary', id, { signature: PNG, confirm: true })).ok, false, 'only the Dean approves');
+  assert.equal((await dean.act('approveSummary', id, { confirm: true })).ok, false, 'a signature is required');
+  assert.equal((await dean.act('approveSummary', id, { signature: SIG, confirm: true })).ok, false, 'the signature must be a PNG');
+  /* the Dean returns it; the Administrative Assistant corrects and sends it again */
+  assert.equal((await dean.act('returnSummary', id, '')).ok, false, 'remarks are required');
+  assert.equal((await dean.act('returnSummary', id, 'Charge the fee to the College Fund.')).ok, true);
+  a = (await get(adm)).apps[0];
+  assert.equal(a.post.status, 'submitted'); assert.equal(a.post.deanReturn.note, 'Charge the fee to the College Fund.');
+  assert.equal((await adm.act('postReview', id, { checks: allChecks(), remarks: {}, items: [{ approved: 5500, fund: 'College Fund', why: '' }], overall: '' }, 'verify')).ok, true);
+  /* approve and sign */
+  const ok = await dean.act('approveSummary', id, { signature: PNG, confirm: true, note: 'Approved.' });
+  assert.equal(ok.ok, true, JSON.stringify(ok.result));
+  a = (await get(adm)).apps[0];
+  assert.equal(a.status, 'verified'); assert.equal(a.post.summary.signature, PNG); assert.equal(a.post.summary.byEmail, 'elena.navarro@dlsu.edu.ph');
+  assert.equal((await adm.act('complete', id, { rfp: 'RFP-9' })).ok, true, 'filed after the Dean approves');
+  a = (await get(adm)).apps[0];
+  assert.equal(a.report.no, 'SOE-' + a.ref);
+  assert.ok(a.history.some((h) => h.action === 'Summary of Expenses approved'));
 });

@@ -15,7 +15,7 @@ const isStaff=()=>['admin','sysadmin'].indexOf(u().role)>-1;
 const msgs=C.toast=m=>toast(m);
 
 /* ---------- tabs and roles ---------- */
-const TABS=[['dash','Dashboard'],['form','Application form'],['par','Post-activity report'],['track','Tracking'],['verify','Verification'],['rpt','Reimbursement report'],['records','Sheet & Drive'],['notif','Notifications'],['guide','Guidelines'],['flow','Workflow'],['settings','Roles'],['ver','Versions']];
+const TABS=[['dash','Dashboard'],['form','Application form'],['par','Post-activity report'],['track','Tracking'],['verify','Verification'],['rpt','Summary of Expenses'],['records','Sheet & Drive'],['notif','Notifications'],['guide','Guidelines'],['flow','Workflow'],['settings','Roles'],['ver','Versions']];
 const ALL=TABS.map(t=>t[0]);
 const APPR=['dash','notif','guide','flow','ver'];
 const ROLE_TABS={student:['dash','form','par','notif','guide','flow','ver'],adviser:APPR,chair:APPR,assoc:APPR,dean:APPR,
@@ -124,7 +124,7 @@ function periodBar(){
 /* an approver may hold more than one signing step on an application (for example a Chair who is also the Thesis Adviser), so buckets follow the person, not the role */
 function approverBuckets(email,apps){
   const mine=apps.filter(a=>CHAIN.some(k=>a.route[k]===email));
-  return {assigned:mine,pending:mine.filter(a=>a.status==='pending'&&a.route[CHAIN[a.stage]]===email),
+  return {assigned:mine,pending:mine.filter(a=>a.status==='pending'&&a.route[CHAIN[a.stage]]===email||a.status==='approved'&&a.post.status==='dean'&&a.route.dean===email),
     approved:mine.filter(a=>Object.keys(a.decisions).some(k=>a.decisions[k].email===email&&['endorsed','approved'].indexOf(a.decisions[k].d)>-1)),
     returned:mine.filter(a=>a.status==='returned'&&a.route[a.returned.role]===email),rejected:mine.filter(a=>a.status==='rejected'&&a.route[a.rejected.role]===email)};
 }
@@ -154,7 +154,7 @@ const reimbOf=a=>a.post&&a.post.verify&&!a.post.verify.draft&&a.post.verify.tota
 const STAGES=[
   ['Thesis Adviser',a=>a.status==='pending'&&a.stage===0],['Department Chair',a=>a.status==='pending'&&a.stage===1],['Associate Dean',a=>a.status==='pending'&&a.stage===2],['Dean',a=>a.status==='pending'&&a.stage===3],
   ['Returned to the student',a=>a.status==='returned','warn'],['Approved, report due',a=>a.status==='approved'&&a.post.status==='none'],['Report returned',a=>a.status==='approved'&&a.post.status==='returned','warn'],
-  ['Report to verify',a=>a.status==='approved'&&a.post.status==='submitted'],['Verified, RFP to record',a=>a.status==='verified'],['Filed at the FAO',a=>a.status==='completed','done'],['Rejected',a=>a.status==='rejected','bad']];
+  ['Report to verify',a=>a.status==='approved'&&a.post.status==='submitted'],['Summary with the Dean',a=>a.status==='approved'&&a.post.status==='dean'],['Dean approved, RFP to record',a=>a.status==='verified'],['Filed at the FAO',a=>a.status==='completed','done'],['Rejected',a=>a.status==='rejected','bad']];
 function pipelineHTML(apps){
   const total=apps.length;
   return '<div class="panel"><h3>Where applications are</h3><p class="muted">Every application in this view, by stage. Bars are shares of '+total+'.</p><div class="hbars">'+
@@ -189,7 +189,7 @@ R.dash=function(){
   }else{
     const all=periodApps(),b=staffBuckets(all),granted=all.filter(a=>a.grant),grants=C.total(granted.map(a=>({v:a.grant.total})),'v'),reimb=C.total(all.map(a=>({v:reimbOf(a)})),'v'),filed=all.filter(a=>a.status==='completed'),
       inflight=all.filter(a=>a.status==='pending').length,dl=granted.map(a=>(a.grant.at-a.created)/DAY),avg=dl.length?(dl.reduce((x,y)=>x+y,0)/dl.length).toFixed(1):'–';
-    body.innerHTML=dashHead(esc(u().label)+' dashboard',r==='admin'?'Validate post-activity documents, edit reimbursement items, download the reimbursement report and record the RFP.':'All applications, with every tab available for testing.')+
+    body.innerHTML=dashHead(esc(u().label)+' dashboard',r==='admin'?'Verify post-activity requirements, prepare the Summary of Expenses for the Dean, then download it and record the RFP.':'All applications, with every tab available for testing.')+
       '<div class="stats">'+stat('Applications',all.length,inflight+' in approval · '+all.filter(a=>a.status==='approved').length+' approved, awaiting report')+stat('Grants approved',peso(grants),granted.length+' grant'+(granted.length===1?'':'s')+' · avg '+avg+' days to decide')+stat('Reimbursement approved',peso(reimb),pct(reimb,grants)+' of the grants approved')+stat('Filed at the FAO',filed.length,all.filter(a=>a.status==='verified').length+' verified, RFP still to record',all.some(a=>a.status==='verified')?'attn':'')+'</div>'+
       '<div class="dash-cols">'+pipelineHTML(all)+fundingHTML(all)+attentionHTML(all,true)+'</div>'+
       '<div class="card" style="margin-top:14px"><div class="panel-h"><h3>Applications</h3><button class="btn sm sec" data-go="track">Open the tracking table</button></div>'+chipsHTML(b)+dashList(b,{rfp:true,help:CHIP_HELP.staff,action:a=>{
@@ -286,7 +286,7 @@ function factsHTML(a){
   return '<dl class="who">'+p('Student',a.studentName+' · ID '+a.sid+' · '+a.program+' · year '+a.year)+p('Thesis Adviser',C.nameOf(a.route.adviser))+p('Department Chair',C.nameOf(a.route.chair)+' ('+a.program+')')+p('Associate Dean',C.nameOf(a.route.assoc))+p(a.route.dean!==D().settings.dean?'Approver (for the Dean)':'Dean',C.nameOf(a.route.dean))+
    p('Conference',a.conf.title)+p('Dates · venue',fmtD(a.conf.start)+' to '+fmtD(a.conf.end)+' · '+a.conf.venue)+p('Organizer · type',a.conf.org+' · '+a.conf.etype)+p('Event location',C.regionLabel(a.conf.scope)+' (grant limit ₱'+money(C.CAP[a.conf.scope])+')')+
    p('Paper',a.paper.title+' · '+a.paper.ptype+' · '+a.paper.cls)+p('Indexed in',a.paper.index)+p('Co-authors',[a.paper.coF&&'Faculty: '+a.paper.coF,a.paper.coS&&'Student: '+a.paper.coS].filter(Boolean).join(' · '))+
-   p('Privacy consent',a.privacy?'Accepted '+fmtT(a.privacy.at):'')+p('Grant',a.grant?'₱'+money(a.grant.total)+' · funding source: '+a.grant.fund+' · e-signed by '+a.grant.by:'Not yet approved')+'</dl>';
+   p('Privacy consent',a.privacy?'Accepted '+fmtT(a.privacy.at):'')+p('Grant',a.grant?'₱'+money(a.grant.total)+' · funding source: '+a.grant.fund+' · approved by '+a.grant.by:'Not yet approved')+'</dl>';
 }
 function expensesHTML(a){
   const rows=a.expenses.map(x=>'<tr><td>'+esc(x.type)+'</td><td class="r num" data-label="Projected (₱)">'+money(x.amount)+'</td><td class="muted" data-label="Remarks">'+esc(x.remarks)+'</td></tr>').join('');
@@ -319,21 +319,22 @@ function actionHTML(a){
       '<div class="field"><label for="r_text">Your reply</label><textarea id="r_text" rows="3" placeholder="Explain what you changed or attached"></textarea></div><div class="field" style="margin-top:8px"><label for="r_files">Attach documents (optional)</label><input id="r_files" type="file" multiple accept=".pdf,.jpg,.jpeg,.png"></div><div class="msg" id="r_msg" style="color:var(--bad);font-size:12px"></div>'+
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"><button class="btn sec" data-act="editapp">Edit the application</button><button class="btn" data-act="resubmit">Resubmit with my reply</button></div></div>';
     else if(a.status==='approved'&&['none','returned'].indexOf(a.post.status)>-1)h+='<div class="card"><h3>Next: post-activity report</h3><p>Due <b>'+fmtD(C.dueDate(a))+'</b> ('+C.PAR_DAYS+' days after the event). Three uploads: a consolidated PDF of your documents, the Post-Conference Report (PDF), and an article of 300 to 500 words with a poster or social media graphic. List the expenses you are claiming.</p><button class="btn" style="margin-top:8px" data-act="gopar" data-id="'+a.id+'">'+(a.post.status==='returned'?'Correct and resubmit the report':'Submit post-activity report')+'</button></div>';
-    else h+='<div class="card"><h3>Status</h3><p>'+esc(i.label)+'. '+(a.status==='pending'?'Waiting for the '+i.by+'.':a.status==='completed'?'You may check with the FAO after 5 to 10 working days for an update.':'')+'</p></div>';
+    else h+='<div class="card"><h3>Status</h3><p>'+esc(i.label)+'. '+(a.status==='pending'?'Waiting for the '+i.by+'.':a.status==='completed'?'Check the status at Window A or B, Finance Office, St. La Salle Hall, about 5 to 10 business days after the email, and bring your original receipts or invoices.':'')+'</p></div>';
   }
+  else if(a.route.dean===me&&a.status==='approved'&&a.post.status==='dean')h+=summaryCard(a);
   else if(CHAIN.some(k=>a.route[k]===me)){
     const s=CHAIN[a.stage],mine=a.status==='pending'&&a.route[s]===me;
     const done=CHAIN.filter(k=>a.decisions[k]&&a.decisions[k].email===me&&a.decisions[k].d!=='returned').map(k=>CH[k].label+': '+a.decisions[k].d+' '+fmtT(a.decisions[k].at)).join(' · ');
     if(mine){
       const dean=s==='dean',total=C.filesOf(a).filter(f=>!f.superseded).length;
       h+='<div class="card"><h3>Your decision as '+(s==='dean'&&a.route.dean!==D().settings.dean?'approver in place of the Dean':CH[s].label)+'</h3><p class="muted">Preview the documents first. <b id="viewcount">'+viewedCount(a)+'</b> of '+total+' previewed by you.</p>'+
-       (dean?grantFields(a)+'<div class="field" style="margin-top:10px"><label>Your digital signature</label><canvas id="sigpad" class="sigpad" aria-label="Signature pad. Draw your signature."></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><button type="button" class="btn sm sec" data-act="sigclear">Clear</button><button type="button" class="btn sm sec" data-act="sigsaved">Use my saved signature</button><button type="button" class="btn sm sec" data-act="sigupload">Upload a signature image</button><button type="button" class="btn sm sec" data-act="sigsample">Insert sample signature</button><input type="file" id="sigfile" accept="image/png,image/jpeg" hidden></div><label class="chk" style="margin-top:6px"><input type="checkbox" id="d_remember"> Remember my signature on this browser</label><small>Only the Dean signs. The endorsers appear on the reimbursement report with the date they endorsed.</small></div>':'')+
+       (dean?grantFields(a)+'<p class="muted" style="margin-top:8px">No signature is needed here. You sign the Summary of Expenses after the event, when the Administrative Assistant sends it to you.</p>':'')+
        '<div class="field" style="margin-top:10px"><label for="d_note">Remarks <span class="muted">(required to Return or Reject)</span></label><textarea id="d_note" rows="3"></textarea></div><div class="msg" id="d_msg" style="color:var(--bad);font-size:12px"></div><div id="d_confirm"></div>'+
        '<div id="d_btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="decide" data-k="'+(dean?'approve':'endorse')+'">'+(dean?'Review and approve':'Endorse')+'</button><button class="btn warn" data-act="decide" data-k="return">Return with remarks</button><button class="btn bad" data-act="decide" data-k="reject">Reject…</button></div></div>';
     }else h+='<div class="card"><h3>Your part</h3><p>'+(done?esc(done)+'.':a.status==='pending'?'It is not your turn yet. It is with the '+i.by+'.':esc(i.label)+'.')+'</p></div>';
   }
   else if(r==='admin'){
-    h+='<div class="card"><h3>Administrative Assistant</h3>'+(a.status==='approved'&&a.post.status==='submitted'?'<button class="btn" data-act="verifyopen" data-id="'+a.id+'">Verify post-activity documents</button>':a.status==='verified'||a.status==='completed'?'<button class="btn" data-act="rptopen" data-id="'+a.id+'">Open reimbursement report</button>':'<p class="muted">'+esc(i.label)+'. Nothing to verify yet.</p>')+'<p class="muted" style="margin-top:8px">To clarify something with the student, a signatory or the Dean, use <b>Messages and clarifications</b> below.</p></div>';
+    h+='<div class="card"><h3>Administrative Assistant</h3>'+(a.status==='approved'&&a.post.status==='submitted'?'<button class="btn" data-act="verifyopen" data-id="'+a.id+'">Verify post-activity documents</button>':a.status==='approved'&&a.post.status==='dean'?'<p>The Summary of Expenses is with <b>'+esc(C.nameOf(a.route.dean))+'</b> for approval. You can download it once it is approved.</p>':(a.status==='verified'&&a.post.summary)||a.status==='completed'?'<button class="btn" data-act="rptopen" data-id="'+a.id+'">Open the Summary of Expenses</button>':a.status==='verified'?'<button class="btn" data-act="verifyopen" data-id="'+a.id+'">Send the Summary of Expenses to the Dean</button>':'<p class="muted">'+esc(i.label)+'. Nothing to verify yet.</p>')+'<p class="muted" style="margin-top:8px">To clarify something with the student, a signatory or the Dean, use <b>Messages and clarifications</b> below.</p></div>';
   }
   if(['admin','sysadmin'].indexOf(r)>-1&&['completed','rejected'].indexOf(a.status)<0)h+='<div class="card"><h4>Reminder</h4><p class="muted">Send an email and in-app reminder to whoever is holding this application.</p><button class="btn sec sm" style="margin-top:6px" data-act="remind" data-id="'+a.id+'">Send reminder</button></div>';
   return h;
@@ -342,7 +343,7 @@ function postHTML(a){
   if(a.post.status==='none')return '';
   const p=a.post,v=p.verify,ok=v&&!v.draft;
   const flagged=v&&v.returns?C.REQ_CHECK.filter(r=>v.returns[r[0]]):[];
-  return '<div class="card"><h3>Post-activity report <span class="pill '+(p.status==='verified'?'p-ok':p.status==='returned'?'p-warn':'p-wait')+'">'+p.status+'</span></h3>'+
+  return '<div class="card"><h3>Post-activity report <span class="pill '+(p.status==='verified'?'p-ok':p.status==='returned'?'p-warn':'p-wait')+'">'+({submitted:'for verification',returned:'returned',dean:'with the Dean',verified:p.summary?'approved by the Dean':'verified'}[p.status]||p.status)+'</span></h3>'+
    '<p class="muted">Submitted '+fmtT(p.submittedAt)+(p.cycle>1?' (version '+p.cycle+'; earlier versions stay on record)':'')+'</p>'+
    (p.status==='returned'&&flagged.length?'<div class="callout" style="margin-top:8px"><b>Requirements returned:</b> '+flagged.map(r=>esc(r[1])+(v.remarks[r[0]]?' ('+esc(v.remarks[r[0]])+')':'')).join('; ')+'</div>':'')+
    '<div class="tbl" style="margin-top:8px"><table><thead><tr><th>Expense</th><th>OR or invoice no.</th><th>Merchant</th><th class="r">For reimbursement (₱)</th>'+(ok?'<th class="r">Approved (₱)</th><th>Funding source</th><th>Remarks</th>':'')+'</tr></thead><tbody>'+
@@ -393,6 +394,43 @@ document.addEventListener('change',e=>{
   }
 });
 ACT.sigupload=()=>{const el=$('#sigfile');if(el)el.click()};
+/* The Dean reviews the validated Summary of Expenses, signs it and approves it, or returns it to the Administrative Assistant. */
+function summaryCard(a){
+  const v=a.post.verify;
+  return '<div class="card"><h3>Approve the Summary of Expenses</h3><p class="muted">The Administrative Assistant verified the three post-activity requirements and prepared this summary. Check the amounts and funding sources, then sign and approve it. Only after your approval can it be downloaded or printed.</p>'+
+   '<dl class="who" style="margin-top:8px"><dt>Grant you approved</dt><dd>₱'+money(a.grant.total)+' · '+esc(a.grant.fund)+'</dd><dt>For reimbursement</dt><dd><b>₱'+money(v.total)+'</b> across '+C.rptItems(a).length+' expense(s)</dd><dt>Prepared by</dt><dd>'+esc(v.by)+', '+fmtT(v.at)+'</dd></dl>'+
+   '<button class="btn sm sec" style="margin-top:8px" data-act="soeview">Read the full summary</button>'+
+   '<div class="field" style="margin-top:10px"><label>Your digital signature</label><canvas id="sigpad" class="sigpad" aria-label="Signature pad. Draw your signature."></canvas><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><button type="button" class="btn sm sec" data-act="sigclear">Clear</button><button type="button" class="btn sm sec" data-act="sigsaved">Use my saved signature</button><button type="button" class="btn sm sec" data-act="sigupload">Upload a signature image</button><input type="file" id="sigfile" accept="image/png,image/jpeg" hidden></div><div style="margin-top:8px"><label class="chk"><input type="checkbox" id="d_remember"> <span>Remember my signature on this browser</span></label></div></div>'+
+   '<div class="field" style="margin-top:10px"><label for="d_note">Remarks <span class="muted">(required to return it)</span></label><textarea id="d_note" rows="3"></textarea></div><div class="msg" id="d_msg" style="color:var(--bad);font-size:12px"></div><div id="d_confirm"></div>'+
+   '<div id="d_btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="soeapprove">Review and approve</button><button class="btn warn" data-act="soereturn">Return to the Administrative Assistant</button></div></div>';
+}
+let pendingSummary=null;
+ACT.soeview=()=>{const a=D().apps.find(x=>x.id===state.curApp),el=$('#soePreview');if(el){el.remove();return}$('#d_btns').insertAdjacentHTML('afterend','<div id="soePreview" style="margin-top:12px;overflow-x:auto">'+C.reportHTML(a)+'</div>')};
+ACT.soeapprove=async function(){
+  const a=D().apps.find(x=>x.id===state.curApp),msg=$('#d_msg'),cv=$('#sigpad'),signed=cv&&cv.dataset.signed==='1';msg.textContent='';
+  const o={signature:signed?cv.toDataURL('image/png'):'',note:$('#d_note').value.trim()};
+  const chk=await E.approveSummary(u(),a,Object.assign({dry:true},o));
+  if(chk.err){msg.textContent=chk.err;toast(chk.err);return}
+  pendingSummary=o;
+  $('#d_confirm').innerHTML='<div class="callout info" style="margin-top:10px" role="group" aria-label="Confirm the Summary of Expenses"><b>Confirm the Summary of Expenses</b><p style="margin-top:6px">Reimbursement of <b>₱'+money(chk.total)+'</b>. Your signature will appear on the summary:</p><img class="sigimg" src="'+o.signature+'" alt="Your signature">'+
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="soeconfirm">Confirm approval</button><button class="btn sec" data-act="soecancel">Go back and edit</button></div></div>';
+  $('#d_btns').style.display='none';$('#d_confirm').scrollIntoView({block:'nearest',behavior:'smooth'});
+};
+ACT.soecancel=()=>{pendingSummary=null;$('#d_confirm').innerHTML='';$('#d_btns').style.display='flex'};
+ACT.soeconfirm=async function(){
+  const a=D().apps.find(x=>x.id===state.curApp),msg=$('#d_msg'),keep=$('#d_remember')&&$('#d_remember').checked;
+  if(!pendingSummary)return;
+  const res=await E.approveSummary(u(),a,Object.assign({confirm:true},pendingSummary));
+  if(res.err){msg.textContent=res.err;toast(res.err);return}
+  if(keep)C.api.saveSignature(pendingSummary.signature);
+  pendingSummary=null;toast('Summary of Expenses approved and signed. The Administrative Assistant was notified.');R.app();
+};
+ACT.soereturn=async function(){
+  const a=D().apps.find(x=>x.id===state.curApp),msg=$('#d_msg'),note=$('#d_note').value.trim();
+  if(!note){msg.textContent='Add remarks that tell the Administrative Assistant what to change.';$('#d_note').focus();return}
+  const res=await E.returnSummary(u(),a,note);if(res.err){msg.textContent=res.err;toast(res.err);return}
+  toast('Returned to the Administrative Assistant with your remarks.');R.app();
+};
 /* The Dean first sees a summary and confirms. Nothing is recorded until Confirm approval. */
 let pendingApproval=null;
 ACT.decide=async function(t){
@@ -402,14 +440,12 @@ ACT.decide=async function(t){
   else if(k==='return')res=await E.returnApp(u(),a,note);
   else if(k==='reject'){if(!note){msg.textContent='A reason is required to reject.';$('#d_note').focus();return}if(!confirm('Reject this application? It will be closed and the student notified.'))return;res=await E.reject(u(),a,note)}
   else{
-    const cv=$('#sigpad'),signed=cv&&cv.dataset.signed==='1';
-    const o={signature:signed?cv.toDataURL('image/png'):'',note,amount:$('#d_amt').value,fund:$('#d_fund').value};
+    const o={note,amount:$('#d_amt').value,fund:$('#d_fund').value};
     const chk=await E.approveGrant(u(),a,Object.assign({dry:true},o));
     if(chk.err){msg.textContent=chk.err;toast(chk.err);return}
     pendingApproval=o;
     $('#d_confirm').innerHTML='<div class="callout info" style="margin-top:10px" role="group" aria-label="Confirm the grant approval"><b>Confirm the grant approval</b>'+
       '<dl class="who" style="margin-top:8px"><dt>Approved grant</dt><dd><b>₱'+money(chk.total)+'</b> <span class="muted">(limit ₱'+money(C.CAP[a.conf.scope])+' for '+esc(C.regionLabel(a.conf.scope))+')</span></dd><dt>Funding source</dt><dd>'+esc(chk.fund)+'</dd></dl>'+
-      '<p style="margin-top:8px">Your signature:</p><img class="sigimg" src="'+o.signature+'" alt="Your signature">'+
       '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="btn" data-act="confirmapprove">Confirm approval</button><button class="btn sec" data-act="cancelconfirm">Go back and edit</button></div></div>';
     $('#d_btns').style.display='none';$('#d_confirm').scrollIntoView({block:'nearest',behavior:'smooth'});
     return;
@@ -420,13 +456,12 @@ ACT.decide=async function(t){
 };
 ACT.cancelconfirm=()=>{pendingApproval=null;$('#d_confirm').innerHTML='';$('#d_btns').style.display='flex'};
 ACT.confirmapprove=async function(){
-  const a=D().apps.find(x=>x.id===state.curApp),msg=$('#d_msg'),keep=$('#d_remember')&&$('#d_remember').checked;
+  const a=D().apps.find(x=>x.id===state.curApp),msg=$('#d_msg');
   if(!pendingApproval)return;
   const res=await E.approveGrant(u(),a,Object.assign({confirm:true},pendingApproval));
   if(res.err){msg.textContent=res.err;toast(res.err);return}
-  if(keep){C.api.saveSignature(pendingApproval.signature)}
   pendingApproval=null;
-  toast('Grant approved and signed. The student was notified by email and in-app.');
+  toast('Grant approved. The student was notified by email and in-app.');
   R.app();
 };
 ACT.comment=function(t){
