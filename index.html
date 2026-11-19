@@ -519,7 +519,7 @@ tr.sel td{background:var(--accent-soft)}
 <section class="view" id="v-flow" hidden data-title="Workflow">
   <header><h2>Approval and reimbursement workflow</h2><p class="muted">Solid lines are the normal path and run automatically after each decision. Dashed lines return the file to the student with remarks. The dotted line ends the application. Earlier decisions and every file version are always kept.</p></header>
   <p class="muted swipe">Scroll sideways to see every step.</p>
-  <div class="flow"><svg viewBox="0 0 1000 484" role="img" aria-label="Phase 1: the student submits, then the thesis adviser, department chair, associate dean and dean decide in turn, and an approved grant is sent to the student. Phase 2: the student submits three post-activity uploads, the administrative assistant verifies them and sends the Summary of Expenses to the Dean, who approves and signs it, the summary is submitted to the FAO, and the application completes.">
+  <div class="flow"><svg viewBox="0 0 1000 484" role="img" aria-label="Phase 1: the student submits, then the thesis adviser, department chair, associate dean and dean decide in turn, and an approved grant is sent to the student. Phase 2: the student submits three post-activity uploads, the administrative assistant verifies them and sends the Summary of Expenses to the Dean, who approves and signs it or returns it with remarks, the summary is submitted to the FAO, and the application completes.">
     <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
     <marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--warn)"/></marker></defs>
     <rect class="sw" x="4" y="8" width="992" height="232" rx="8"/><text class="sm" x="14" y="28">PHASE 1 · APPLICATION AND ENDORSEMENT · ROUTING IS AUTOMATIC AFTER EACH DECISION</text>
@@ -534,7 +534,7 @@ tr.sel td{background:var(--accent-soft)}
     <path class="ln" d="M140 92H162" marker-end="url(#ar)"/><path class="ln" d="M288 92H310" marker-end="url(#ar)"/><path class="ln" d="M436 92H458" marker-end="url(#ar)"/><path class="ln" d="M584 92H606" marker-end="url(#ar)"/><path class="ln" d="M756 92H778" marker-end="url(#ar)"/>
     <path class="ld" d="M226 128V176M374 128V176M522 128V176M682 128V176M682 176H78V130" marker-end="url(#aw)"/>
     <text class="sm" x="92" y="194">Return with remarks: the student replies, uploads documents and resubmits. The same approver continues.</text>
-    <path class="lb" d="M880 128V186"/><text x="886" y="190" font-size="11" fill="var(--bad)">Reject (reason required):</text><text x="886" y="204" font-size="11" fill="var(--bad)">closed, history kept</text>
+    <path class="lb" d="M880 128V186"/><text x="872" y="190" text-anchor="end" font-size="11" fill="var(--bad)">Reject (reason required):</text><text x="872" y="204" text-anchor="end" font-size="11" fill="var(--bad)">closed, history kept</text>
     <text class="sm" x="92" y="226">Any approver can also write a comment to ask for clarification at any stage.</text>
 
     <g><rect class="nd2" x="16" y="292" width="150" height="72" rx="6"/><text x="91" y="318" text-anchor="middle" font-size="12.5" font-weight="600">Student</text><text class="sub" x="91" y="335" text-anchor="middle">three uploads</text><text class="sub" x="91" y="348" text-anchor="middle">expenses: OR no., merchant</text></g>
@@ -544,6 +544,7 @@ tr.sel td{background:var(--accent-soft)}
     <g><rect class="nd2" x="788" y="292" width="196" height="72" rx="6"/><text x="886" y="318" text-anchor="middle" font-size="12.5" font-weight="600">Completed</text><text class="sub" x="886" y="335" text-anchor="middle">student emailed: check</text><text class="sub" x="886" y="348" text-anchor="middle">in 5 to 10 business days</text></g>
     <path class="ln" d="M166 328H202" marker-end="url(#ar)"/><path class="ln" d="M374 328H410" marker-end="url(#ar)"/><path class="ln" d="M562 328H598" marker-end="url(#ar)"/><path class="ln" d="M750 328H786" marker-end="url(#ar)"/>
     <path class="ld" d="M289 364V396H91V366" marker-end="url(#aw)"/><text class="sm" x="104" y="414">Return requirements: the student resubmits a new version (v2); the original is kept.</text>
+    <path class="ld" d="M487 364V380H340V366" marker-end="url(#aw)"/><text class="sm" x="104" y="432">The Dean can return the Summary of Expenses to the Administrative Assistant with remarks.</text>
     <text class="sm" x="14" y="466">Every action is written to the Approval History · every record goes to the Google Sheet · every file to Google Drive, named with the reference number (2627-Term1-001).</text>
   </svg></div>
 
