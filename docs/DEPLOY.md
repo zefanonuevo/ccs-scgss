@@ -66,7 +66,36 @@ One role per person: if someone is on the list more than once, the highest role 
 **Later changes** are done on the **Roles** tab: Delete, tick boxes with Switch off / Switch on / Delete selected, and a CSV upload with a preview (add and update; replace the staff list; or delete everyone listed). Delete removes access and the person's saved draft and signature; applications and history stay. `users.js delete <email>` does one person from the command line.
 Applications cannot be submitted until the Dean, Associate Dean and the chair of that department exist.
 
-**8. Backups:** schedule `deploy/apps-backup.sh` nightly (`pg_dump` of the database *and* the files folder, encrypted, copied to Drive). Keep the `age` private key off the server. Do one restore test before go-live.
+**8. Backups:** `deploy/apps-backup.sh` makes a `pg_dump` of the database and a tar of the uploaded files, encrypts both with `age`, and copies them to the Shared Drive with `rclone`. It keeps 14 days of encrypted copies in `/var/backups/apps`; Drive copies are never deleted, so prune them yourself. It does **not** include `/etc/apps/scgss.env` (database password, Google token): keep a copy of that file somewhere safe.
+
+1. **Tools** on the apps VM: `sudo apt install -y postgresql-client age rclone`.
+2. **Key pair**, made on your own computer, not the server: `age-keygen -o scgss-backup.key`. It prints `Public key: age1...`. Only that public key goes on the VM. Store `scgss-backup.key` in a password manager and an offline copy; without it no backup can be restored.
+3. **Drive**, once, as root: `sudo rclone config` (new remote named `gdrive-shared`, type `drive`, choose the Shared Drive). Create a `Backups` folder in it and check with `sudo rclone lsd gdrive-shared:`.
+4. **Run once by hand** and check: `sudo AGE_PUBLIC_KEY=age1...yourkey bash /srv/apps/scgss/current/deploy/apps-backup.sh`, then `ls -lh /var/backups/apps/` (two `.age` files) and `sudo rclone ls gdrive-shared:Backups/ | tail`.
+5. **Restore test before go-live**, on your own computer with the key and one downloaded file:
+   `age -d -i scgss-backup.key app_scgss-YYYY-MM-DD-HHMM.dump.age > x.dump`, then `createdb scgss_restore_test && pg_restore -d scgss_restore_test x.dump`, then `psql scgss_restore_test -c "select count(*) from apps;"`, then `dropdb scgss_restore_test && rm x.dump` (it holds personal data). For the files archive, decrypt the `app_scgss-files-*.tar.age` the same way and list it with `tar -tf`.
+6. **Nightly at 02:00** with a systemd timer. Put the public key in the first file.
+
+   `/etc/systemd/system/scgss-backup.service`:
+   ```
+   [Unit]
+   Description=SCGSS nightly backup
+   [Service]
+   Type=oneshot
+   Environment=AGE_PUBLIC_KEY=age1...yourkey
+   ExecStart=/bin/bash /srv/apps/scgss/current/deploy/apps-backup.sh
+   ```
+   `/etc/systemd/system/scgss-backup.timer`:
+   ```
+   [Unit]
+   Description=SCGSS nightly backup
+   [Timer]
+   OnCalendar=*-*-* 02:00:00
+   Persistent=true
+   [Install]
+   WantedBy=timers.target
+   ```
+   Then `sudo systemctl daemon-reload && sudo systemctl enable --now scgss-backup.timer` and `systemctl list-timers scgss-backup.timer`. Next morning, check `journalctl -u scgss-backup -e`. A failed run shows only there; nothing emails you.
 
 **9. Privacy settings (v1.0):** in `/etc/apps/scgss.env` set `AUDIT_KEEP_DAYS` (default 365; the notice tells students access logs are kept 12 months). The service deletes older access-log rows once a day. Then:
 - Have the DPO approve the notice text in `shared/rules.js` (`PRIVACY`), add the DPO contact, and change `PRIVACY_VERSION` whenever the text changes. Each application stores the version the student accepted.
