@@ -4,7 +4,7 @@
 set -euo pipefail
 NAME=scgss
 REPO=https://github.com/zefanonuevo/ccs-scgss
-BRANCH=${BRANCH:-backend}   # main still holds the browser-only simulation until the backend branch is merged; then change this to main
+BRANCH=${BRANCH:-main}
 command -v psql >/dev/null || { echo "Install PostgreSQL first and create the app_scgss database (docs/DEPLOY.md step 2)."; exit 1; }
 command -v node >/dev/null || { echo "Install Node.js 22 LTS first (see docs/DEPLOY.md)."; exit 1; }
 id "app_$NAME" >/dev/null 2>&1 || useradd --system --home-dir "/srv/apps/$NAME" --shell /usr/sbin/nologin "app_$NAME"

@@ -31,7 +31,7 @@ sudo -u postgres psql -c "REVOKE ALL ON DATABASE app_scgss FROM PUBLIC;"
 ```
 PostgreSQL listens on 127.0.0.1 only. The tables (including `scgss_users`) are created by the app on first start.
 
-**3. Install** on the apps VM, as root, after reading it: `sudo bash deploy/setup-scgss.sh` (set `BRANCH=backend` until the branch is merged). It creates the `app_scgss` user, `/srv/apps/scgss`, the service template and the settings file.
+**3. Install** on the apps VM, as root, after reading it: `sudo bash deploy/setup-scgss.sh`. It creates the `app_scgss` user, `/srv/apps/scgss`, the service template and the settings file.
 
 **4. Settings:** edit `/etc/apps/scgss.env`: set `DATABASE_URL=postgres://app_scgss:<password>@127.0.0.1:5432/app_scgss`, `HOST` to the apps VM's private address, and `GAS_URL`/`GAS_TOKEN` (step 4a). Leave Google empty to run without it.
 
@@ -112,7 +112,7 @@ Applications cannot be submitted until the Dean, Associate Dean and the chair of
 
 ## Updating
 1. Take a database copy first: `sudo bash -c 'umask 077; sudo -u postgres pg_dump -Fc app_scgss > /var/backups/app_scgss-before-update.dump'` (the root shell writes the file, because the `postgres` user cannot write to `/var/backups`) (delete it once the update is confirmed; it holds personal data). The nightly `deploy/apps-backup.sh` needs `AGE_PUBLIC_KEY` set, so it does not run as a bare command.
-2. `cd /srv/apps/scgss/current && sudo BRANCH=backend bash deploy/setup-scgss.sh` (pulls, installs, keeps your settings).
+2. `cd /srv/apps/scgss/current && sudo bash deploy/setup-scgss.sh` (pulls, installs, keeps your settings).
 3. `sudo systemctl restart app@scgss`, then `sudo systemctl status app@scgss --no-pager` must say `active (running)`.
 4. `curl http://<apps-vm-private-ip>:3001/healthz` must print `ok`. Use the private address from `HOST` in `/etc/apps/scgss.env`: the service does not listen on `localhost`, so `curl http://localhost:3001/healthz` is expected to fail.
 5. Open https://ccs.dlsu.edu.ph/scgss/ and press Ctrl+F5. The version tag in the header must match `CHANGELOG.md`.
