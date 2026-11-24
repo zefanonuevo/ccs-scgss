@@ -37,12 +37,12 @@ function portalChecker(portalUrl, ttlMs = 10000) {
 }
 
 function createApp({ store, engine, gas, me, config }) {
-  const cfg = Object.assign({ siteRoot: path.resolve(__dirname, '..'), filesDir: path.resolve(__dirname, 'data/files'), baseUrl: '', autoStudents: true }, config);
+  const cfg = Object.assign({ siteRoot: path.resolve(__dirname, '..'), filesDir: path.resolve(__dirname, 'data/files'), baseUrl: '', autoStudents: true, trustProxy: 1 }, config);
   fs.mkdirSync(cfg.filesDir, { recursive: true });
   const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
   const app = express();
   app.disable('x-powered-by');
-  app.set('trust proxy', 1);
+  app.set('trust proxy', cfg.trustProxy); // how many proxies sit in front: the access log's address is the real visitor only if this is right
   app.use((req, res, next) => {
     res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'SAMEORIGIN', 'Cache-Control': 'no-store', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()' });
     next();
@@ -95,8 +95,9 @@ function createApp({ store, engine, gas, me, config }) {
     if (!FILE_TYPES[ext]) return res.status(400).json({ ok: false, error: 'This file type is not accepted. Use PDF, PNG, JPG, DOCX, XLSX or TXT.' });
     if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ ok: false, error: 'The file is empty.' });
     if (!looksLike(ext, req.body)) return res.status(400).json({ ok: false, error: 'The file content does not match its type (' + ext + '). Use a real ' + ext.slice(1).toUpperCase() + ' file.' });
-    const meta = await engine.registerFile({ orig, size: req.body.length, type: FILE_TYPES[ext], by: req.user.name, byEmail: req.user.email });
-    fs.writeFileSync(path.join(cfg.filesDir, meta.id), req.body);
+    /* the bytes are written first; the record is saved only if that worked */
+    const meta = await engine.registerFile({ orig, size: req.body.length, type: FILE_TYPES[ext], by: req.user.name, byEmail: req.user.email }, (id) => fs.promises.writeFile(path.join(cfg.filesDir, id), req.body));
+    if (meta.err) return res.status(429).json({ ok: false, error: meta.err });
     res.json({ ok: true, file: { id: meta.id, orig: meta.orig, size: meta.size } });
   }));
   app.get('/api/files/:id', who, (req, res) => {
@@ -109,7 +110,7 @@ function createApp({ store, engine, gas, me, config }) {
     if (!fs.existsSync(p)) return res.status(404).json({ ok: false, error: 'The stored file is missing.' });
     store.audit(req.user.email, req.query.download ? 'file_download' : 'file_view', (a ? a.ref : 'draft') + ' ' + id, req.ip); // who opened which personal document
     res.set({ 'Content-Type': f.type || 'application/octet-stream', 'Content-Disposition': (req.query.download ? 'attachment' : 'inline') + '; filename="' + String(f.name || f.orig).replace(/[^\w.\-]+/g, '_') + '"', 'Cache-Control': 'private, no-store' });
-    fs.createReadStream(p).pipe(res);
+    fs.createReadStream(p).on('error', () => res.destroy()).pipe(res); // the file may vanish after the check above
   });
 
   /* ---------- drafts and the remembered signature ---------- */
@@ -182,6 +183,7 @@ function createApp({ store, engine, gas, me, config }) {
     res.set({ 'Cache-Control': 'no-cache', 'Content-Type': 'text/html; charset=utf-8' }).send(html);
   });
   app.use('/js', express.static(path.join(cfg.siteRoot, 'js'), { dotfiles: 'deny', index: false, redirect: false, setHeaders: (r) => r.set('Cache-Control', 'no-cache') }));
+  app.get('/css/ccs-tokens.css', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(cfg.siteRoot, 'css/ccs-tokens.css')));
   app.get('/shared/rules.js', (req, res) => res.set('Cache-Control', 'no-cache').sendFile(path.join(cfg.siteRoot, 'shared/rules.js')));
   app.use((req, res) => res.status(404).type('text').send('Not found'));
   app.use((err, req, res, next) => { console.error('[error]', req.method, req.path, err); if (res.headersSent) return next(err); res.status(500).json({ ok: false, error: 'Something went wrong on the server. Nothing was saved.' }); });

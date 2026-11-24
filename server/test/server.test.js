@@ -165,6 +165,7 @@ test('only the listed files are served', async (t) => {
   const s = await boot(); t.after(s.close);
   for (const p of ['/server/app.js', '/google/Code.gs', '/.git/config', '/js/../server/db.js', '/CHANGELOG.md']) assert.equal((await s.as(null).get(p)).status, 404, p);
   assert.equal((await s.as(null).get('/shared/rules.js')).status, 200);
+  assert.equal((await s.as(null).get('/css/ccs-tokens.css')).status, 200, 'the theme stylesheet is served from this site');
 });
 
 test('students in the student email format are let in; other emails must be listed', async (t) => {
@@ -383,8 +384,56 @@ test('the Dean approves the grant without a signature, then approves and signs t
   assert.equal(ok.ok, true, JSON.stringify(ok.result));
   a = (await get(adm)).apps[0];
   assert.equal(a.status, 'verified'); assert.equal(a.post.summary.signature, PNG); assert.equal(a.post.summary.byEmail, 'elena.navarro@dlsu.edu.ph');
+  assert.equal((await get(maria)).apps[0].post.summary.signature, null, 'the student does not receive the Dean\'s signature image');
+  assert.equal((await get(s.as(REYES))).apps[0].post.summary.signature, null, 'nor does the adviser');
+  assert.equal((await get(dean)).apps[0].post.summary.signature, PNG, 'the Dean does');
   assert.equal((await adm.act('complete', id, { rfp: 'RFP-9' })).ok, true, 'filed after the Dean approves');
   a = (await get(adm)).apps[0];
   assert.equal(a.report.no, 'SOE-' + a.ref);
   assert.ok(a.history.some((h) => h.action === 'Summary of Expenses approved'));
+});
+
+test('a student does not receive other students\' names and emails', async (t) => {
+  const s = await boot(); t.after(s.close);
+  await s.store.upsertUser({ email: 'other_student@dlsu.edu.ph', role: 'student', program: 'BSIT' });
+  const emails = async (who) => (await (await who.get('/api/state')).json()).state.directory.map((x) => x.email);
+  const mine = await emails(s.as(MARIA));
+  assert.ok(!mine.includes('other_student@dlsu.edu.ph'), 'no other student');
+  assert.ok(mine.includes(REYES) && mine.includes('rosa.delgado@dlsu.edu.ph'), 'advisers and the office stay');
+  assert.ok((await emails(s.as('rosa.delgado@dlsu.edu.ph'))).includes('other_student@dlsu.edu.ph'), 'staff still see everyone');
+});
+
+test('uploads: a person may hold only 15 unattached files, and unattached files are purged after 14 days', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const maria = s.as(MARIA); let last;
+  for (let i = 0; i < 15; i++) last = await maria.upload('f' + i + '.pdf');
+  assert.ok(last && last.id);
+  const up = await fetch(s.base + '/api/files', { method: 'POST', headers: { cookie: 'as=' + MARIA, origin: ORIGIN, 'x-file-name': 'one-too-many.pdf' }, body: PDF });
+  assert.equal(up.status, 429);
+  s.engine.db.files[last.id].at = Date.now() - 15 * 864e5;
+  assert.equal(await s.engine.purgeUnattached(14), 1);
+  assert.equal(s.engine.db.files[last.id], undefined);
+  assert.equal((await maria.get('/api/files/' + last.id)).status, 404);
+});
+
+test('typed text longer than 6000 characters is refused', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const maria = s.as(MARIA);
+  const sub = await maria.act('submit', '', form(await maria.upload('r.pdf'), REYES)); const id = sub.result.appId;
+  assert.equal((await maria.act('comment', id, 'x'.repeat(6001), [], null, null)).ok, false);
+  assert.equal((await maria.act('comment', id, 'a short question', [], [REYES], null)).ok, true);
+  const long = form(await maria.upload('r2.pdf'), REYES); long.conf = 'C'.repeat(201);
+  assert.equal((await maria.act('submit', '', long)).ok, false, 'form fields are limited to 200 characters');
+});
+
+test('an action that throws half-way leaves nothing behind', async (t) => {
+  const s = await boot(); t.after(s.close);
+  const maria = s.as(MARIA);
+  const sub = await maria.act('submit', '', form(await maria.upload('r.pdf'), REYES)); const id = sub.result.appId;
+  const real = s.engine.E.endorse;
+  s.engine.E.endorse = (actor, a) => { a.status = 'rejected'; throw new Error('boom'); };
+  assert.equal((await s.as(REYES).act('endorse', id, 'ok')).ok, false);
+  s.engine.E.endorse = real;
+  assert.equal(s.engine.byId(id).status, 'pending', 'memory was reloaded from the database');
+  assert.equal((await s.as(REYES).act('endorse', id, 'ok')).ok, true, 'and the next action saves only its own change');
 });

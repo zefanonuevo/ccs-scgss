@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@500;600&display=swap');
+/*
+  CCS design tokens, v2 (green, white and black)
+  Shared by ccs-task-tracker and ccs-scgss. Change a value here and both sites follow.
+  Contains: color, shadow, easing and type tokens in light and dark, and the System/Light/Dark theme switch.
+  Theme selection: no data-theme attribute follows the device setting; data-theme="light" or "dark" overrides it.
+  App-specific tokens (chart colors, status dots) stay in each app.
+*/
+:root{
+  --paper:#f4f7f3; --surface:#ffffff; --raised:#ffffff; --ink:#14221b; --muted:#4a5a52; --line:#d3ddd6;
+  --accent:#0b5d45; --accent-fill:#0b5d45; --accent-ink:#ffffff; --accent-soft:#dcebe2;
+  --good:#1d7a36; --good-soft:#e3f3e8; --warn:#a64b00; --warn-soft:#fdeedd; --crit:#c4001a; --crit-soft:#fde7ea;
+  --fill:rgba(118,118,128,.12); --scrim:rgba(0,0,0,.28);
+  --shadow-1:0 1px 2px rgba(0,0,0,.05); --shadow-hover:0 4px 14px rgba(0,0,0,.1); --shadow-2:0 12px 40px rgba(0,0,0,.16),0 0 0 .5px rgba(0,0,0,.08);
+  --ease-out:cubic-bezier(.23,1,.32,1); --ease-drawer:cubic-bezier(.32,.72,0,1);
+  --f-display:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --f-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --f-accent:'Poppins','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; /* labels and short accents only, never paragraphs */
+  --f-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0b110e; --surface:#121c17; --raised:#17241d; --ink:#e6eee9; --muted:#9db0a5; --line:#243529;
+  --accent:#5fcfa5; --accent-fill:#0e7a5a; --accent-ink:#ffffff; --accent-soft:#183b2e;
+  --good:#30d158; --good-soft:#163524; --warn:#ff9f0a; --warn-soft:#3b2a0c; --crit:#ff6961; --crit-soft:#401c1a;
+  --fill:rgba(118,118,128,.24); --scrim:rgba(0,0,0,.5);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-hover:0 4px 14px rgba(0,0,0,.45); --shadow-2:0 12px 40px rgba(0,0,0,.55),0 0 0 .5px rgba(255,255,255,.08);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b110e; --surface:#121c17; --raised:#17241d; --ink:#e6eee9; --muted:#9db0a5; --line:#243529;
+  --accent:#5fcfa5; --accent-fill:#0e7a5a; --accent-ink:#ffffff; --accent-soft:#183b2e;
+  --good:#30d158; --good-soft:#163524; --warn:#ff9f0a; --warn-soft:#3b2a0c; --crit:#ff6961; --crit-soft:#401c1a;
+  --fill:rgba(118,118,128,.24); --scrim:rgba(0,0,0,.5);
+  --shadow-1:0 1px 2px rgba(0,0,0,.4); --shadow-hover:0 4px 14px rgba(0,0,0,.45); --shadow-2:0 12px 40px rgba(0,0,0,.55),0 0 0 .5px rgba(255,255,255,.08);
+  color-scheme:dark}
+
+/* Theme switch: three icon buttons, role="radiogroup" with role="radio" buttons and aria-checked */
+.theme{display:inline-flex;flex:none;gap:2px;padding:3px;border-radius:9px;background:var(--fill)}
+.theme button{appearance:none;border:0;background:none;width:32px;height:30px;border-radius:7px;display:grid;place-items:center;color:var(--muted);cursor:pointer;transition:transform 160ms var(--ease-out)}
+.theme button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+.theme button:active{transform:scale(.94)}
+@media (hover:hover) and (pointer:fine){.theme button:hover{color:var(--ink)}}
+@media (prefers-reduced-motion:reduce){.theme button:active{transform:none}}

@@ -24,10 +24,10 @@ if (!env.DATABASE_URL) { console.error('DATABASE_URL is not set (postgres://app_
   const store = makeStore(open({ url: env.DATABASE_URL }));
   await store.init();
   const gas = createGas({ url: env.GAS_URL, token: env.GAS_TOKEN, filesDir });
-  const engine = await createEngine({ store, gas });
+  const engine = await createEngine({ store, gas, filesDir });
   const app = createApp({
     store, engine, gas, me: portalChecker(env.PORTAL_URL || 'http://127.0.0.1:3000'),
-    config: { baseUrl: env.BASE_URL || '', filesDir, allowedDomain: env.ALLOWED_DOMAIN || 'dlsu.edu.ph', autoStudents: env.AUTO_STUDENTS !== 'off' }
+    config: { baseUrl: env.BASE_URL || '', filesDir, allowedDomain: env.ALLOWED_DOMAIN || 'dlsu.edu.ph', autoStudents: env.AUTO_STUDENTS !== 'off', trustProxy: Number(env.TRUST_PROXY) || 1 }
   });
 
   /* automatic reminders: checked every hour; each reminder carries a key, so it is never sent twice */
@@ -38,6 +38,10 @@ if (!env.DATABASE_URL) { console.error('DATABASE_URL is not set (postgres://app_
   const keep = Number(env.AUDIT_KEEP_DAYS) > 0 ? Number(env.AUDIT_KEEP_DAYS) : 365;
   async function purge() { try { const n = await store.purgeAudit(keep); if (n) console.log('[privacy]', n, 'old access log row(s) deleted'); } catch (e) { console.error('[privacy]', e.message); } }
   purge(); setInterval(purge, 24 * 60 * 60 * 1000).unref();
+
+  /* uploads nobody attached to an application within 14 days are deleted, so abandoned files cannot fill the disk */
+  async function sweepFiles() { try { const n = await engine.purgeUnattached(14); if (n) console.log('[files]', n, 'unattached upload(s) deleted'); } catch (e) { console.error('[files]', e.message); } }
+  sweepFiles(); setInterval(sweepFiles, 24 * 60 * 60 * 1000).unref();
 
   const port = Number(env.PORT || 3001), host = env.HOST || '127.0.0.1';
   app.listen(port, host, () => console.log('SCGSS listening on ' + host + ':' + port + (gas.live() ? ' (Google sync on)' : ' (Google sync off)')));

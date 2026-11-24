@@ -53,7 +53,11 @@ function upsert_(key, row) {
   Object.keys(row).forEach(function (k) {
     if (headers.indexOf(k) < 0) { headers.push(k); sh.getRange(1, headers.length).setValue(k); }
   });
-  var values = headers.map(function (h) { return row[h] === undefined ? '' : row[h]; });
+  // A value that starts with = + - or @ would run as a formula (students type some of these fields). A leading ' keeps it as plain text.
+  var values = headers.map(function (h) {
+    var v = row[h] === undefined ? '' : row[h];
+    return (typeof v === 'string' && /^[=+\-@]/.test(v)) ? "'" + v : v;
+  });
   var refCol = headers.indexOf('Reference') + 1;
   var at = 0;
   if (sh.getLastRow() > 1 && refCol > 0) {

@@ -94,6 +94,7 @@ function validateForm(f){
   req(f.start,0,'f_start','Enter the start date.');req(f.end,0,'f_end','Enter the end date.');
   if(f.start&&f.end&&f.end<f.start)add(0,'f_end','The end date is before the start date.');
   req(f.venue,0,'f_venue','Enter the venue.');req(f.org,0,'f_org','Enter the organizer.');req(f.etype,0,'f_etype','Select the type of event.');req(f.scope,0,'f_scope','Select where the event takes place.');
+  [['sid','f_sid'],['conf','f_conf'],['venue','f_venue'],['org','f_org'],['title','f_title'],['cof','f_title'],['cos','f_title']].forEach(k=>{if(String(f[k[0]]==null?'':f[k[0]]).length>200)add(0,k[1],'One of the entries is too long (200 characters at most).')});
   req(f.index,1,'f_index','Select where the paper is indexed.');req(f.title,1,'f_title','Enter the title of the paper.');
   const t=round2(f.exp.reduce((s,x)=>s+(Number(x.amount)||0),0)),cap=CAP[f.scope];
   if(f.exp.some(x=>Number(x.amount)<0))add(2,'ex_0','Amounts cannot be negative.');

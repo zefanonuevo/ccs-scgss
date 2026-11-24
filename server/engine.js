@@ -8,7 +8,10 @@ const R = require('../shared/rules');
 const { money, fmtT, fmtD, pad3, round2 } = R.u;
 const { PAR_DAYS, ADVISER_ROLES, EXPENSE_TYPES, REQ_POST, REQ_CHECK, ARTICLE_WORDS, wordCount, CHAIN, CH, ROLE_NAME, CAP, regionLabel, info, projected, dueDate, total, manilaToday, daysBetween, validateForm, nameOf } = R;
 
-async function createEngine({ store, gas }) {
+const fs = require('node:fs');
+const path = require('node:path');
+
+async function createEngine({ store, gas, filesDir }) {
   const now = () => Date.now();
   const db = await store.loadAll();
   db.sigs = {}; db.drafts = {};
@@ -33,12 +36,16 @@ async function createEngine({ store, gas }) {
   let chain = Promise.resolve();
   const locked = (fn) => { const p = chain.then(fn, fn); chain = p.catch(() => {}); return p; };
   const save = () => {}; /* the rule code calls this after a change; the write happens once, after the whole action, in run() */
-  async function persist() {
-    try { await store.commit(db); } catch (e) {
-      const fresh = await store.loadAll(); Object.keys(db).forEach((k) => { delete db[k]; }); Object.assign(db, fresh); db.sigs = {}; db.drafts = {};
-      throw e;
-    }
+  async function reload() { const fresh = await store.loadAll(); Object.keys(db).forEach((k) => { delete db[k]; }); Object.assign(db, fresh); db.sigs = {}; db.drafts = {}; }
+  /* only: ids of the applications this action touched (others are not compared); omit it to compare them all */
+  async function persist(only) {
+    try { await store.commit(db, only); } catch (e) { await reload(); throw e; }
   }
+  /* run fn, then write once. If fn throws half-way, memory is reloaded from the database so a half-done change is never saved later. */
+  const atomic = (fn, ids) => locked(async () => {
+    let r; try { r = fn(); } catch (e) { await reload(); throw e; }
+    await persist(ids ? ids(r) : undefined); return r;
+  });
   const byId = (id) => db.apps.find((a) => a.id === id);
   const addDays = R.addDays;
   const fundsOf = R.fundsOf;
@@ -69,7 +76,7 @@ async function createEngine({ store, gas }) {
     syncLog.unshift({ at: now(), ref: a.ref, why, mode: gas.live() ? 'live' : 'off' }); syncLog.length = Math.min(syncLog.length, 80);
     if (gas.live()) {
       const row = {}; SHEET_COLS.forEach((c) => { row[c[0]] = c[1](a); }); gas.post({ action: 'upsert', key: a.ref, row });
-      Object.values(db.files).filter((f) => f.appId === a.id && f.name && !f.pushed).forEach((f) => { f.pushed = true; gas.pushFile(f); });
+      Object.values(db.files).filter((f) => f.appId === a.id && f.name && !f.pushed).forEach((f) => gas.pushFile(f)); /* gas sets f.pushed only after Google accepts it */
     }
     save();
   }
@@ -431,16 +438,42 @@ E.markViewed=function(actor,a,fileId){
 };
 
   /* ---------- registering uploaded files ---------- */
-  const registerFile = (o) => locked(async () => { const id = 'f' + crypto.randomUUID().replace(/-/g, ''); /* random, so one file's id says nothing about another's */ db.files[id] = Object.assign({ id, orig: 'document.pdf', size: 0, type: 'application/pdf', by: '', at: now(), name: null, appId: null, folder: 'Unfiled', kind: '', version: 1 }, o); await persist(); return db.files[id]; });
+  /* write(id) saves the bytes first, so a full disk leaves no record without a file. A person may hold only MAX_UNATTACHED files that are not on an application yet. */
+  const MAX_UNATTACHED = 15;
+  const registerFile = (o, write) => locked(async () => {
+    if (Object.values(db.files).filter((f) => !f.appId && f.byEmail === o.byEmail).length >= MAX_UNATTACHED) return { err: 'You have too many files waiting to be attached. Submit or finish your application first.' };
+    const id = 'f' + crypto.randomUUID().replace(/-/g, ''); /* random, so one file's id says nothing about another's */
+    if (write) await write(id);
+    db.files[id] = Object.assign({ id, orig: 'document.pdf', size: 0, type: 'application/pdf', by: '', at: now(), name: null, appId: null, folder: 'Unfiled', kind: '', version: 1 }, o);
+    try { await persist(); } catch (e) { if (filesDir) await fs.promises.unlink(path.join(filesDir, id)).catch(() => {}); throw e; }
+    return db.files[id];
+  });
+  /* files nobody attached to an application within `days` are deleted (a saved draft may still point at a recent one) */
+  const purgeUnattached = (days) => locked(async () => {
+    const cut = now() - days * 864e5, old = Object.values(db.files).filter((f) => !f.appId && f.at < cut);
+    old.forEach((f) => { delete db.files[f.id]; if (filesDir) fs.promises.unlink(path.join(filesDir, f.id)).catch(() => {}); });
+    if (old.length) await persist([]);
+    return old.length;
+  });
 
   /* ---------- what a person may see ---------- */
   const isStaff = (u) => u.role === 'admin' || u.role === 'sysadmin';
   const mayView = (u, a) => isStaff(u) || a.studentEmail === u.email || Object.keys(a.route).some((k) => a.route[k] === u.email);
   async function snapshotFor(u) {
-    const apps = db.apps.filter((a) => mayView(u, a));
+    /* the Dean's signature image goes only to staff and to the signer, not to the student or the other approvers */
+    const hideSig = (a) => {
+      if (isStaff(u) || a.route.dean === u.email || !((a.post && a.post.summary && a.post.summary.signature) || (a.grant && a.grant.signature))) return a;
+      const c = Object.assign({}, a);
+      if (a.post && a.post.summary) c.post = Object.assign({}, a.post, { summary: Object.assign({}, a.post.summary, { signature: null }) });
+      if (a.grant && a.grant.signature) c.grant = Object.assign({}, a.grant, { signature: null });
+      return c;
+    };
+    const apps = db.apps.filter((a) => mayView(u, a)).map(hideSig);
     const ids = new Set(apps.map((a) => a.id));
     const files = {}; Object.values(db.files).forEach((f) => { if ((f.appId && ids.has(f.appId)) || (!f.appId && f.byEmail === u.email)) files[f.id] = f; });
-    const dir = store.listUsers().filter((x) => x.active === 1).map(decorate);
+    /* staff see everyone; anyone else sees only the people they can pick or deal with: advisers, the office, and the signers on their applications */
+    const route = new Set(apps.flatMap((a) => Object.values(a.route)));
+    const dir = store.listUsers().filter((x) => x.active === 1 && (isStaff(u) || ADVISER_ROLES.includes(x.role) || x.role === 'admin' || route.has(x.email) || x.email === u.email)).map(decorate);
     return {
       me: decorate(u), apps, files, directory: dir, settings: signers(), counters: db.counters,
       notifs: db.notifs.filter((n) => n.to === u.email).slice(0, 200),
@@ -451,8 +484,11 @@ E.markViewed=function(actor,a,fileId){
 
   /* ---------- run one action on the server ---------- */
   const ACTIONS = new Set(['submit', 'endorse', 'approveGrant', 'returnApp', 'reject', 'comment', 'resubmit', 'submitPost', 'postReview', 'approveSummary', 'returnSummary', 'complete', 'remind', 'markRead', 'markViewed']);
+  /* no typed text may be longer than this (the signature image and the article, which has its own limit, are the longest allowed) */
+  const tooLong = (x, d = 0) => (typeof x === 'string' ? x.length > 6000 && x.indexOf('data:image/') !== 0 : !!x && typeof x === 'object' && d < 6 && Object.values(x).some((v) => tooLong(v, d + 1)));
   const runNow = (actor, name, appId, args) => {
     if (!ACTIONS.has(name)) return ERR('Unknown action.');
+    if (tooLong(args)) return ERR('One of the texts is too long. Shorten it and try again.');
     if (name === 'submit') return E.submit(actor, args[0]);
     if (name === 'markRead') { E.markRead(actor.email, args[0]); return OK; }
     const a = byId(appId);
@@ -465,9 +501,10 @@ E.markViewed=function(actor,a,fileId){
     }
     return r;
   };
-  const run = (actor, name, appId, args) => locked(async () => { const r = runNow(actor, name, appId, args); await persist(); return r; });
+  /* an action changes one application (or creates one), so only that one is compared when saving */
+  const run = (actor, name, appId, args) => atomic(() => runNow(actor, name, appId, args), (r) => (r && r.app ? [r.app.id] : appId ? [appId] : []));
 
-  return { E, db, run, byId, registerFile, snapshotFor, mayView, signers, advisers, nextRef, advisories, acct, decorate, syncLog, autoRemind: () => locked(async () => { const n = E.autoRemind(); await persist(); return n; }), sweep: (actor, days) => locked(async () => { const n = E.sweep(actor, days); await persist(); return n; }) };
+  return { E, db, run, byId, registerFile, purgeUnattached, snapshotFor, mayView, signers, advisers, nextRef, advisories, acct, decorate, syncLog, autoRemind: () => atomic(() => E.autoRemind()), sweep: (actor, days) => atomic(() => E.sweep(actor, days)) };
 }
 
 module.exports = { createEngine };

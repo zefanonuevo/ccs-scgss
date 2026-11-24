@@ -138,15 +138,17 @@ function makeStore(pool) {
     },
 
     /** Write only what changed since the last commit, in one transaction. If it fails, nothing is written and the error is thrown. */
-    async commit(st) {
-      const c = await pool.connect(), after = [];
+    /** only: optional list of application ids that may have changed; the other applications are not compared (they are the slow part as data grows). */
+    async commit(st, only) {
+      const c = await pool.connect(), after = [], ids = only ? new Set(only) : null;
       const put = async (kind, id, obj, sql, params) => { const s = JSON.stringify(obj); if (cache[kind].get(id) !== s) { await c.query(sql, params(s)); after.push(() => cache[kind].set(id, s)); } };
       try {
         await c.query('BEGIN');
-        for (const a of st.apps) await put('apps', a.id, a, 'INSERT INTO apps (id, ref, student_email, status, data) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO UPDATE SET ref = $2, student_email = $3, status = $4, data = $5', (s) => [a.id, a.ref, a.studentEmail, a.status, s]);
+        for (const a of st.apps) if (!ids || ids.has(a.id)) await put('apps', a.id, a, 'INSERT INTO apps (id, ref, student_email, status, data) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (id) DO UPDATE SET ref = $2, student_email = $3, status = $4, data = $5', (s) => [a.id, a.ref, a.studentEmail, a.status, s]);
         for (const n of st.notifs) await put('notifs', n.id, n, 'INSERT INTO notifs (id, to_email, data) VALUES ($1,$2,$3) ON CONFLICT (id) DO UPDATE SET data = $3', (s) => [n.id, n.to, s]);
         for (const m of st.outbox.slice(0, 200)) await put('outbox', m.id, m, 'INSERT INTO outbox (id, data) VALUES ($1,$2) ON CONFLICT (id) DO UPDATE SET data = $2', (s) => [m.id, s]);
         for (const f of Object.values(st.files)) await put('files', f.id, f, 'INSERT INTO files (id, app_id, data) VALUES ($1,$2,$3) ON CONFLICT (id) DO UPDATE SET app_id = $2, data = $3', (s) => [f.id, f.appId || null, s]);
+        for (const id of [...cache.files.keys()]) if (!st.files[id]) { await c.query('DELETE FROM files WHERE id = $1', [id]); after.push(() => cache.files.delete(id)); } /* a purged unattached file */
         const kv = async (k, v) => { if (cache.kv.get(k) !== v) { await c.query('INSERT INTO kv (k, v) VALUES ($1,$2) ON CONFLICT (k) DO UPDATE SET v = $2', [k, v]); after.push(() => cache.kv.set(k, v)); } };
         await kv('seq', String(st.seq)); await kv('counters', JSON.stringify(st.counters));
         for (const k of Object.keys(st.keys)) if (!cache.dedupe.has(k)) { await c.query('INSERT INTO dedupe (k) VALUES ($1) ON CONFLICT DO NOTHING', [k]); after.push(() => cache.dedupe.add(k)); }

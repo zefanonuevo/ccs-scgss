@@ -4,27 +4,35 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-function createGas({ url, token, filesDir, log = console }) {
-  const queue = []; let busy = false;
+function createGas({ url, token, filesDir, log = console, timeoutMs = 60000 }) {
+  const queue = [], waiting = new Set(); let busy = false;
   async function pump() {
     if (busy) return; busy = true;
     while (queue.length) {
-      const job = queue.shift();
+      const job = queue.shift(); let ok = false;
       try {
-        const body = await job();
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), redirect: 'follow' });
+        const body = await job.build();
+        /* a timeout, so one hung Google call cannot hold back every later email */
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token }, body)), redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
         const j = await res.json().catch(() => null);
-        if (!res.ok || !j || j.ok !== true) log.error('[gas] rejected:', res.status, j && j.error);
+        ok = res.ok && !!j && j.ok === true;
+        if (!ok) log.error('[gas] rejected:', res.status, j && j.error);
       } catch (e) { log.error('[gas] failed:', e.message); }
+      if (job.done) job.done(ok);
     }
     busy = false;
   }
   return {
     live: () => !!(url && token),
-    post(p) { if (!url || !token) return; queue.push(async () => p); pump(); },
+    post(p) { if (!url || !token) return; queue.push({ build: async () => p }); pump(); },
+    /* the file is marked pushed only once Google accepted it; until then every later save of the application tries again */
     pushFile(f) {
-      if (!url || !token) return;
-      queue.push(async () => ({ action: 'file', folder: f.folder, name: f.name, mime: f.type, b64: (await fs.promises.readFile(path.join(filesDir, f.id))).toString('base64') }));
+      if (!url || !token || waiting.has(f.id)) return;
+      waiting.add(f.id);
+      queue.push({
+        build: async () => ({ action: 'file', folder: f.folder, name: f.name, mime: f.type, b64: (await fs.promises.readFile(path.join(filesDir, f.id))).toString('base64') }),
+        done: (ok) => { waiting.delete(f.id); if (ok) f.pushed = true; }
+      });
       pump();
     },
     idle: () => new Promise((r) => { const t = setInterval(() => { if (!busy && !queue.length) { clearInterval(t); r(); } }, 20); })

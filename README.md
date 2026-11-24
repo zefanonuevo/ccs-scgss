@@ -27,4 +27,4 @@ student, adviser, chair (one per program), assoc (Associate Dean), dean, admin (
 Every version is in [CHANGELOG.md](CHANGELOG.md) and in the app on the **Versions** tab.
 
 ## Design system
-Same macOS-style design as [ccs-task-tracker](https://github.com/zefanonuevo/ccs-task-tracker). Colors, shadows, easing, type and the theme switch load from the shared stylesheet in [ccs-design](https://github.com/zefanonuevo/ccs-design); the page needs a network connection to load it.
+Same macOS-style design as [ccs-task-tracker](https://github.com/zefanonuevo/ccs-task-tracker). Colors, shadows, easing, type and the theme switch come from `css/ccs-tokens.css`, a copy of the shared stylesheet in [ccs-design](https://github.com/zefanonuevo/ccs-design) kept in this repo so the page does not depend on another site. To take a design update, copy the new file over it.
